@@ -1,2 +1,9 @@
-# CPinHToTauTau
-Repository for the H->tau tau CP analysis in Run 3 - joint columnflow use between DESY and IPHC
+# CPinHToTauTau Analysis
+
+
+### Resources
+
+- [columnflow](https://github.com/uhh-cms/columnflow)
+- [law](https://github.com/riga/law)
+- [order](https://github.com/riga/order)
+- [luigi](https://github.com/spotify/luigi)
