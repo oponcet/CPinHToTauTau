@@ -37,7 +37,7 @@ def muon_selection(
         self: Selector,
         events: ak.Array,
         **kwargs
-) -> tuple[ak.Array, SelectionResult]:
+) -> tuple[SelectionResult, ak.Array, ak.Array, ak.Array]:
     """
     Muon selection returning two sets of indidces for default and veto muons.
     
@@ -71,7 +71,10 @@ def muon_selection(
         "muon_dz_0p2"         : abs(events.Muon.dz) < 0.2,
         "muon_iso_0p3"        : events.Muon.pfRelIso04_all < 0.3
     }
-    
+
+
+    # pt sorted indices for converting masks to indices
+    sorted_indices = ak.argsort(events.Muon.pt, axis=-1, ascending=False)
     muon_mask  = ak.local_index(events.Muon.pt) >= 0
     
     good_muon_mask = ak.copy(muon_mask)
@@ -90,19 +93,19 @@ def muon_selection(
         double_veto_muon_mask = double_veto_muon_mask & double_veto_selections[cut]
 
 
-    # build and return selection results
-    # "objects" maps source columns to new columns and selections to be applied on the old columns
-    # to create them, e.g. {"Muon": {"MySelectedMuon": indices_applied_to_Muon}}
-    return events, SelectionResult(
+    # convert to sorted indices
+    good_muon_indices = sorted_indices[good_muon_mask[sorted_indices]]
+    good_muon_indices = ak.values_astype(good_muon_indices, np.int32)
+
+    veto_muon_indices = sorted_indices[single_veto_muon_mask[sorted_indices]]
+    veto_muon_indices = ak.values_astype(veto_muon_indices, np.int32)
+
+    double_veto_muon_indices = sorted_indices[double_veto_muon_mask[sorted_indices]]
+    double_veto_muon_indices = ak.values_astype(double_veto_muon_indices, np.int32)
+
+    return SelectionResult(
         steps=selection_steps,
-        objects={
-            "Muon": {
-                "Muon": good_muon_mask,
-                "VetoMuon": single_veto_muon_mask & ~good_muon_mask,
-                "DoubleVetoMuon": double_veto_muon_mask,
-            },
-        },
-    )
+    ), good_muon_indices, veto_muon_indices, double_veto_muon_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -125,7 +128,7 @@ def electron_selection(
         self: Selector,
         events: ak.Array,
         **kwargs
-) -> tuple[ak.Array, SelectionResult]:
+) -> tuple[SelectionResult, ak.Array, ak.Array, ak.Array]:
     """
     Electron selection returning two sets of indidces for default and veto muons.
     
@@ -169,7 +172,9 @@ def electron_selection(
         "electron_cutBased"       : events.Electron.cutBased == 1,
         "electron_pfRelIso03_all" : events.Electron.pfRelIso03_all < 0.3
     }
-    
+
+    # pt sorted indices for converting masks to indices
+    sorted_indices = ak.argsort(events.Electron.pt, axis=-1, ascending=False)    
     electron_mask  = ak.local_index(events.Electron.pt) >= 0
     
     good_electron_mask = ak.copy(electron_mask)
@@ -188,19 +193,20 @@ def electron_selection(
         double_veto_electron_mask = double_veto_electron_mask & double_veto_selections[cut]
 
 
-    # build and return selection results
-    # "objects" maps source columns to new columns and selections to be applied on the old columns
-    # to create them, e.g. {"Electron": {"MySelectedElectron": indices_applied_to_Electron}}
-    return events, SelectionResult(
+    # convert to sorted indices
+    good_electron_indices = sorted_indices[good_electron_mask[sorted_indices]]
+    good_electron_indices = ak.values_astype(good_electron_indices, np.int32)
+
+    veto_electron_indices = sorted_indices[single_veto_electron_mask[sorted_indices]]
+    veto_electron_indices = ak.values_astype(veto_electron_indices, np.int32)
+
+    double_veto_electron_indices = sorted_indices[double_veto_electron_mask[sorted_indices]]
+    double_veto_electron_indices = ak.values_astype(double_veto_electron_indices, np.int32)
+
+
+    return SelectionResult(
         steps=selection_steps,
-        objects={
-            "Electron": {
-                "Electron": good_electron_mask,
-                "VetoElectron": single_veto_electron_mask & ~good_electron_mask,
-                "DoubleVetoElectron": double_veto_electron_mask,
-            },
-        },
-    )
+    ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -222,7 +228,7 @@ def tau_selection(
         self: Selector,
         events: ak.Array,
         **kwargs
-) -> tuple[ak.Array, SelectionResult]:
+) -> tuple[SelectionResult, ak.Array]:
     """
     Tau selection returning two sets of indidces for default and veto muons.
     
@@ -249,6 +255,8 @@ def tau_selection(
         "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_vs_mu.tight,
     }
 
+    # pt sorted indices for converting masks to indices
+    sorted_indices = ak.argsort(events.Tau.pt, axis=-1, ascending=False)
     tau_mask  = ak.local_index(events.Tau.pt) >= 0
     
     good_tau_mask = ak.copy(tau_mask)
@@ -258,17 +266,13 @@ def tau_selection(
         good_tau_mask = good_tau_mask & good_selections[cut]
         selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
 
-    # build and return selection results
-    # "objects" maps source columns to new columns and selections to be applied on the old columns
-    # to create them, e.g. {"Muon": {"MySelectedMuon": indices_applied_to_Muon}}
-    return events, SelectionResult(
+    # convert to sorted indices
+    good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
+    good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
+
+    return SelectionResult(
         steps=selection_steps,
-        objects={
-            "Tau": {
-                "Tau": good_tau_mask,
-            },
-        },
-    )
+    ), good_tau_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -326,7 +330,7 @@ def jet_selection(
 
     return events, SelectionResult(
         steps={
-            "b_jet_veto": bjet_veto
+            "b_veto": bjet_veto
         },
         objects={
             "Jet": {
