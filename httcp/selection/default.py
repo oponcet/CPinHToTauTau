@@ -19,68 +19,6 @@ np = maybe_import("numpy")
 ak = maybe_import("awkward")
 
 
-#
-# other unexposed selectors
-# (not selectable from the command line but used by other, exposed selectors)
-#
-
-
-@selector(
-    uses={"Muon.pt", "Muon.eta"},
-)
-def muon_selection(
-    self: Selector,
-    events: ak.Array,
-    **kwargs,
-) -> tuple[ak.Array, SelectionResult]:
-    # example muon selection: exactly one muon
-    muon_mask = (events.Muon.pt >= 20.0) & (abs(events.Muon.eta) < 2.1)
-    muon_sel = ak.sum(muon_mask, axis=1) == 1
-
-    # build and return selection results
-    # "objects" maps source columns to new columns and selections to be applied on the old columns
-    # to create them, e.g. {"Muon": {"MySelectedMuon": indices_applied_to_Muon}}
-    return events, SelectionResult(
-        steps={
-            "muon": muon_sel,
-        },
-        objects={
-            "Muon": {
-                "Muon": muon_mask,
-            },
-        },
-    )
-
-
-@selector(
-    uses={"Jet.pt", "Jet.eta"},
-)
-def jet_selection(
-    self: Selector,
-    events: ak.Array,
-    **kwargs,
-) -> tuple[ak.Array, SelectionResult]:
-    # example jet selection: at least one jet
-    jet_mask = (events.Jet.pt >= 25.0) & (abs(events.Jet.eta) < 2.4)
-    jet_sel = ak.sum(jet_mask, axis=1) >= 1
-
-    # build and return selection results
-    # "objects" maps source columns to new columns and selections to be applied on the old columns
-    # to create them, e.g. {"Jet": {"MyCustomJetCollection": indices_applied_to_Jet}}
-    return events, SelectionResult(
-        steps={
-            "jet": jet_sel,
-        },
-        objects={
-            "Jet": {
-                "Jet": sorted_indices_from_mask(jet_mask, events.Jet.pt, ascending=False),
-            },
-        },
-        aux={
-            "n_jets": ak.sum(jet_mask, axis=1),
-        },
-    )
-
 
 #
 # exposed selectors
@@ -90,16 +28,18 @@ def jet_selection(
 @selector(
     uses={
         # selectors / producers called within _this_ selector
-        mc_weight, cutflow_features, process_ids, muon_selection, jet_selection,
+        json_filter, met_filters, mc_weight, cutflow_features, process_ids,
+        trigger_selection, lepton_pair_selection, jet_selection,
         increment_stats,
     },
     produces={
         # selectors / producers whose newly created columns should be kept
-        mc_weight, cutflow_features, process_ids,
+        mc_weight, lepton_pair_selection, trigger_selection, cutflow_features, 
+        process_ids,
     },
     exposed=True,
 )
-def example(
+def default(
     self: Selector,
     events: ak.Array,
     stats: defaultdict,
@@ -108,16 +48,22 @@ def example(
     # prepare the selection results that are updated at every step
     results = SelectionResult()
 
-    # muon selection
-    events, muon_results = self[muon_selection](events, **kwargs)
-    results += muon_results
+    # filter bad data events according to golden lumi mask
+    if self.dataset_inst.is_data:
+        events, json_filter_results = self[json_filter](events, **kwargs)
+        results += json_filter_results
+
+    # trigger selection
+    events, trigger_results = self[trigger_selection](events, **kwargs)
+    results += trigger_results
+
+    # lepton-pair selection
+    events, hcand_results = self[lepton_pair_selection](events, **kwargs)
+    results += hcand_results
 
     # jet selection
     events, jet_results = self[jet_selection](events, **kwargs)
     results += jet_results
-
-    # combined event selection after all steps
-    results.event = results.steps.muon & results.steps.jet
 
     # create process ids
     events = self[process_ids](events, **kwargs)

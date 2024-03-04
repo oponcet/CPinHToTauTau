@@ -292,7 +292,7 @@ def jet_selection(
         self: Selector,
         events: ak.Array,
         **kwargs
-) -> tuple[ak.Array, SelectionResult]:
+) -> tuple[SelectionResult, ak.Array]:
     """
     Tau selection returning two sets of indidces for default and veto muons.
     
@@ -300,6 +300,7 @@ def jet_selection(
       - 
     """
     is_2016 = self.config_inst.campaign.x.year == 2016
+    sorted_indices = ak.argsort(events.Jet.pt, axis=-1, ascending=False)
 
     # nominal selection
     good_selections = {
@@ -323,19 +324,13 @@ def jet_selection(
     wp_tight = self.config_inst.x.btag_working_points.deepjet.tight
     bjet_mask = (good_jet_mask) & (events.Jet.btagDeepFlavB >= wp_tight)
 
+    good_jet_indices = sorted_indices[good_jet_mask[sorted_indices]]
+    good_jet_indices = ak.values_astype(good_jet_indices, np.int32)
+
     # bjet veto
     bjet_veto = ak.sum(bjet_mask, axis=1) == 0
 
-    
 
-    return events, SelectionResult(
-        steps={
-            "b_veto": bjet_veto
-        },
-        objects={
-            "Jet": {
-                "Jet": good_jet_mask,
-            },
-        },
-    )
+    return SelectionResult(steps={"b_veto": bjet_veto}), good_jet_indices
+    
     
