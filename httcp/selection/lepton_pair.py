@@ -218,7 +218,7 @@ def lepton_pair_selection(
     )
     
     extra_single_lepton_veto_result = SelectionResult()
-    for trigger, trigger_fired, leg_masks in trigger_results.x.trigger_data:
+    for trigger, trigger_fired, trigger_fired_obj_match, leg_masks in trigger_results.x.trigger_data:
         print(f"trigger: {trigger}")
         print(f"trigger_fired: {trigger_fired}")
         is_single = trigger.has_tag("single_trigger")
@@ -383,15 +383,15 @@ def lepton_pair_selection(
             objects={
                 "Electron": {
                     "Electron": sel_electron_indices,
-                    "HCandElectron": sel_hcand_electron_indices
+                    "hCandElectron": sel_hcand_electron_indices
                 },
                 "Muon": {
                     "Muon": sel_muon_indices,
-                    "HCandMuon": sel_hcand_muon_indices
+                    "hCandMuon": sel_hcand_muon_indices
                 },
                 "Tau": {
                     "Tau": sel_tau_indices,
-                    "HCandTau": sel_hcand_tau_indices
+                    "hCandTau": sel_hcand_tau_indices
                 }
             },
             aux={}

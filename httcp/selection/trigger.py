@@ -72,7 +72,7 @@ def trigger_selection(
         # final trigger decision
         fired_and_all_legs_match = fired & all_legs_match
         # store all intermediate results for subsequent selectors
-        trigger_data.append((trigger, fired_and_all_legs_match, leg_masks))
+        trigger_data.append((trigger, fired, fired_and_all_legs_match, leg_masks))
 
         # store the trigger id
         ids = ak.where(fired_and_all_legs_match, np.float32(trigger.id), np.float32(np.nan))

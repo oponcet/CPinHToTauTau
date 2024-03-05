@@ -334,3 +334,21 @@ def jet_selection(
     return SelectionResult(steps={"b_veto": bjet_veto}), good_jet_indices
     
     
+
+
+
+@selector(
+    uses={
+        "GenPart.*",
+    },
+    exposed=False
+)
+def gentau_selection(
+        self: Selector,
+        events: ak.Array,
+        **kwargs,
+) -> ak.Array:
+    genpart = events.GenPart
+    istau_mask = (np.abs(genpart.pdgId) == 15) & (genpart.status == 2)
+    
+    return istau_mask
