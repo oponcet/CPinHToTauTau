@@ -29,21 +29,21 @@ def add_categories(config: od.Config) -> None:
     )
     add_category(
         config,
-        name="ele_tau",
+        name="etau",
         id=101,
         selection="sel_etau",
         label="etau_channel",
     )
     add_category(
         config,
-        name="mu_tau",
+        name="mutau",
         id=102,
         selection="sel_mutau",
         label="mutau_channel",
     )
     add_category(
         config,
-        name="tau_tau",
+        name="tautau",
         id=103,
         selection="sel_tautau",
         label="tautau_channel",

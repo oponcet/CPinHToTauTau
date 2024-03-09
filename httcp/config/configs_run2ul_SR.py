@@ -263,10 +263,12 @@ def add_config(
     }
     
     # channels
-    cfg.add_channel(name="mutau", id=1)
-    cfg.add_channel(name="etau", id=2)
-    cfg.add_channel(name="tautau", id=3)
-    
+    cfg.add_channel(name="emu",    id=1)
+    cfg.add_channel(name="etau",   id=2)
+    cfg.add_channel(name="mutau",  id=3)
+    cfg.add_channel(name="tautau", id=4)
+
+
     # add categories using the "add_category" tool which adds auto-generated ids
     # the "selection" entries refer to names of selectors, e.g. in selection/example.py
     from hcp.config.categories import add_categories

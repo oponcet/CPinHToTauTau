@@ -81,7 +81,7 @@ def cutflow_features(
         features, category_ids, normalization_weights, muon_weights, deterministic_seeds,
     },
 )
-def default(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
+def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     # features
     events = self[features](events, **kwargs)
 

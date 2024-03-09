@@ -7,10 +7,7 @@ Exemplary selection methods.
 from collections import defaultdict
 
 from columnflow.selection import Selector, SelectionResult, selector
-from columnflow.selection.stats import increment_stats
 from columnflow.selection.util import sorted_indices_from_mask
-from columnflow.production.processes import process_ids
-from columnflow.production.cms.mc_weight import mc_weight
 from columnflow.util import maybe_import, DotDict
 
 from httcp.util import IF_NANO_V9, IF_NANO_V11
@@ -37,7 +34,7 @@ def muon_selection(
         self: Selector,
         events: ak.Array,
         **kwargs
-) -> tuple[SelectionResult, ak.Array, ak.Array, ak.Array]:
+) -> tuple[ak.Array, SelectionResult, ak.Array, ak.Array, ak.Array]:
     """
     Muon selection returning two sets of indidces for default and veto muons.
     
@@ -103,9 +100,11 @@ def muon_selection(
     double_veto_muon_indices = sorted_indices[double_veto_muon_mask[sorted_indices]]
     double_veto_muon_indices = ak.values_astype(double_veto_muon_indices, np.int32)
 
-    return SelectionResult(
-        steps=selection_steps,
-    ), good_muon_indices, veto_muon_indices, double_veto_muon_indices
+    return events, \
+        SelectionResult(
+            steps=selection_steps
+        ), \
+        good_muon_indices, veto_muon_indices, double_veto_muon_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -128,7 +127,7 @@ def electron_selection(
         self: Selector,
         events: ak.Array,
         **kwargs
-) -> tuple[SelectionResult, ak.Array, ak.Array, ak.Array]:
+) -> tuple[ak.Array, SelectionResult, ak.Array, ak.Array, ak.Array]:
     """
     Electron selection returning two sets of indidces for default and veto muons.
     
@@ -204,9 +203,10 @@ def electron_selection(
     double_veto_electron_indices = ak.values_astype(double_veto_electron_indices, np.int32)
 
 
-    return SelectionResult(
-        steps=selection_steps,
-    ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
+    return events, \
+        SelectionResult(
+            steps=selection_steps,
+        ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -227,8 +227,10 @@ def electron_selection(
 def tau_selection(
         self: Selector,
         events: ak.Array,
+        electron_indices: ak.Array,
+        muon_indices: ak.Array,
         **kwargs
-) -> tuple[SelectionResult, ak.Array]:
+) -> tuple[ak.Array, SelectionResult, ak.Array]:
     """
     Tau selection returning two sets of indidces for default and veto muons.
     
@@ -247,12 +249,14 @@ def tau_selection(
         tau_vs_jet = DotDict(vvloose=2, loose=4, medium=5)
         
     good_selections = {
-        "tau_pt_20"     : events.Tau.pt > 20
+        "tau_pt_20"     : events.Tau.pt > 20,
         "tau_eta_2p3"   : abs(events.Tau.eta) < 2.3,
         "tau_dz_0p2"    : abs(events.Tau.dz) < 0.2,
         "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_vs_jet.medium,
         "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_vs_e.vvloose,
         "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_vs_mu.tight,
+        "CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
+        "CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
     }
 
     # pt sorted indices for converting masks to indices
@@ -270,9 +274,10 @@ def tau_selection(
     good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
 
-    return SelectionResult(
-        steps=selection_steps,
-    ), good_tau_indices
+    return events, \
+        SelectionResult(
+            steps=selection_steps,
+        ), good_tau_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -292,7 +297,7 @@ def jet_selection(
         self: Selector,
         events: ak.Array,
         **kwargs
-) -> tuple[SelectionResult, ak.Array]:
+) -> tuple[ak.Array, SelectionResult]:
     """
     Tau selection returning two sets of indidces for default and veto muons.
     
@@ -330,13 +335,18 @@ def jet_selection(
     # bjet veto
     bjet_veto = ak.sum(bjet_mask, axis=1) == 0
 
-
-    return SelectionResult(steps={"b_veto": bjet_veto}), good_jet_indices
+    return events, \
+        SelectionResult(
+            steps = {
+                "b_veto": bjet_veto
+            }, 
+            objects = {
+                "Jet": good_jet_indices
+            }
+        )
     
     
-
-
-
+"""
 @selector(
     uses={
         "GenPart.*",
@@ -352,3 +362,4 @@ def gentau_selection(
     istau_mask = (np.abs(genpart.pdgId) == 15) & (genpart.status == 2)
     
     return istau_mask
+"""
