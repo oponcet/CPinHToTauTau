@@ -5,12 +5,12 @@ Prepare h-Candidate from SelectionResult: selected lepton indices & channel_id [
 """
 
 from typing import Optional
-from columnflow.selection import SelectionResult
+from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.selection.util import create_collections_from_masks
 from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
-from hcp.util import invariant_mass, deltaR, transverse_mass
+from httcp.util import invariant_mass, deltaR, transverse_mass
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -31,15 +31,6 @@ def get_sorted_pair(
     dtrpairindices = dtrpairindices[sorted_idx]
 
     # Check if the pfRelIso03_all values are the same for the first two objects in each pair
-    """
-    where_same_iso_1 = ak.fill_none(
-        (
-            ak.firsts(dtrpairs["0"].pfRelIso03_all[:,:1], axis=1)
-            ==
-            ak.firsts(dtrpairs["0"].pfRelIso03_all[:,1:2], axis=1)
-        ), False
-    )
-    """
     where_same_iso_1 = (
         ak.firsts(dtrpairs["0"].pfRelIso03_all[:,:1], axis=1)
         ==
@@ -53,15 +44,6 @@ def get_sorted_pair(
     dtrpairindices = dtrpairindices[sorted_idx]
 
     # Check if the pt values are the same for the first two objects in each pair    
-    """
-    where_same_pt_1 = ak.fill_none(
-        (
-            ak.firsts(dtrpairs["0"].pt[:,:1], axis=1)
-            ==
-            ak.firsts(dtrpairs["0"].pt[:,1:2], axis=1)
-        ), False
-    )
-    """
     where_same_pt_1 = (
         ak.firsts(dtrpairs["0"].pt[:,:1], axis=1)
         ==
@@ -76,15 +58,6 @@ def get_sorted_pair(
     dtrpairindices = dtrpairindices[sorted_idx]
 
     # check if the first two pairs have taus with same rawDeepTau2017v2p1VSjet
-    """
-    where_same_iso_2 = ak.fill_none(
-        (
-            ak.firsts(dtrpairs["1"].rawDeepTau2018v2p5VSjet[:,:1], axis=1)
-            ==
-            ak.firsts(dtrpairs["1"].rawDeepTau2018v2p5VSjet[:,1:2], axis=1)
-        ), False
-    )
-    """
     where_same_iso_2 = (
         ak.firsts(dtrpairs["1"].rawDeepTau2018v2p5VSjet[:,:1], axis=1)
         ==
@@ -155,27 +128,32 @@ def mutau_selection(
 
     preselection = {
         "is_os"         : (lep1.charge * lep2.charge) < 0,
-        "dr_0p5"        : deltaR(lep1, lep2) > 0.5,
+        "dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  #deltaR(lep1, lep2) > 0.5,
         "mT_50"         : transverse_mass(lep1, events.MET) < 50,
-        "invmass_40"    : invariant_mass(lep1, lep2) > 40
+        "invmass_40"    : (1*lep1 + 1*lep2).mass > 40,  # invariant_mass(lep1, lep2) > 40
     }
 
     good_pair_mask = lep1_idx >= 0
     pair_selection_steps = {}
     for cut in preselection.keys():
         good_pair_mask = good_pair_mask & preselection[cut]
-        pair_selection_steps[cut] = ak.sum(preselection[cut], axis=1) > 0
+        #pair_selection_steps[cut] = ak.sum(preselection[cut], axis=1) > 0
+        pair_selection_steps[cut] = ak.sum(good_pair_mask, axis=1) > 0
         
-
     leps_pair_sel = leps_pair[good_pair_mask]
     lep_indices_pair_sel = lep_indices_pair[good_pair_mask]
+
+    lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
+    lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
+
+    lep_indices_pair_sel_single = ak.concatenate([lep1idx, lep2idx], axis=1)
+
 
     where_many   = ak.num(lep_indices_pair_sel, axis=1) > 1
     pair_indices = ak.where(where_many, 
                             get_sorted_pair(leps_pair_sel,
                                             lep_indices_pair_sel),
-                            lep_indices_pair_sel)
-
+                            lep_indices_pair_sel_single)
 
     return events, SelectionResult(
         steps = pair_selection_steps,

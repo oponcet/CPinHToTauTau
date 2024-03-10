@@ -6,7 +6,7 @@ Definition of triggers
 
 import order as od
 
-from hcp.config.trigger_util import Trigger, TriggerLeg
+from httcp.config.trigger_util import Trigger, TriggerLeg
 
 
 def add_triggers_2017(config: od.Config) -> None:

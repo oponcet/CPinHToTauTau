@@ -17,7 +17,7 @@ from columnflow.config_util import (
     verify_config_processes,
 )
 
-from hcp.util import get_dataset_lfns
+from httcp.util import get_dataset_lfns
 
 ak = maybe_import("awkward")
 
@@ -45,7 +45,8 @@ def add_config(
     process_names = [
         #"data",
         #"tt",
-        "dy",
+        #"dy",
+        "h_ggf_tautau",
         #"st",
         #"ewk",
         #"vv",
@@ -62,7 +63,8 @@ def add_config(
         ### data ###
         #"data_mu_b",
         ### backgrounds ###
-        "dy_lep_m50_madgraph",
+        #"dy_lep_m50_madgraph",
+        "h_ggf_tautau_powheg",
         #"tt_sl_powheg",
         #"tt_dl_powheg",
         ### signals ###
@@ -80,11 +82,11 @@ def add_config(
     verify_config_processes(cfg, warn=True)
 
     # default objects, such as calibrator, selector, producer, ml model, inference model, etc
-    cfg.x.default_calibrator = "default"
-    cfg.x.default_selector = "default"
-    cfg.x.default_producer = "default"
+    cfg.x.default_calibrator = "main"
+    cfg.x.default_selector = "main"
+    cfg.x.default_producer = "main"
     cfg.x.default_ml_model = None
-    cfg.x.default_inference_model = "main"
+    cfg.x.default_inference_model = "example"
     cfg.x.default_categories = ("incl",)
     cfg.x.default_variables = ("n_jet", "jet1_pt")
     
@@ -198,12 +200,12 @@ def add_config(
     
     # external files
     json_mirror = "/afs/cern.ch/user/m/mrieger/public/mirrors/jsonpog-integration-849c6a6e"
-    json_local = "/eos/user/o/oponcet/code/analysis/correction/jsonpog-integration"
+    json_local = "/home/gsaha/Work/ColumnflowAnalyses/jsonpog-integration"
     cfg.x.external_files = DotDict.wrap({
         # lumi files
         "lumi": {
-            "golden": ("/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt", "v1"),  # noqa
-            "normtag": ("/afs/cern.ch/user/l/lumipro/public/Normtags/normtag_PHYSICS.json", "v1"),
+            "golden": ("/home/gsaha/Work/ColumnflowAnalyses/jsonpog-integration/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt", "v1"),  # noqa
+            "normtag": ("/home/gsaha/Work/ColumnflowAnalyses/jsonpog-integration/normtag_PHYSICS.json", "v1"),
         },
 
         # electron scale factor 
@@ -263,33 +265,32 @@ def add_config(
     }
     
     # channels
-    cfg.add_channel(name="emu",    id=1)
-    cfg.add_channel(name="etau",   id=2)
-    cfg.add_channel(name="mutau",  id=3)
+    cfg.add_channel(name="etau",   id=1)
+    cfg.add_channel(name="mutau",  id=2)
     cfg.add_channel(name="tautau", id=4)
 
 
     # add categories using the "add_category" tool which adds auto-generated ids
     # the "selection" entries refer to names of selectors, e.g. in selection/example.py
-    from hcp.config.categories import add_categories
+    from httcp.config.categories import add_categories
     add_categories(cfg)
     
     # add variables
     # (the "event", "run" and "lumi" variables are required for some cutflow plotting task,
     # and also correspond to the minimal set of columns that coffea's nano scheme requires)
     # add variables
-    from hcp.config.variables import add_variables
+    from httcp.config.variables import add_variables
     add_variables(cfg)
     
     # add triggers
     if year == 2017:
-        from hcp.config.triggers import add_triggers_2017
+        from httcp.config.triggers import add_triggers_2017
         add_triggers_2017(cfg)
     else:
         raise NotImplementedError(f"triggers not implemented for {year}")
     
     # add met filters
-    from hcp.config.met_filters import add_met_filters
+    from httcp.config.met_filters import add_met_filters
     add_met_filters(cfg)
     
     cfg.x.get_dataset_lfns = get_dataset_lfns

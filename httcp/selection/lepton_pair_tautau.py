@@ -5,12 +5,12 @@ Prepare h-Candidate from SelectionResult: selected lepton indices & channel_id [
 """
 
 from typing import Optional
-from columnflow.selection import SelectionResult
+from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.selection.util import create_collections_from_masks
 from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
-from hcp.util import invariant_mass, deltaR, transverse_mass
+from httcp.util import invariant_mass, deltaR, transverse_mass
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -29,17 +29,6 @@ def get_sorted_pair(
     dtrpairindices = dtrpairindices[sorted_idx]
 
     # if the deep tau val of tau-0 is the same for the first two pair
-    """
-    where_same_iso_1 = (
-        ak.fill_none(
-            (
-                ak.firsts(dtrpairs["0"].rawDeepTau2018v2p5VSjet[:,:1], axis=1)
-                ==
-                ak.firsts(dtrpairs["0"].rawDeepTau2018v2p5VSjet[:,1:2], axis=1)
-            ), False
-        )
-    )
-    """
     where_same_iso_1 = (
         ak.firsts(dtrpairs["0"].rawDeepTau2018v2p5VSjet[:,:1], axis=1)
         ==
@@ -126,7 +115,7 @@ def tautau_selection(
         "is_pt_40"      : (lep1.pt > 40) & (lep2.pt > 40),
         "is_eta_2p1"    : (np.abs(lep1.eta) < 2.1) & (np.abs(lep2.eta) < 2.1),
         "is_os"         : (lep1.charge * lep2.charge) < 0,
-        "dr_0p5"        : deltaR(lep1, lep2) > 0.5,
+        "dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  #deltaR(lep1, lep2) > 0.5,
     }
 
     good_pair_mask = lep1_idx >= 0
@@ -135,16 +124,19 @@ def tautau_selection(
         good_pair_mask = good_pair_mask & preselection[cut]
         pair_selection_steps[cut] = ak.sum(preselection[cut], axis=1) > 0
         
-
     leps_pair_sel = leps_pair[good_pair_mask]
     lep_indices_pair_sel = lep_indices_pair[good_pair_mask]
+
+    lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
+    lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
+
+    lep_indices_pair_sel_single = ak.concatenate([lep1idx, lep2idx], axis=1)
 
     where_many   = ak.num(lep_indices_pair_sel, axis=1) > 1
     pair_indices = ak.where(where_many, 
                             get_sorted_pair(leps_pair_sel,
                                             lep_indices_pair_sel),
-                            lep_indices_pair_sel)
-
+                            lep_indices_pair_sel_single)
 
     return events, SelectionResult(
         steps = pair_selection_steps,
