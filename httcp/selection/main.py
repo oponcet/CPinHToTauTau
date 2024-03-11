@@ -206,7 +206,6 @@ def main(
         },
     )
     results += hcand_results
-
     
     # channel selection
     # channel_id is now in columns
@@ -239,50 +238,10 @@ def main(
     # add cutflow features, passing per-object masks
     events = self[cutflow_features](events, results.objects, **kwargs)
 
-    # increment stats
-    weight_map = {
-        "num_events": Ellipsis,
-        "num_events_selected": event_sel,
-    }
-    group_map = {}
-    if self.dataset_inst.is_mc:
-        weight_map = {
-            **weight_map,
-            # mc weight for all events
-            "sum_mc_weight": (events.mc_weight, Ellipsis),
-            "sum_mc_weight_selected": (events.mc_weight, results.event),
-        }
-        group_map = {
-            # per process
-            "process": {
-                "values": events.process_id,
-                "mask_fn": (lambda v: events.process_id == v),
-            },
-            # per jet multiplicity
-            #"njet": {
-            #    "values": results.x.n_jets,
-            #    "mask_fn": (lambda v: results.x.n_jets == v),
-            #},
-            # per channel
-            "channel": {
-                "values": events.channel_id,
-                "mask_fn": (lambda v: events.channel_id == v),
-            },
-        }
-    events, results = self[increment_stats](
-        events,
-        results,
-        stats,
-        weight_map=weight_map,
-        group_map=group_map,
-        **kwargs,
-    )
-
-    """
     events, results = self[custom_increment_stats]( 
         events,
         results,
         stats,
     )
-    """
+    
     return events, results
