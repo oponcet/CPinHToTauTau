@@ -69,7 +69,6 @@ def muon_selection(
         "muon_iso_0p3"        : events.Muon.pfRelIso04_all < 0.3
     }
 
-    print(" ---> Muon Selection --->")
     # pt sorted indices for converting masks to indices
     sorted_indices = ak.argsort(events.Muon.pt, axis=-1, ascending=False)
     muon_mask  = ak.local_index(events.Muon.pt) >= 0
@@ -79,13 +78,11 @@ def muon_selection(
     double_veto_muon_mask = muon_mask
     selection_steps = {}
 
-    print(f"\tmuon mask: {good_muon_mask}")
     for cut in good_selections.keys():
         good_muon_mask = good_muon_mask & good_selections[cut]
         #selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
         selection_steps[cut] = ak.sum(good_muon_mask, axis=1) > 0
 
-    print(f"\tgood muon mask: {good_muon_mask}")
 
     for cut in single_veto_selections.keys():
         single_veto_muon_mask = single_veto_muon_mask & single_veto_selections[cut]
@@ -151,7 +148,6 @@ def electron_selection(
         mva_iso_wp90 = events.Electron.mvaFall17V2Iso_WP90
         mva_noniso_wp90 = events.Electron.mvaFall17V2noIso_WP90
 
-    print(f" ---> Electron Selection ---> ")
     good_selections = {
         "electron_pt_26"          : events.Electron.pt > 26,
         "electron_eta_2p1"        : abs(events.Electron.eta) < 2.1,
@@ -181,7 +177,6 @@ def electron_selection(
     # pt sorted indices for converting masks to indices
     sorted_indices = ak.argsort(events.Electron.pt, axis=-1, ascending=False)    
     electron_mask  = ak.local_index(events.Electron.pt) >= 0
-    print(f"\telectron mask: {electron_mask}")
     good_electron_mask = electron_mask
     single_veto_electron_mask = electron_mask
     double_veto_electron_mask = electron_mask
@@ -192,7 +187,6 @@ def electron_selection(
         #selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
         selection_steps[cut] = ak.sum(good_electron_mask, axis=1) > 0
 
-    print(f"\tgood electron mask: {good_electron_mask}")
 
     for cut in single_veto_selections.keys():
         single_veto_electron_mask = single_veto_electron_mask & single_veto_selections[cut]
@@ -258,7 +252,6 @@ def tau_selection(
         tau_vs_mu = DotDict(vloose=1, tight=4)
         tau_vs_jet = DotDict(vvloose=2, loose=4, medium=5)
 
-    print(" ---> Tau Selection --->")
     good_selections = {
         "tau_pt_20"     : events.Tau.pt > 20,
         "tau_eta_2p3"   : abs(events.Tau.eta) < 2.3,
@@ -274,7 +267,6 @@ def tau_selection(
     sorted_indices = ak.argsort(events.Tau.pt, axis=-1, ascending=False)
     tau_mask  = ak.local_index(events.Tau.pt) >= 0
 
-    print(f"\ttau mask : {tau_mask}")
     good_tau_mask = tau_mask
     selection_steps = {}
 
@@ -283,7 +275,6 @@ def tau_selection(
         #selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
         selection_steps[cut] = ak.sum(good_tau_mask, axis=1) > 0
 
-    print(f"\tgood tau mask : {good_tau_mask}")
     # convert to sorted indices
     good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
@@ -353,11 +344,13 @@ def jet_selection(
     return events, \
         SelectionResult(
             steps = {
-                "b_veto": bjet_veto
+                "b_veto": bjet_veto,
             }, 
             objects = {
-                "Jet": good_jet_indices
-            }
+                "Jet": {
+                    "Jet": good_jet_indices,
+                },
+            },
         )
     
     

@@ -52,10 +52,8 @@ def custom_increment_stats(
 
     # get a list of unique process ids present in the chunk
     unique_process_ids = np.unique(events.process_id)
-    print(f"unique_process_ids: {unique_process_ids}")
     # increment plain counts
     n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
-    print(f"n_evt_per_file: {n_evt_per_file}")
     #from IPython import embed
     #embed()
     stats["num_events"] = n_evt_per_file
@@ -84,8 +82,7 @@ def custom_increment_stats(
             stats[f"sum_{name}_per_process"][int(p)] += ak.sum(
                 weights[(events.process_id == p) & joinable_mask],
             )
-    print(f"events: {events}")
-    print(f"results: {results}")
+
     return events, results
 
 
@@ -130,13 +127,13 @@ def main(
     # met filter selection
     events, met_filter_results = self[met_filters](events, **kwargs)
     results += met_filter_results
-
+    
     # jet selection
     events, bjet_veto_result = self[jet_selection](events, 
                                                    call_force=True, 
                                                    **kwargs)
     results += bjet_veto_result
-
+    
     # muon selection
     # e.g. mu_idx: [ [0,1], [], [1], [0], [] ] 
     events, muon_results, good_muon_indices, veto_muon_indices, dlveto_muon_indices = self[muon_selection](events,
@@ -197,15 +194,7 @@ def main(
     results += tautau_results
     tautau_pair = ak.concatenate([events.Tau[tautau_indices_pair[:,:1]], 
                                   events.Tau[tautau_indices_pair[:,1:2]]], axis=1)
-    
-    # channel selection
-    # channel_id is now in columns
-    events, channel_results = self[get_categories](events, 
-                                                   trigger_results, 
-                                                   etau_indices_pair, 
-                                                   mutau_indices_pair, 
-                                                   tautau_indices_pair)
-    results += channel_results
+
 
     # make sure events have at least one lepton pair
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
@@ -218,14 +207,24 @@ def main(
     )
     results += hcand_results
 
+    
+    # channel selection
+    # channel_id is now in columns
+    events, channel_results = self[get_categories](events, 
+                                                   trigger_results, 
+                                                   etau_indices_pair, 
+                                                   mutau_indices_pair, 
+                                                   tautau_indices_pair)
+    results += channel_results
 
+    
     # extra lepton veto
     events, extra_lepton_veto_results = self[extra_lepton_veto](events, 
                                                                 veto_ele_indices,
                                                                 veto_muon_indices,
                                                                 hcand_pair)
     results += extra_lepton_veto_results
-
+    
     # create process ids
     events = self[process_ids](events, **kwargs)
 
@@ -238,12 +237,12 @@ def main(
         events = self[mc_weight](events, **kwargs)
 
     # add cutflow features, passing per-object masks
-    #events = self[cutflow_features](events, results.objects, **kwargs)
-    """
+    events = self[cutflow_features](events, results.objects, **kwargs)
+
     # increment stats
     weight_map = {
         "num_events": Ellipsis,
-        "num_events_selected": results.event,
+        "num_events_selected": event_sel,
     }
     group_map = {}
     if self.dataset_inst.is_mc:
@@ -264,6 +263,11 @@ def main(
             #    "values": results.x.n_jets,
             #    "mask_fn": (lambda v: results.x.n_jets == v),
             #},
+            # per channel
+            "channel": {
+                "values": events.channel_id,
+                "mask_fn": (lambda v: events.channel_id == v),
+            },
         }
     events, results = self[increment_stats](
         events,
@@ -273,13 +277,12 @@ def main(
         group_map=group_map,
         **kwargs,
     )
+
     """
-    print("call custom incr stats")
     events, results = self[custom_increment_stats]( 
         events,
         results,
         stats,
     )
-    print(f"events: {events}")
-    print(f"results: {results}")
+    """
     return events, results

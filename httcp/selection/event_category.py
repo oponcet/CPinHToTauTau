@@ -52,17 +52,17 @@ def get_categories(
                                 & (ak.num(mutau_pair_indices, axis=1) == 0) 
                                 & (ak.num(tautau_pair_indices, axis=1) == 2))],
         "is_etau_mutau"     : [ch_etau.id + ch_mutau.id, 
-                               ((ak.num(etau_pair_indices, axis=1) == 2) 
-                                & (ak.num(mutau_pair_indices, axis=1) == 2) 
+                               ((ak.num(etau_pair_indices, axis=1) >= 2) 
+                                & (ak.num(mutau_pair_indices, axis=1) >= 2) 
                                 & (ak.num(tautau_pair_indices, axis=1) == 0))],
         "is_etau_tautau"    : [ch_etau.id + ch_tautau.id, 
-                               ((ak.num(etau_pair_indices, axis=1) == 2) 
+                               ((ak.num(etau_pair_indices, axis=1) >= 2) 
                                 & (ak.num(mutau_pair_indices, axis=1) == 0) 
-                                & (ak.num(tautau_pair_indices, axis=1) == 2))], 
+                                & (ak.num(tautau_pair_indices, axis=1) >= 2))], 
         "is_mutau_tautau"   : [ch_mutau.id + ch_tautau.id, 
                                ((ak.num(etau_pair_indices, axis=1) == 0) 
-                                & (ak.num(mutau_pair_indices, axis=1) == 2) 
-                                & (ak.num(tautau_pair_indices, axis=1) == 2))], 
+                                & (ak.num(mutau_pair_indices, axis=1) >= 2) 
+                                & (ak.num(tautau_pair_indices, axis=1) >= 2))], 
     }
 
     selection_steps  = {}

@@ -219,35 +219,8 @@ def add_config(
     cfg.x.reduced_file_size = 512.0
     
     # columns to keep after certain steps
-    cfg.x.keep_columns = DotDict.wrap({
-        "cf.ReduceEvents": {
-            # general event info
-            "run", "luminosityBlock", "event",
-            # object info
-            "Jet.pt", "Jet.eta", "Jet.phi", "Jet.mass", "Jet.btagDeepFlavB", "Jet.hadronFlavour",
-            "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass", "Muon.pfRelIso03_all",
-            "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.pfRelIso03_all",
-            "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass", "Tau.idDeepTau2017v2p1VSe", "Tau.idDeepTau2017v2p1VSmu", "Tau.idDeepTau2017v2p1VSjet", "Tau.decayMode",
-            "MET.pt", "MET.phi", "MET.significance", "MET.covXX", "MET.covXY", "MET.covYY",
-            "PV.npvs",
-            # columns added during selection
-            "deterministic_seed", "process_id", "mc_weight", "cutflow.*", "channel_id",
-            "single_triggered", "cross_triggered",
-            "tau2_isolated", "m_ll", "dr_ll",
-            "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand_invmass", "hcand_dr",
-            # "leptons_os",
-        },
-        "cf.MergeSelectionMasks": {
-            "normalization_weight", "process_id", "category_ids", "channel_id", "cutflow.*",
-            "m_ll", "dr_ll",
-            "hcand.pt", "hcand.eta", "hcand.mass",
-            "hcand_invmass", "hcand_dr",
-            # "leptons_os",
-        },
-        "cf.UniteColumns": {
-            "*",
-        },
-    })
+    from httcp.config.variables import keep_columns
+    keep_columns(cfg)
     
     # event weight columns as keys in an OrderedDict, mapped to shift instances they depend on
     get_shifts = functools.partial(get_shifts_from_sources, cfg)

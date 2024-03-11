@@ -57,7 +57,6 @@ def extra_lepton_veto(
     dr_mask = ak.where(has_single_pair, ak.concatenate([dr_mask_hcand_lep1, dr_mask_hcand_lep2], axis=1), dummy)
 
     has_no_extra_lepton = ak.sum(dr_mask, axis=1) == 2
-    print(has_no_extra_lepton)
 
     return events, SelectionResult(steps={"extra_lepton_veto": has_no_extra_lepton})
 
@@ -95,7 +94,6 @@ def double_lepton_veto(
     dr_mask = (leps1.charge * leps2.charge < 0) & (leps1.delta_r(leps2) > 0.15)
 
     dl_veto = ak.sum(dr_mask, axis=1) == 0
-    print(dl_veto)
 
     return events, SelectionResult(steps={"dilepton_veto": dl_veto})
     

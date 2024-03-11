@@ -14,29 +14,32 @@ def keep_columns(cfg: od.Config) -> None:
         "cf.ReduceEvents": {
             # general event info
             "run", "luminosityBlock", "event",
-            "PV.npvs","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-            "deterministic_seed", "process_id", "cutflow.*",
-        } | {f"MET.{var}" for var in [
-            "pt", "phi", "significance",
-            "covXX", "covXY", "covYY",
-        ]     
-         } | {f"Jet.{var}" for var in [
-             "pt", "eta", "phi", "mass", 
-             "btagDeepFlavB", "hadronFlavour",
-         ] 
-          } | {f"Tau.{var}" for var in [
-              "pt","eta","phi","mass","dxy","dz", "charge", "rawDeepTau2018v2p5VSjet",
-              "idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", 
-          ] 
-           } | {f"Muon.{var}" for var in [
-               "pt","eta","phi","mass","dxy","dz", "charge", 
-               "pfRelIso04_all","mT"
-           ] 
+            "PV.npvs", "Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
+            "deterministic_seed", "process_id", "mc_weight", "cutflow.*",
+            "channel_id",
+            # MET
+            "MET.pt", "MET.phi", "MET.significance",
+            "MET.covXX", "MET.covXY", "MET.covYY",
+            # Jet
+            "Jet.pt", "Jet.eta", "Jet.phi", "Jet.mass", 
+            "Jet.btagDeepFlavB", "Jet.hadronFlavour",
+            # Tau
+            "Tau.pt", "Tau.eta","Tau.phi","Tau.mass","Tau.dxy","Tau.dz", 
+            "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet",
+            "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", 
+            "Tau.idDeepTau2018v2p5VSmu", 
+            # Muon
+            "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass", "Muon.dxy",
+            "Muon.dz", "Muon.charge", "Muon.pfRelIso03_all",
+            # Electron
+            "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy",
+            "Electron.dz", "Electron.charge", "Electron.pfRelIso03_all",
             } | {
                 ColumnCollection.ALL_FROM_SELECTOR
             },
         "cf.MergeSelectionMasks": {
-            "normalization_weight", "cutflow.*", "process_id", "category_ids",
+            "normalization_weight", "cutflow.*", "process_id", "category_ids", 
+            "channel_id",
         },
         "cf.UniteColumns": {
             "*",
