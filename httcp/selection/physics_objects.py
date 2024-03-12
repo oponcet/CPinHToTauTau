@@ -108,7 +108,7 @@ def muon_selection(
     #        steps=selection_steps
     #    ), \
     #    good_muon_indices, veto_muon_indices, double_veto_muon_indices
-    print(f"nGoodMuons: {ak.sum(good_muon_mask)}")
+    #print(f"nGoodMuons: {ak.sum(good_muon_mask)}")
     return good_muon_indices, veto_muon_indices, double_veto_muon_indices
 
 
@@ -207,7 +207,7 @@ def electron_selection(
     #    SelectionResult(
     #        steps=selection_steps,
     #    ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
-    print(f"nGoodElectrons: {ak.sum(good_electron_mask)}")
+    #print(f"nGoodElectrons: {ak.sum(good_electron_mask)}")
     return good_electron_indices, veto_electron_indices, double_veto_electron_indices
 
 
@@ -275,7 +275,7 @@ def tau_selection(
     #    SelectionResult(
     #        steps=selection_steps,
     #    ), good_tau_indices
-    print(f"nGoodTaus: {ak.sum(good_tau_mask)}")
+    #print(f"nGoodTaus: {ak.sum(good_tau_mask)}")
     return good_tau_indices
 
 
