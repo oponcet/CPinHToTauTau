@@ -5,7 +5,7 @@ A Columnflow based analysis framework from IPHC and DESY
 <!-- marker-before-logo -->
 
 <div style="text-align: center;">
-    <img src="assets/logo.png" alt="IPHC-DESY" width="400" height="300">
+    <img src="assets/logo.png" alt="Image Description" style="width: 400px; height: 220px;">
 </div>
 
 <!-- marker-after-logo -->
