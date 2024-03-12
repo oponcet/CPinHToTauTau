@@ -4,11 +4,19 @@ A Columnflow based analysis framework from IPHC and DESY
 
 <!-- marker-before-logo -->
 
-<p align="center">
-  <img src="https://media.githubusercontent.com/media/gsaha009/CPinHToTauTau/main/assets/logo.png" width="240" />
-</p>
+<div style="text-align: center;">
+    <img src="assets/logo.png" alt="IPHC-DESY">
+</div>
 
 <!-- marker-after-logo -->
+
+#<!-- marker-before-logo -->
+
+#<p align="center">
+#  <img src="https://media.githubusercontent.com/media/gsaha009/CPinHToTauTau/main/assets/logo.png" width="240" />
+#</p>
+#
+#<!-- marker-after-logo -->
 
 ### Resources
 
