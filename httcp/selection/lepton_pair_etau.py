@@ -163,6 +163,7 @@ def etau_selection(
                                             lep_indices_pair_sel),
                             lep_indices_pair_sel_single)
 
-    return events, SelectionResult(
-        steps = pair_selection_steps,
-    ), pair_indices
+    #return events, SelectionResult(
+    #    steps = pair_selection_steps,
+    #), pair_indices
+    return pair_indices

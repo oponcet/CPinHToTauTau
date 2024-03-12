@@ -121,6 +121,7 @@ def tautau_selection(
     good_pair_mask = lep1_idx >= 0
     pair_selection_steps = {}
     for cut in preselection.keys():
+        print(f"{cut}: {preselection[cut]}")
         good_pair_mask = good_pair_mask & preselection[cut]
         pair_selection_steps[cut] = ak.sum(preselection[cut], axis=1) > 0
         
@@ -138,6 +139,7 @@ def tautau_selection(
                                             lep_indices_pair_sel),
                             lep_indices_pair_sel_single)
 
-    return events, SelectionResult(
-        steps = pair_selection_steps,
-    ), pair_indices
+    #return events, SelectionResult(
+    #    steps = pair_selection_steps,
+    #), pair_indices
+    return pair_indices

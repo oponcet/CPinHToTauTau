@@ -1,3 +1,4 @@
+
 # coding: utf-8
 
 """
@@ -80,8 +81,8 @@ def muon_selection(
 
     for cut in good_selections.keys():
         good_muon_mask = good_muon_mask & good_selections[cut]
-        #selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
-        selection_steps[cut] = ak.sum(good_muon_mask, axis=1) > 0
+        selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
+        #selection_steps[cut] = ak.sum(good_muon_mask, axis=1) > 0
 
 
     for cut in single_veto_selections.keys():
@@ -102,11 +103,13 @@ def muon_selection(
     double_veto_muon_indices = sorted_indices[double_veto_muon_mask[sorted_indices]]
     double_veto_muon_indices = ak.values_astype(double_veto_muon_indices, np.int32)
 
-    return events, \
-        SelectionResult(
-            steps=selection_steps
-        ), \
-        good_muon_indices, veto_muon_indices, double_veto_muon_indices
+    #return events, \
+    #    SelectionResult(
+    #        steps=selection_steps
+    #    ), \
+    #    good_muon_indices, veto_muon_indices, double_veto_muon_indices
+    print(f"nGoodMuons: {ak.sum(good_muon_mask)}")
+    return good_muon_indices, veto_muon_indices, double_veto_muon_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -136,24 +139,17 @@ def electron_selection(
     References:
       - https://twiki.cern.ch/twiki/bin/view/CMS/EgammaNanoAOD?rev=4
     """
-    # obtain mva flags, which might be located at different routes, depending on the nano version
-    if "mvaIso_WP80" in events.Electron.fields:
-        # >= nano v10
-        mva_iso_wp80 = events.Electron.mvaIso_WP80
-        mva_iso_wp90 = events.Electron.mvaIso_WP90
-        mva_noniso_wp90 = events.Electron.mvaNoIso_WP90
-    else:
-        # <= nano v9
-        mva_iso_wp80 = events.Electron.mvaFall17V2Iso_WP80
-        mva_iso_wp90 = events.Electron.mvaFall17V2Iso_WP90
-        mva_noniso_wp90 = events.Electron.mvaFall17V2noIso_WP90
+    # >= nano v10
+    mva_iso_wp80 = events.Electron.mvaIso_WP80
+    mva_iso_wp90 = events.Electron.mvaIso_WP90
+    mva_noniso_wp90 = events.Electron.mvaNoIso_WP90
 
     good_selections = {
-        "electron_pt_26"          : events.Electron.pt > 26,
+        "electron_pt_25"          : events.Electron.pt > 25,
         "electron_eta_2p1"        : abs(events.Electron.eta) < 2.1,
         "electron_dxy_0p045"      : abs(events.Electron.dxy) < 0.045,
         "electron_dz_0p2"         : abs(events.Electron.dz) < 0.2,
-        "electron_mva_iso_wp80"   : mva_iso_wp80 == 1
+        "electron_mva_iso_wp80"   : mva_iso_wp80 == 1,
     }
     single_veto_selections = {
         "electron_pt_10"          : events.Electron.pt > 10,
@@ -163,7 +159,7 @@ def electron_selection(
         "electron_mva_noniso_wp90": mva_noniso_wp90 == 1,
         "electron_convVeto"       : events.Electron.convVeto == 1,
         #"electron_lostHits"       : events.Electron.lostHits <= 1,
-        "electron_pfRelIso03_all" : events.Electron.pfRelIso03_all < 0.3
+        "electron_pfRelIso03_all" : events.Electron.pfRelIso03_all < 0.3,
     }
     double_veto_selections = {
         "electron_pt_15"          : events.Electron.pt > 15,
@@ -171,7 +167,7 @@ def electron_selection(
         "electron_dxy_0p045"      : abs(events.Electron.dxy) < 0.045,
         "electron_dz_0p2"         : abs(events.Electron.dz) < 0.2,
         "electron_cutBased"       : events.Electron.cutBased == 1,
-        "electron_pfRelIso03_all" : events.Electron.pfRelIso03_all < 0.3
+        "electron_pfRelIso03_all" : events.Electron.pfRelIso03_all < 0.3,
     }
 
     # pt sorted indices for converting masks to indices
@@ -184,8 +180,8 @@ def electron_selection(
 
     for cut in good_selections.keys():
         good_electron_mask = good_electron_mask & good_selections[cut]
-        #selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
-        selection_steps[cut] = ak.sum(good_electron_mask, axis=1) > 0
+        selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
+        #selection_steps[cut] = ak.sum(good_electron_mask, axis=1) > 0
 
 
     for cut in single_veto_selections.keys():
@@ -207,10 +203,12 @@ def electron_selection(
     double_veto_electron_indices = ak.values_astype(double_veto_electron_indices, np.int32)
 
 
-    return events, \
-        SelectionResult(
-            steps=selection_steps,
-        ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
+    #return events, \
+    #    SelectionResult(
+    #        steps=selection_steps,
+    #    ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
+    print(f"nGoodElectrons: {ak.sum(good_electron_mask)}")
+    return good_electron_indices, veto_electron_indices, double_veto_electron_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -241,17 +239,11 @@ def tau_selection(
     References:
       - 
     """
-    if self.config_inst.campaign.x.version < 10:
-        # https://cms-nanoaod-integration.web.cern.ch/integration/master/mc94X_doc.html
-        tau_vs_e = DotDict(vvloose=2, vloose=4)
-        tau_vs_mu = DotDict(vloose=1, tight=8)
-        tau_vs_jet = DotDict(vvloose=2, loose=8, medium=16)
-    else:
-        # https://cms-nanoaod-integration.web.cern.ch/integration/cms-swmaster/data106Xul17v2_v10_doc.html#Tau
-        tau_vs_e = DotDict(vvloose=2, vloose=3)
-        tau_vs_mu = DotDict(vloose=1, tight=4)
-        tau_vs_jet = DotDict(vvloose=2, loose=4, medium=5)
-
+    # https://cms-nanoaod-integration.web.cern.ch/integration/cms-swmaster/data106Xul17v2_v10_doc.html#Tau
+    tau_vs_e = DotDict(vvloose=2, vloose=3)
+    tau_vs_mu = DotDict(vloose=1, tight=4)
+    tau_vs_jet = DotDict(vvloose=2, loose=4, medium=5)
+    
     good_selections = {
         "tau_pt_20"     : events.Tau.pt > 20,
         "tau_eta_2p3"   : abs(events.Tau.eta) < 2.3,
@@ -259,8 +251,8 @@ def tau_selection(
         "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_vs_jet.medium,
         "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_vs_e.vvloose,
         "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_vs_mu.tight,
-        "CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
-        "CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
+        #"CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
+        #"CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
     }
 
     # pt sorted indices for converting masks to indices
@@ -272,17 +264,19 @@ def tau_selection(
 
     for cut in good_selections.keys():
         good_tau_mask = good_tau_mask & good_selections[cut]
-        #selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
-        selection_steps[cut] = ak.sum(good_tau_mask, axis=1) > 0
+        selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
+        #selection_steps[cut] = ak.sum(good_tau_mask, axis=1) > 0
 
     # convert to sorted indices
     good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
 
-    return events, \
-        SelectionResult(
-            steps=selection_steps,
-        ), good_tau_indices
+    #return events, \
+    #    SelectionResult(
+    #        steps=selection_steps,
+    #    ), good_tau_indices
+    print(f"nGoodTaus: {ak.sum(good_tau_mask)}")
+    return good_tau_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -328,8 +322,8 @@ def jet_selection(
 
     for cut in good_selections.keys():
         good_jet_mask = good_jet_mask & good_selections[cut]
-        #selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
-        selection_steps[cut] = ak.sum(good_jet_mask, axis=1) > 0
+        selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
+        #selection_steps[cut] = ak.sum(good_jet_mask, axis=1) > 0
 
     # b-tagged jets, tight working point
     wp_tight = self.config_inst.x.btag_working_points.deepjet.tight

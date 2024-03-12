@@ -44,19 +44,53 @@ def extra_lepton_veto(
     # keep all True -> [[True], [True], [True], ..., [True]]
     # because, not applying any veto if there is more than one higgs cand pair
     # and keeping those events for now
-    dummy = (events.event > 0)[:,None]
-    dummy = ak.concatenate([dummy, dummy], axis=1)
-    hcand_pair_p4 = 1 * hcand_pair
+    dummy = (events.event < 0)[:,None]
+    #dummy = (events.event > 0)
+    #print(dummy, dummy.type)
+    #dummy = ak.concatenate([dummy, dummy], axis=1)
+    hcand_pair_p4 = ak.firsts(1 * hcand_pair, axis=1)
+    #print(ak.to_list(hcand_pair_p4.pt))
 
     hcand_lep1 = hcand_pair_p4[:,:1]
     hcand_lep2 = hcand_pair_p4[:,1:2]
 
-    dr_mask_hcand_lep1 = ak.firsts(ak.all(hcand_lep1.metric_table(extra_lep) > 0.5, axis=-1), axis=1)
-    dr_mask_hcand_lep2 = ak.firsts(ak.all(hcand_lep2.metric_table(extra_lep) > 0.5, axis=-1), axis=1)
+    dr_hlep1_extraleps = extra_lep.metric_table(hcand_lep1)
+    dr_hlep2_extraleps = extra_lep.metric_table(hcand_lep2)
+    #print(ak.to_list(dr_hlep2_extraleps))
 
-    dr_mask = ak.where(has_single_pair, ak.concatenate([dr_mask_hcand_lep1, dr_mask_hcand_lep2], axis=1), dummy)
+    #mask_dr_hlep1_extraleps_self = dr_hlep1_extraleps < 0.01
+    mask_dr_hlep1_extraleps      = dr_hlep1_extraleps > 0.5
+    mask_dr_hlep2_extraleps      = dr_hlep2_extraleps > 0.5
+    #print(f" {ak.to_list(dr_hlep1_extraleps)[:1000]} \n")
+    #print(f" {ak.to_list(dr_hlep2_extraleps)[:1000]} \n")
+    mask_dr_all = mask_dr_hlep1_extraleps & mask_dr_hlep1_extraleps #& ~mask_dr_hlep1_extraleps_self
+    #print(f" {ak.to_list(mask_dr_all)[:1000]} \n")
 
-    has_no_extra_lepton = ak.sum(dr_mask, axis=1) == 2
+    has_extra_lepton = ak.any(mask_dr_all, axis=-1)
+    
+
+
+    #dr_mask_hcand_lep1 = ak.firsts(ak.all(hcand_lep1.metric_table(extra_lep) > 0.5, axis=-1), axis=1)
+    #dr_mask_hcand_lep2 = ak.firsts(ak.all(hcand_lep2.metric_table(extra_lep) > 0.5, axis=-1), axis=1)
+    ###dr = hcand_pair_p4.metric_table(extra_lep) > 0.5
+    #print(ak.to_list(dr))
+    ###dr_mask = ak.fill_none(ak.firsts(ak.all(dr == True, axis=1), axis=1), False)
+    #print(ak.to_list(ak.sum(dr, axis=1)))
+    #print(ak.to_list(ak.sum(hcand_pair_p4.metric_table(extra_lep) > 0.5, axis=-1)))
+    ##print(dr_mask, dr_mask.type)
+    #dr = ak.firsts(ak.all(hcand_pair_p4.metric_table(extra_lep) > 0.5, axis=-1), axis=1)
+
+    ###dr_mask = ak.where(has_single_pair,
+    ###                   dr_mask,
+    ###                   dummy)
+    dr_mask = ak.where(has_single_pair, 
+                       has_extra_lepton,
+                       dummy)
+
+    #dr_mask = ak.where(has_single_pair, ak.concatenate([dr_mask_hcand_lep1, dr_mask_hcand_lep2], axis=1), dummy)
+
+    has_no_extra_lepton = ak.sum(dr_mask, axis=1) == 0
+    #has_no_extra_lepton = dr_mask
 
     return events, SelectionResult(steps={"extra_lepton_veto": has_no_extra_lepton})
 
@@ -85,15 +119,21 @@ def double_lepton_veto(
                                     behavior=coffea.nanoevents.methods.nanoaod.behavior)
     double_veto_electron = ak.with_name(double_veto_electron, "PtEtaPhiMLorentzVector")
 
-    double_veto_lepton   = ak.concatenate([double_veto_muon, double_veto_electron], axis=1)
+    mu_pair = ak.combinations(double_veto_muon, 2, axis=1)
+    el_pair = ak.combinations(double_veto_electron, 2, axis=1)
 
-    lepton_pair = ak.combinations(double_veto_lepton, 2, axis=-1)
-    
-    leps1, leps2 = ak.unzip(lepton_pair)
+    mu1,mu2 = ak.unzip(mu_pair)
+    el1,el2 = ak.unzip(el_pair)
 
-    dr_mask = (leps1.charge * leps2.charge < 0) & (leps1.delta_r(leps2) > 0.15)
+    presel_mask = lambda leps1, leps2: ((leps1.charge * leps2.charge < 0) & (leps1.delta_r(leps2) > 0.15))
 
-    dl_veto = ak.sum(dr_mask, axis=1) == 0
+    dlveto_mu_mask = presel_mask(mu1,mu2)
+    dlveto_el_mask = presel_mask(el1,el2)
+
+    dl_mu_veto = ak.sum(dlveto_mu_mask, axis=1) == 0
+    dl_el_veto = ak.sum(dlveto_el_mask, axis=1) == 0
+
+    dl_veto    = dl_mu_veto & dl_el_veto
 
     return events, SelectionResult(steps={"dilepton_veto": dl_veto})
     

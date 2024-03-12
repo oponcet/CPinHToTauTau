@@ -124,78 +124,118 @@ def main(
     events, trigger_results = self[trigger_selection](events, **kwargs)
     results += trigger_results
 
+    event_sel_trigger = reduce(and_, results.steps.values())
+    
     # met filter selection
     events, met_filter_results = self[met_filters](events, **kwargs)
     results += met_filter_results
+    
+    event_sel_met = reduce(and_, results.steps.values())
     
     # jet selection
     events, bjet_veto_result = self[jet_selection](events, 
                                                    call_force=True, 
                                                    **kwargs)
     results += bjet_veto_result
-    
+
+    event_sel_bveto = reduce(and_, results.steps.values())
+
     # muon selection
     # e.g. mu_idx: [ [0,1], [], [1], [0], [] ] 
-    events, muon_results, good_muon_indices, veto_muon_indices, dlveto_muon_indices = self[muon_selection](events,
-                                                                                                           call_force=True, 
-                                                                                                           **kwargs)
-    results += muon_results
+    good_muon_indices, veto_muon_indices, dlveto_muon_indices = self[muon_selection](events,
+                                                                                     call_force=True, 
+                                                                                     **kwargs)
+    #events, muon_results, good_muon_indices, veto_muon_indices, dlveto_muon_indices = self[muon_selection](events,
+    #                                                                                                       call_force=True, 
+    #                                                                                                       **kwargs)
+    #results += muon_results
 
+    event_sel_muon = reduce(and_, results.steps.values())
     # electron selection
     # e.g. ele_idx: [ [], [0,1], [], [], [1,2] ] 
-    events, ele_results, good_ele_indices, veto_ele_indices, dlveto_ele_indices = self[electron_selection](events,
-                                                                                                           call_force=True, 
-                                                                                                           **kwargs)
-    results += ele_results
+    good_ele_indices, veto_ele_indices, dlveto_ele_indices = self[electron_selection](events,
+                                                                                      call_force=True, 
+                                                                                      **kwargs)
+    #events, ele_results, good_ele_indices, veto_ele_indices, dlveto_ele_indices = self[electron_selection](events,
+    #                                                                                                       call_force=True, 
+    #                                                                                                       **kwargs)
+    #results += ele_results
 
+    event_sel_electron = reduce(and_, results.steps.values())
     # tau selection
     # e.g. tau_idx: [ [1], [0,1], [1,2], [], [0,1] ] 
-    events, tau_results, good_tau_indices = self[tau_selection](events,
-                                                                good_ele_indices,
-                                                                good_muon_indices,
-                                                                call_force=True, 
-                                                                **kwargs)
-    results += tau_results
+    #events, tau_results, good_tau_indices = self[tau_selection](events,
+    #                                                            good_ele_indices,
+    #                                                            good_muon_indices,
+    #                                                            call_force=True, 
+    #                                                            **kwargs)
+    good_tau_indices = self[tau_selection](events,
+                                           good_ele_indices,
+                                           good_muon_indices,
+                                           call_force=True, 
+                                           **kwargs)
+    #results += tau_results
 
+    event_sel_tau = reduce(and_, results.steps.values())
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
                                                                         dlveto_ele_indices,
                                                                         dlveto_muon_indices)
     results += extra_double_lepton_veto_results
-
+    
+    event_sel_dlveto = reduce(and_, results.steps.values())
+    
     # e-tau pair i.e. hcand selection
     # e.g. [ [], [e1, tau1], [], [], [e1, tau2] ]
-    events, etau_results, etau_indices_pair = self[etau_selection](events,
-                                                                   good_ele_indices,
-                                                                   good_tau_indices,
-                                                                   call_force=True,
-                                                                   **kwargs)
-    results += etau_results
+    etau_indices_pair = self[etau_selection](events,
+                                             good_ele_indices,
+                                             good_tau_indices,
+                                             call_force=True,
+                                             **kwargs)
+    #events, etau_results, etau_indices_pair = self[etau_selection](events,
+    #                                                               good_ele_indices,
+    #                                                               good_tau_indices,
+    #                                                               call_force=True,
+    #                                                               **kwargs)
+    #results += etau_results
     etau_pair         = ak.concatenate([events.Electron[etau_indices_pair[:,:1]], 
                                         events.Tau[etau_indices_pair[:,1:2]]], axis=1)
 
+    event_sel_etau_pair = reduce(and_, results.steps.values())
+
     # mu-tau pair i.e. hcand selection
     # e.g. [ [mu1, tau1], [], [mu1, tau2], [], [] ]
-    events, mutau_results, mutau_indices_pair = self[mutau_selection](events,
-                                                                      good_muon_indices,
-                                                                      good_tau_indices,
-                                                                      call_force=True,
-                                                                      **kwargs)
-    results += mutau_results
+    mutau_indices_pair = self[mutau_selection](events,
+                                               good_muon_indices,
+                                               good_tau_indices,
+                                               call_force=True,
+                                               **kwargs)
+    #events, mutau_results, mutau_indices_pair = self[mutau_selection](events,
+    #                                                                  good_muon_indices,
+    #                                                                  good_tau_indices,
+    #                                                                  call_force=True,
+    #                                                                  **kwargs)
+    #results += mutau_results
     mutau_pair = ak.concatenate([events.Muon[mutau_indices_pair[:,:1]], 
                                  events.Tau[mutau_indices_pair[:,1:2]]], axis=1)
 
+    event_sel_mutau_pair = reduce(and_, results.steps.values())
+
     # tau-tau pair i.e. hcand selection
     # e.g. [ [], [tau1, tau2], [], [], [] ]
-    events, tautau_results, tautau_indices_pair = self[tautau_selection](events,
-                                                                         good_tau_indices,
-                                                                         call_force=True,
-                                                                         **kwargs)
-    results += tautau_results
+    tautau_indices_pair = self[tautau_selection](events,
+                                                 good_tau_indices,
+                                                 call_force=True,
+                                                 **kwargs)
+    #events, tautau_results, tautau_indices_pair = self[tautau_selection](events,
+    #                                                                     good_tau_indices,
+    #                                                                     call_force=True,
+    #                                                                     **kwargs)
+    #results += tautau_results
     tautau_pair = ak.concatenate([events.Tau[tautau_indices_pair[:,:1]], 
                                   events.Tau[tautau_indices_pair[:,1:2]]], axis=1)
 
-
+    event_sel_tautau_pair = reduce(and_, results.steps.values())
     # make sure events have at least one lepton pair
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
     hcand_pair = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
@@ -206,16 +246,21 @@ def main(
         },
     )
     results += hcand_results
-    
+    event_sel_hcand = reduce(and_, results.steps.values())
     # channel selection
     # channel_id is now in columns
-    events, channel_results = self[get_categories](events, 
-                                                   trigger_results, 
-                                                   etau_indices_pair, 
-                                                   mutau_indices_pair, 
-                                                   tautau_indices_pair)
-    results += channel_results
-
+    events = self[get_categories](events, 
+                                  trigger_results, 
+                                  etau_indices_pair, 
+                                  mutau_indices_pair, 
+                                  tautau_indices_pair)
+    #events, channel_results = self[get_categories](events, 
+    #                                               trigger_results, 
+    #                                               etau_indices_pair, 
+    #                                               mutau_indices_pair, 
+    #                                               tautau_indices_pair)
+    #results += channel_results
+    event_sel_getcat = reduce(and_, results.steps.values())
     
     # extra lepton veto
     events, extra_lepton_veto_results = self[extra_lepton_veto](events, 
@@ -223,7 +268,7 @@ def main(
                                                                 veto_muon_indices,
                                                                 hcand_pair)
     results += extra_lepton_veto_results
-    
+
     # create process ids
     events = self[process_ids](events, **kwargs)
 
@@ -238,10 +283,65 @@ def main(
     # add cutflow features, passing per-object masks
     events = self[cutflow_features](events, results.objects, **kwargs)
 
+
+
+
+
+# increment stats
+    weight_map = {
+        "num_events": Ellipsis,
+        "num_events_trigger": event_sel_trigger,
+        "num_events_met": event_sel_met,
+        "num_events_bveto": event_sel_bveto,
+        "num_events_muon": event_sel_muon,
+        "num_events_electron": event_sel_electron,
+        "num_events_tau": event_sel_tau,
+        "num_events_dlveto": event_sel_dlveto,
+        "num_events_etau_pair": event_sel_etau_pair,
+        "num_events_mutau_pair": event_sel_mutau_pair,
+        "num_events_tautau_pair": event_sel_tautau_pair,
+        "num_events_gethcand": event_sel_hcand,
+        "num_events_getcat":   event_sel_getcat,
+        "num_events_selected": event_sel,
+    }
+    group_map = {}
+    if self.dataset_inst.is_mc:
+        weight_map = {
+            **weight_map,
+            # mc weight for all events
+            "sum_mc_weight": (events.mc_weight, Ellipsis),
+            "sum_mc_weight_selected": (events.mc_weight, results.event),
+        }
+        group_map = {
+            # per process
+            "process": {
+                "values": events.process_id,
+                "mask_fn": (lambda v: events.process_id == v),
+            },
+            # per jet multiplicity
+            #"njet": {
+            #    "values": results.x.n_jets,
+            #    "mask_fn": (lambda v: results.x.n_jets == v),
+            #},
+            # per channel
+            "channel": {
+                "values": events.channel_id,
+                "mask_fn": (lambda v: events.channel_id == v),
+            },
+        }
+    events, results = self[increment_stats](
+        events,
+        results,
+        stats,
+        weight_map=weight_map,
+        group_map=group_map,
+        **kwargs,
+    )
+    """
     events, results = self[custom_increment_stats]( 
         events,
         results,
         stats,
     )
-    
+    """
     return events, results

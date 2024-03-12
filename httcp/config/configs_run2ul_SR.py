@@ -88,7 +88,8 @@ def add_config(
     cfg.x.default_ml_model = None
     cfg.x.default_inference_model = "example"
     cfg.x.default_categories = ("incl",)
-    cfg.x.default_variables = ("n_jet", "jet1_pt")
+    #cfg.x.default_variables = ("n_jet", "jet1_pt")
+    cfg.x.default_variables = ("event","channel_id")
     
     # process groups for conveniently looping over certain processs
     # (used in wrapper_factory and during plotting)
