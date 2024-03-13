@@ -20,6 +20,7 @@ from columnflow.util import maybe_import
 from columnflow.columnar_util import optional_column as optional
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
+from httcp.production.main import hcand_features
 from httcp.production.main import cutflow_features
 
 from httcp.selection.physics_objects import *
@@ -99,11 +100,12 @@ def custom_increment_stats(
         etau_selection, mutau_selection, tautau_selection, get_categories,
         extra_lepton_veto, double_lepton_veto, match_trigobj,
         increment_stats, custom_increment_stats,
+        hcand_features,
     },
     produces={
         # selectors / producers whose newly created columns should be kept
         mc_weight, trigger_selection, get_categories, cutflow_features, process_ids,
-        custom_increment_stats, "hcand",
+        custom_increment_stats,
     },
     exposed=True,
 )
@@ -188,7 +190,7 @@ def main(
                                                                                     good_ele_indices,
                                                                                     good_muon_indices,
                                                                                     good_tau_indices,
-                                                                                    True)
+                                                                                    False)
 
     #results += trigobj_result
     event_sel_trigobj = reduce(and_, results.steps.values())
@@ -280,8 +282,13 @@ def main(
     )
     results += hcand_results
     event_sel_hcand = reduce(and_, results.steps.values())
+    hcand_col = ak.firsts(hcand_pair, axis=1)
+    #events = set_ak_column(events, "hcand", hcand_col)
+    events = self[hcand_features](events, hcand_col)
+
+
     
-    events = set_ak_column(events, "hcand", ak.firsts(hcand_pair, axis=1))
+
     # extra lepton veto
     events, extra_lepton_veto_results = self[extra_lepton_veto](events, 
                                                                 veto_ele_indices,

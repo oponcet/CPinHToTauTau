@@ -3,7 +3,7 @@
 """
 Column production methods related to higher-level features.
 """
-
+import functools
 
 from columnflow.production import Producer, producer
 from columnflow.production.categories import category_ids
@@ -20,31 +20,58 @@ ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 maybe_import("coffea.nanoevents.methods.nanoaod")
 
+# helpers
+set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
+set_ak_column_i32 = functools.partial(set_ak_column, value_type=np.int32)
+
 @producer(
     uses={
         # nano columns
-        "Jet.pt", "events.hcand",
+        "Jet.pt",
     },
     produces={
         # new columns
-        "ht", "n_jet", "events.hcand", #"hcand.invm", "hcand.dr",
+        "ht", "n_jet",
     },
 )
 def features(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column(events, "ht", ak.sum(events.Jet.pt, axis=1))
     events = set_ak_column(events, "n_jet", ak.num(events.Jet.pt, axis=1), value_type=np.int32)
 
-    events = ak.Array(events, behavior=coffea.nanoevents.methods.nanoaod.behavior)
-    events["hcand"] = ak.with_name(events.hcand, "PtEtaPhiMLorentzVector")
-    
-    mass = (events.hcand[:,:1] + events.hcand[:,1:2]).mass
-    dr = ak.firsts(events.hcand[:,:1].metric_table(events.hcand[:,1:2]), axis=1)
+    return events
+
+
+
+@producer(
+    uses={
+        # nano columns
+        "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass",
+        "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
+        "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
+    },
+    produces={
+        # new columns
+        "hcand_invm", "hcand_dr",
+    },
+)
+def hcand_features(
+        self: Producer, 
+        events: ak.Array,
+        hcand_pair: ak.Array,
+        **kwargs
+) -> ak.Array:
+    hcand_pair = 1 * hcand_pair
+
+    mass = (hcand_pair[:,:1] + hcand_pair[:,1:2]).mass
+    dr = ak.firsts(hcand_pair[:,:1].metric_table(hcand_pair[:,1:2]), axis=1)
     
     #from IPython import embed; embed()
-    events = set_ak_column_f32(events, "hcand.invm", ak.firsts(mass))
-    events = set_ak_column_f32(events, "hcand.dr", ak.firsts(dr))
+    events = set_ak_column_f32(events, "hcand_invm", ak.firsts(mass))
+    events = set_ak_column_f32(events, "hcand_dr", ak.firsts(dr))
 
     return events
+
+
 
 
 @producer(

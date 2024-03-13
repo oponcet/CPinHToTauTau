@@ -34,14 +34,14 @@ def keep_columns(cfg: od.Config) -> None:
             "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy",
             "Electron.dz", "Electron.charge", "Electron.pfRelIso03_all",
             # customized columns
-            "channel_id", "process_id", "hcand.*",
+            "channel_id", "process_id",
             "single_electron_triggered", "cross_electron_triggered",
             "single_muon_triggered", "cross_muon_triggered",
             "cross_muon_triggered",
         },
         "cf.MergeSelectionMasks": {
             "normalization_weight", "cutflow.*", "process_id", "category_ids", 
-            "channel_id", "hcand.*",
+            "channel_id",
             "single_electron_triggered", "cross_electron_triggered",
             "single_muon_triggered", "cross_muon_triggered",
             "cross_muon_triggered",
@@ -205,10 +205,11 @@ def add_hcand_features(cfg: od.Config) -> None:
     """
     Adds h lepton features only
     """
+    """
     for i in range(2):
         cfg.add_variable(
             name=f"hlepton_{i+1}_pt",
-            expression=f"hcand.pt[:,{i}]",
+            expression=f"hcand_pt[:,{i}]",
             null_value=EMPTY_FLOAT,
             binning=(40, 0., 200.),
             unit="GeV",
@@ -216,15 +217,16 @@ def add_hcand_features(cfg: od.Config) -> None:
         )
         cfg.add_variable(
             name=f"hlepton_{i+1}_eta",
-            expression=f"hcand.eta[:,{i}]",
+            expression=f"hcand_eta[:,{i}]",
             null_value=EMPTY_FLOAT,
             binning=(25, -2.5, 2.5),
             unit="GeV",
             x_title=f"lepton_{i+1}" + r" $\eta$",
-        )
+    )
+    """
     cfg.add_variable(
         name="hcand_invmass",
-        expression="hcand.invm",
+        expression="hcand_invm",
         null_value=EMPTY_FLOAT,
         binning=(50, 0, 400),
         unit="GeV",
@@ -232,7 +234,7 @@ def add_hcand_features(cfg: od.Config) -> None:
     )
     cfg.add_variable(
         name="hcand_dr",
-        expression="hcand.dr",
+        expression="hcand_dr",
         null_value=EMPTY_FLOAT,
         binning=(40, 0, 5),
         x_title=r"$\Delta R(l,l)$",
