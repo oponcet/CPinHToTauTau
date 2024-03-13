@@ -54,12 +54,9 @@ def match_trigobj(
     if domatch:
         # perform each lepton election step separately per trigger
         for trigger, trigger_fired, leg_masks in trigger_results.x.trigger_data:
-            print(f"trigger: {trigger}")
-            print(f"trigger_fired: {trigger_fired}")
-            is_single = trigger.has_tag("single_trigger")
-            is_cross = trigger.has_tag("cross_trigger")
-            
-            print(f"Triggered? is_single: {is_single} :: is_cross: {is_cross} ")
+            #print(f"trigger: {trigger}")
+            #print(f"trigger_fired: {trigger_fired}")
+            #print(f"Triggered? is_single: {is_single} :: is_cross: {is_cross} ")
             
             is_single_el = trigger.has_tag("single_el")
             is_cross_el  = trigger.has_tag("cross_el_tau")
