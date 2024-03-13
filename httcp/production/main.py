@@ -17,21 +17,32 @@ from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
-
+coffea = maybe_import("coffea")
+maybe_import("coffea.nanoevents.methods.nanoaod")
 
 @producer(
     uses={
         # nano columns
-        "Jet.pt",
+        "Jet.pt", "events.hcand",
     },
     produces={
         # new columns
-        "ht", "n_jet",
+        "ht", "n_jet", "events.hcand", #"hcand.invm", "hcand.dr",
     },
 )
 def features(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column(events, "ht", ak.sum(events.Jet.pt, axis=1))
     events = set_ak_column(events, "n_jet", ak.num(events.Jet.pt, axis=1), value_type=np.int32)
+
+    events = ak.Array(events, behavior=coffea.nanoevents.methods.nanoaod.behavior)
+    events["hcand"] = ak.with_name(events.hcand, "PtEtaPhiMLorentzVector")
+    
+    mass = (events.hcand[:,:1] + events.hcand[:,1:2]).mass
+    dr = ak.firsts(events.hcand[:,:1].metric_table(events.hcand[:,1:2]), axis=1)
+    
+    #from IPython import embed; embed()
+    events = set_ak_column_f32(events, "hcand.invm", ak.firsts(mass))
+    events = set_ak_column_f32(events, "hcand.dr", ak.firsts(dr))
 
     return events
 

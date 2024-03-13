@@ -23,7 +23,6 @@ ak = maybe_import("awkward")
 #
 # the main analysis object
 #
-
 analysis_httcp = ana = od.Analysis(
     name="analysis_httcp",
     id=1,
@@ -54,12 +53,7 @@ ana.x.config_groups = {}
 #
 # setup configs
 #
-# an example config is setup below, based on cms NanoAOD v9 for Run2 2017, focussing on
-# ttbar and single top MCs, plus single muon data
-# update this config or add additional ones to accomodate the needs of your analysis
-
 from httcp.config.configs_run2ul_SR import add_config as add_config_run2ul_SR
-#from cmsdb.campaigns.run2_2017_nano_local_v9 import campaign_run2_2017_nano_v9
 from cmsdb.campaigns.run2_2017_nano_local_v10 import campaign_run2_2017_nano_local_v10
 
 add_config_run2ul_SR(

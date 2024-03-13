@@ -15,8 +15,7 @@ def keep_columns(cfg: od.Config) -> None:
             # general event info
             "run", "luminosityBlock", "event",
             "PV.npvs", "Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-            "deterministic_seed", "process_id", "mc_weight", "cutflow.*",
-            "channel_id",
+            "deterministic_seed", "mc_weight", "cutflow.*",
             # MET
             "MET.pt", "MET.phi", "MET.significance",
             "MET.covXX", "MET.covXY", "MET.covYY",
@@ -34,12 +33,18 @@ def keep_columns(cfg: od.Config) -> None:
             # Electron
             "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy",
             "Electron.dz", "Electron.charge", "Electron.pfRelIso03_all",
-            } | {
-                ColumnCollection.ALL_FROM_SELECTOR
-            },
+            # customized columns
+            "channel_id", "process_id", "hcand.*",
+            "single_electron_triggered", "cross_electron_triggered",
+            "single_muon_triggered", "cross_muon_triggered",
+            "cross_muon_triggered",
+        },
         "cf.MergeSelectionMasks": {
             "normalization_weight", "cutflow.*", "process_id", "category_ids", 
-            "channel_id",
+            "channel_id", "hcand.*",
+            "single_electron_triggered", "cross_electron_triggered",
+            "single_muon_triggered", "cross_muon_triggered",
+            "cross_muon_triggered",
         },
         "cf.UniteColumns": {
             "*",
@@ -47,10 +52,11 @@ def keep_columns(cfg: od.Config) -> None:
     })
 
 
-def add_variables(cfg: od.Config) -> None:
-    # add variables
-    # (the "event", "run" and "lumi" variables are required for some cutflow plotting task,
-    # and also correspond to the minimal set of columns that coffea's nano scheme requires)
+
+def add_common_features(cfg: od.config) -> None:
+    """
+    Adds common features
+    """
     cfg.add_variable(
         name="event",
         expression="event",
@@ -72,6 +78,42 @@ def add_variables(cfg: od.Config) -> None:
         x_title="Luminosity block",
         discrete_x=True,
     )
+
+
+def add_lepton_features(cfg: od.Config) -> None:
+    """
+    Adds lepton features only , ex electron_1_pt
+    """
+    for obj in ["Electron", "Muon", "Tau"]:
+        for i in range(2):
+            cfg.add_variable(
+                name=f"{obj.lower()}_{i+1}_pt",
+                expression=f"{obj}.pt[:,{i}]",
+                null_value=EMPTY_FLOAT,
+                binning=(40, 0., 200.),
+                unit="GeV",
+                x_title=obj + r" $p_{T}$",
+            )
+            cfg.add_variable(
+                name=f"{obj.lower()}_{i+1}_phi",
+                expression=f"{obj}.phi[:,{i}]",
+                null_value=EMPTY_FLOAT,
+                binning=(32, -3.2, 3.2),
+                x_title=obj + r" $\phi$",
+            )
+            cfg.add_variable(
+                name=f"{obj.lower()}_{i+1}_eta",
+                expression=f"{obj}.eta[:,{i}]",
+                null_value=EMPTY_FLOAT,
+                binning=(25, -2.5, 2.5),
+                x_title=obj + r" $\eta$",
+            )
+
+
+def add_jet_features(cfg: od.Config) -> None:
+    """
+    Adds jet features only
+    """
     cfg.add_variable(
         name="n_jet",
         expression="n_jet",
@@ -82,132 +124,59 @@ def add_variables(cfg: od.Config) -> None:
     cfg.add_variable(
         name="jets_pt",
         expression="Jet.pt",
-        binning=(40, 0.0, 100.0),
+        binning=(40, 0.0, 400.0),
         unit="GeV",
         x_title=r"$p_{T} of all jets$",
     )
+    for i in range(2):
+        cfg.add_variable(
+            name=f"jet_{i+1}_pt",
+            expression=f"Jet.pt[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(40, 0.0, 400.0),
+            unit="GeV",
+            x_title=r"Jet $p_{T}$",
+        )
+        cfg.add_variable(
+            name=f"jet_{i+1}_eta",
+            expression=f"Jet.eta[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(30, -3.0, 3.0),
+            x_title=r"Jet $\eta$",
+        )
     cfg.add_variable(
-        name="jets_eta",
-        expression="Jet.eta",
-        binning=(20, -3., 3.),
+        name="ht",
+        # expression=lambda events: ak.sum(events.Jet.pt, axis=1),
+        expression="ht",
+        binning=(40, 0.0, 800.0),
         unit="GeV",
-        x_title=r"$\eta of all jets$",
+        x_title="HT",
     )
+
+
+def add_highlevel_features(cfg: od.Config) -> None:    
+    """
+    Adds MET and other high-level features
+    """
     cfg.add_variable(
-        name="jet1_pt",
-        expression="Jet.pt[:,0]",
+        name="met",
+        expression="MET.pt",
         null_value=EMPTY_FLOAT,
-        binning=(40, 0.0, 400.0),
-        unit="GeV",
-        x_title=r"Jet 1 $p_{T}$",
-    )
-    cfg.add_variable(
-        name="jet1_eta",
-        expression="Jet.eta[:,0]",
-        null_value=EMPTY_FLOAT,
-        binning=(30, -3.0, 3.0),
-        x_title=r"Jet 1 $\eta$",
+        binning=(20, 0.0, 100.0),
+        x_title=r"MET",
     )
     
-    cfg.add_variable(
-        name="jet_raw_DeepJetFlavB",
-        expression="Jet.btagDeepFlavB",
-        null_value=EMPTY_FLOAT,
-        binning=(30, 0,1),
-        x_title=r"raw DeepJetFlawB",
-    )
-    
-    
-    # cfg.add_variable(
-    #     name="ht",
-    #     expression=lambda events: ak.sum(events.Jet.pt, axis=1),
-    #     binning=(40, 0.0, 800.0),
-    #     unit="GeV",
-    #     x_title="HT",
-    # )
-    # weights
+
+def add_weight_features(cfg: od.Config) -> None:
+    """
+    Adds weights
+    """
     cfg.add_variable(
         name="mc_weight",
         expression="mc_weight",
-        binning=(200, -100, 100),
+        binning=(200, -10, 10),
         x_title="MC weight",
     )
-    # cutflow variables
-    cfg.add_variable(
-        name="cf_jet1_pt",
-        expression="cutflow.jet1_pt",
-        binning=(40, 0.0, 400.0),
-        unit="GeV",
-        x_title=r"Jet 1 $p_{T}$",
-    )
-    
-    cfg.add_variable(
-        name="muon_eta",
-        expression="Muon.eta",
-        null_value=EMPTY_FLOAT,
-        binning=(30, -3.0, 3.0),
-        x_title=r"muon $\eta$",
-    )
-    
-    cfg.add_variable(
-        name="muon_pt",
-        expression="Muon.pt",
-        null_value=EMPTY_FLOAT,
-        binning=(30, 20.0, 80.0),
-        unit="GeV",
-        x_title=r"muon $p_{T}$",
-    )
-    cfg.add_variable(
-        name="muon_phi",
-        expression="Muon.phi",
-        null_value=EMPTY_FLOAT,
-        binning=(20, -3.14159, 3.14159),
-        x_title=r"muon $\varphi$",
-    )
-    
-    cfg.add_variable(
-        name="tau_phi",
-        expression="Tau.phi",
-        null_value=EMPTY_FLOAT,
-        binning=(20, -3.14159, 3.14159),
-        x_title=r"tau $\varphi$",
-    )
-    
-    cfg.add_variable(
-        name="tau_eta",
-        expression="Tau.eta",
-        null_value=EMPTY_FLOAT,
-        binning=(30, -3.0, 3.0),
-        x_title=r"tau $\eta$",
-    )
-    
-    cfg.add_variable(
-        name="tau_pt",
-        expression="Tau.pt",
-        null_value=EMPTY_FLOAT,
-        binning=(30, 25, 85),
-        unit="GeV",
-        x_title=r"tau $p_{T}$",
-    )
-    
-    cfg.add_variable(
-        name="muon_mT",
-        expression="Muon.mT",
-        null_value=EMPTY_FLOAT,
-        binning=(40, 0.0, 200.0),
-        unit="GeV",
-        x_title=r"leading muon $m_{T}$",
-    )
-    
-    cfg.add_variable(
-        name="mutau_mass",
-        expression="mutau_mass",
-        null_value=EMPTY_FLOAT,
-        binning=(40, 0.0, 200.0),
-        unit="GeV",
-        x_title=r"$m_{vis}$",
-    )
-    
     cfg.add_variable(
         name="pu_weight",
         expression="pu_weight",
@@ -216,3 +185,69 @@ def add_variables(cfg: od.Config) -> None:
         unit="GeV",
         x_title=r"Pileup weight",
     )
+
+    
+
+def add_cutflow_features(cfg: od.Config) -> None:
+    """
+    Adds cf features
+    """
+    cfg.add_variable(
+        name="cf_jet1_pt",
+        expression="cutflow.jet1_pt",
+        binning=(40, 0.0, 400.0),
+        unit="GeV",
+        x_title=r"Jet 1 $p_{T}$",
+    )
+
+
+def add_hcand_features(cfg: od.Config) -> None:
+    """
+    Adds h lepton features only
+    """
+    for i in range(2):
+        cfg.add_variable(
+            name=f"hlepton_{i+1}_pt",
+            expression=f"hcand.pt[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(40, 0., 200.),
+            unit="GeV",
+            x_title=f"lepton_{i+1}" + r" $p_{T}$",
+        )
+        cfg.add_variable(
+            name=f"hlepton_{i+1}_eta",
+            expression=f"hcand.eta[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(25, -2.5, 2.5),
+            unit="GeV",
+            x_title=f"lepton_{i+1}" + r" $\eta$",
+        )
+    cfg.add_variable(
+        name="hcand_invmass",
+        expression="hcand.invm",
+        null_value=EMPTY_FLOAT,
+        binning=(50, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{ll}$",
+    )
+    cfg.add_variable(
+        name="hcand_dr",
+        expression="hcand.dr",
+        null_value=EMPTY_FLOAT,
+        binning=(40, 0, 5),
+        x_title=r"$\Delta R(l,l)$",
+    )
+
+
+
+def add_variables(cfg: od.Config) -> None:
+    """
+    Adds all variables to a *config*.
+    """
+    add_common_features(cfg)
+    add_lepton_features(cfg)
+    add_jet_features(cfg)
+    add_highlevel_features(cfg)
+    add_hcand_features(cfg)
+    add_weight_features(cfg)
+    add_cutflow_features(cfg)

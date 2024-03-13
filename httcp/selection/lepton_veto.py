@@ -10,7 +10,7 @@ from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.columnar_util import set_ak_column
 from columnflow.util import maybe_import, DotDict
 
-from httcp.util import deltaR, new_invariant_mass
+
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")

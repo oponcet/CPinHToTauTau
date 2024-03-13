@@ -90,7 +90,6 @@ def trigger_selection(
         },
         aux={
             "trigger_data": trigger_data,
-            "trigger_fired_and_all_legs_match": fired_and_all_legs_match,
         },
     )
 

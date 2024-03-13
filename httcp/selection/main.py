@@ -18,6 +18,7 @@ from columnflow.production.cms.mc_weight import mc_weight
 
 from columnflow.util import maybe_import
 from columnflow.columnar_util import optional_column as optional
+from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
 from httcp.production.main import cutflow_features
 
@@ -27,6 +28,7 @@ from httcp.selection.lepton_pair_etau import etau_selection
 from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
 from httcp.selection.event_category import get_categories
+from httcp.selection.match_trigobj import match_trigobj
 from httcp.selection.lepton_veto import *
 
 
@@ -95,13 +97,13 @@ def custom_increment_stats(
         json_filter, met_filters, mc_weight, cutflow_features, process_ids,
         trigger_selection, muon_selection, electron_selection, tau_selection, jet_selection,
         etau_selection, mutau_selection, tautau_selection, get_categories,
-        extra_lepton_veto, double_lepton_veto,
+        extra_lepton_veto, double_lepton_veto, match_trigobj,
         increment_stats, custom_increment_stats,
     },
     produces={
         # selectors / producers whose newly created columns should be kept
         mc_weight, trigger_selection, get_categories, cutflow_features, process_ids,
-        custom_increment_stats,
+        custom_increment_stats, "hcand",
     },
     exposed=True,
 )
@@ -177,6 +179,20 @@ def main(
     #results += tau_results
 
     event_sel_tau = reduce(and_, results.steps.values())
+
+
+    # trigger obj matching
+    events, \
+        good_ele_indices, good_muon_indices, good_tau_indices = self[match_trigobj](events,
+                                                                                    trigger_results,
+                                                                                    good_ele_indices,
+                                                                                    good_muon_indices,
+                                                                                    good_tau_indices,
+                                                                                    True)
+
+    #results += trigobj_result
+    event_sel_trigobj = reduce(and_, results.steps.values())
+
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
                                                                         dlveto_ele_indices,
@@ -236,17 +252,7 @@ def main(
                                   events.Tau[tautau_indices_pair[:,1:2]]], axis=1)
 
     event_sel_tautau_pair = reduce(and_, results.steps.values())
-    # make sure events have at least one lepton pair
-    # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
-    hcand_pair = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
-    # ak.sum(ak.num(hcand_pair, axis=-1), axis=-1) = [ 2, 4, 2, 0, 2 ]
-    hcand_results = SelectionResult(
-        steps={
-            "Atleast_one_higgs_cand": ak.sum(ak.num(hcand_pair, axis=-1), axis=-1) > 0,
-        },
-    )
-    results += hcand_results
-    event_sel_hcand = reduce(and_, results.steps.values())
+
     # channel selection
     # channel_id is now in columns
     events = self[get_categories](events, 
@@ -262,6 +268,20 @@ def main(
     #results += channel_results
     event_sel_getcat = reduce(and_, results.steps.values())
     
+
+    # make sure events have at least one lepton pair
+    # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
+    hcand_pair = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
+    # ak.sum(ak.num(hcand_pair, axis=-1), axis=-1) = [ 2, 4, 2, 0, 2 ]
+    hcand_results = SelectionResult(
+        steps={
+            "Atleast_one_higgs_cand": ak.sum(ak.num(hcand_pair, axis=-1), axis=-1) > 0,
+        },
+    )
+    results += hcand_results
+    event_sel_hcand = reduce(and_, results.steps.values())
+    
+    events = set_ak_column(events, "hcand", ak.firsts(hcand_pair, axis=1))
     # extra lepton veto
     events, extra_lepton_veto_results = self[extra_lepton_veto](events, 
                                                                 veto_ele_indices,
@@ -285,9 +305,7 @@ def main(
 
 
 
-
-
-# increment stats
+    # increment stats
     weight_map = {
         "num_events": Ellipsis,
         "num_events_trigger": event_sel_trigger,
@@ -296,6 +314,7 @@ def main(
         "num_events_muon": event_sel_muon,
         "num_events_electron": event_sel_electron,
         "num_events_tau": event_sel_tau,
+        "num_events_hastrigobj": event_sel_trigobj,
         "num_events_dlveto": event_sel_dlveto,
         "num_events_etau_pair": event_sel_etau_pair,
         "num_events_mutau_pair": event_sel_mutau_pair,
