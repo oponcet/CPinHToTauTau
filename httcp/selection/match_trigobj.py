@@ -19,8 +19,8 @@ ak = maybe_import("awkward")
 @selector(
     uses={
         "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass",
-        "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
-        "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
+        "Muon.pt"    , "Muon.eta"    , "Muon.phi"    , "Muon.mass",
+        "Tau.pt",      "Tau.eta",      "Tau.phi",      "Tau.mass",
         "TrigObj.pt", "TrigObj.eta", "TrigObj.phi",
     },
     produces={"single_electron_triggered", "cross_electron_triggered", 

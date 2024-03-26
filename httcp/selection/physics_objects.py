@@ -1,4 +1,3 @@
-
 # coding: utf-8
 
 """
@@ -81,8 +80,7 @@ def muon_selection(
 
     for cut in good_selections.keys():
         good_muon_mask = good_muon_mask & good_selections[cut]
-        selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
-        #selection_steps[cut] = ak.sum(good_muon_mask, axis=1) > 0
+        selection_steps[cut] = good_muon_mask
 
 
     for cut in single_veto_selections.keys():
@@ -103,13 +101,9 @@ def muon_selection(
     double_veto_muon_indices = sorted_indices[double_veto_muon_mask[sorted_indices]]
     double_veto_muon_indices = ak.values_astype(double_veto_muon_indices, np.int32)
 
-    #return events, \
-    #    SelectionResult(
-    #        steps=selection_steps
-    #    ), \
-    #    good_muon_indices, veto_muon_indices, double_veto_muon_indices
-    #print(f"nGoodMuons: {ak.sum(good_muon_mask)}")
-    return good_muon_indices, veto_muon_indices, double_veto_muon_indices
+    return events, SelectionResult(
+        aux={"muon_selection": selection_steps},
+    ), good_muon_indices, veto_muon_indices, double_veto_muon_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -180,8 +174,7 @@ def electron_selection(
 
     for cut in good_selections.keys():
         good_electron_mask = good_electron_mask & good_selections[cut]
-        selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
-        #selection_steps[cut] = ak.sum(good_electron_mask, axis=1) > 0
+        selection_steps[cut] = good_electron_mask
 
 
     for cut in single_veto_selections.keys():
@@ -203,12 +196,9 @@ def electron_selection(
     double_veto_electron_indices = ak.values_astype(double_veto_electron_indices, np.int32)
 
 
-    #return events, \
-    #    SelectionResult(
-    #        steps=selection_steps,
-    #    ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
-    #print(f"nGoodElectrons: {ak.sum(good_electron_mask)}")
-    return good_electron_indices, veto_electron_indices, double_veto_electron_indices
+    return events, SelectionResult(
+        aux={"electron_selection":selection_steps},
+    ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -264,19 +254,15 @@ def tau_selection(
 
     for cut in good_selections.keys():
         good_tau_mask = good_tau_mask & good_selections[cut]
-        selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
-        #selection_steps[cut] = ak.sum(good_tau_mask, axis=1) > 0
+        selection_steps[cut] = good_tau_mask
 
     # convert to sorted indices
     good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
 
-    #return events, \
-    #    SelectionResult(
-    #        steps=selection_steps,
-    #    ), good_tau_indices
-    #print(f"nGoodTaus: {ak.sum(good_tau_mask)}")
-    return good_tau_indices
+    return events, SelectionResult(
+        aux={"tau_selection":selection_steps},
+    ), good_tau_indices
 
 
 # ------------------------------------------------------------------------------------------------------- #
@@ -322,7 +308,7 @@ def jet_selection(
 
     for cut in good_selections.keys():
         good_jet_mask = good_jet_mask & good_selections[cut]
-        selection_steps[cut] = ak.sum(good_selections[cut], axis=1) > 0
+        selection_steps[cut] = good_jet_mask
         #selection_steps[cut] = ak.sum(good_jet_mask, axis=1) > 0
 
     # b-tagged jets, tight working point
@@ -335,17 +321,17 @@ def jet_selection(
     # bjet veto
     bjet_veto = ak.sum(bjet_mask, axis=1) == 0
 
-    return events, \
-        SelectionResult(
-            steps = {
-                "b_veto": bjet_veto,
-            }, 
-            objects = {
-                "Jet": {
-                    "Jet": good_jet_indices,
-                },
+    return events, SelectionResult(
+        steps = {
+            "b_veto": bjet_veto,
+        }, 
+        objects = {
+            "Jet": {
+                "Jet": good_jet_indices,
             },
-        )
+        },
+        aux = selection_steps,
+    )
     
     
 """

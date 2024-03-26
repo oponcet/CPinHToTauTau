@@ -227,7 +227,7 @@ def add_config(
     get_shifts = functools.partial(get_shifts_from_sources, cfg)
     cfg.x.event_weights = DotDict({
         "normalization_weight": [],
-        "muon_weight": get_shifts("mu"),
+        #"muon_weight": get_shifts("mu"),
     })
     
     # versions per task family, either referring to strings or to callables receving the invoking

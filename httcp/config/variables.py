@@ -15,7 +15,7 @@ def keep_columns(cfg: od.Config) -> None:
             # general event info
             "run", "luminosityBlock", "event",
             "PV.npvs", "Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-            "deterministic_seed", "mc_weight", "cutflow.*",
+            #"deterministic_seed", "mc_weight", "cutflow.*",
             # MET
             "MET.pt", "MET.phi", "MET.significance",
             "MET.covXX", "MET.covXY", "MET.covYY",
@@ -34,17 +34,22 @@ def keep_columns(cfg: od.Config) -> None:
             "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy",
             "Electron.dz", "Electron.charge", "Electron.pfRelIso03_all",
             # customized columns
-            "channel_id", "process_id",
-            "single_electron_triggered", "cross_electron_triggered",
-            "single_muon_triggered", "cross_muon_triggered",
-            "cross_muon_triggered",
+            #"channel_id", "process_id", "hcand.*",
+            #"single_electron_triggered", "cross_electron_triggered",
+            #"single_muon_triggered", "cross_muon_triggered",
+            #"cross_muon_triggered",
+            # columns added during selection
+            ColumnCollection.ALL_FROM_SELECTOR,
         },
         "cf.MergeSelectionMasks": {
-            "normalization_weight", "cutflow.*", "process_id", "category_ids", 
-            "channel_id",
-            "single_electron_triggered", "cross_electron_triggered",
-            "single_muon_triggered", "cross_muon_triggered",
-            "cross_muon_triggered",
+            #"normalization_weight", "cutflow.*", "process_id", "category_ids", 
+            #"channel_id",
+            #"single_electron_triggered", "cross_electron_triggered",
+            #"single_muon_triggered", "cross_muon_triggered",
+            #"cross_muon_triggered",
+            #"hcand.*",
+            "*",
+            ColumnCollection.ALL_FROM_SELECTOR,
         },
         "cf.UniteColumns": {
             "*",

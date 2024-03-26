@@ -75,5 +75,5 @@ def get_categories(
     channel_id = ak.values_astype(channel_id, np.uint8)
     events = set_ak_column(events, "channel_id", channel_id)
 
-    #return events, SelectionResult(steps=selection_steps)
-    return events
+    return events, SelectionResult(steps=selection_steps)
+    #return events
