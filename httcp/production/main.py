@@ -48,7 +48,7 @@ def features(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass",
         "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
         "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
-        "hcand.*",
+        #"hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass",
     },
     produces={
         # new columns
@@ -62,11 +62,17 @@ def hcand_features(
         **kwargs
 ) -> ak.Array:
 
-    events = ak.Array(events, behavior=coffea.nanoevents.methods.nanoaod.behavior)
-    events["hcand"] = ak.with_name(events.hcand, "PtEtaPhiMLorentzVector")
+    #events = ak.Array(events, behavior=coffea.nanoevents.methods.nanoaod.behavior)
+    #events["hcand"] = ak.with_name(events.hcand, "PtEtaPhiMLorentzVector")
+    hcand_pair_p4 = ak.firsts(1 * hcand_pair, axis=1)
+    hcand1 = hcand_pair_p4[:,0:1]
+    hcand2 = hcand_pair_p4[:,1:2]
+    #print(hcand1.pt)
+    #print(hcand2.pt)
+    #hcand = ak.with_name(hcand_pair, "PtEtaPhiMLorentzVector")
 
-    mass = (hcand[:,:1] + hcand[:,1:2]).mass
-    dr = ak.firsts(hcand_pair[:,:1].metric_table(hcand_pair[:,1:2]), axis=1)
+    mass = (hcand1 + hcand2).mass
+    dr = ak.firsts(hcand1.metric_table(hcand2), axis=1)
     
     #from IPython import embed; embed()
     events = set_ak_column_f32(events, "hcand_invm", ak.firsts(mass))
@@ -115,14 +121,15 @@ def cutflow_features(
 
 @producer(
     uses={
-        features, category_ids, normalization_weights, deterministic_seeds, hcand_features,#muon_weights,
+        features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
     },
     produces={
-        features, category_ids, normalization_weights, deterministic_seeds, hcand_features, #muon_weights,
+        features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     #from IPython import embed; embed()
+    #1/0
     # features
     events = self[features](events, **kwargs)
 
@@ -130,7 +137,7 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = self[category_ids](events, **kwargs)
 
     # hcand features
-    events = self[hcand_features](events, **kwargs)
+    #events = self[hcand_features](events, **kwargs)
 
     # deterministic seeds
     events = self[deterministic_seeds](events, **kwargs)

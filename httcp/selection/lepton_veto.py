@@ -38,7 +38,7 @@ def extra_lepton_veto(
                           behavior=coffea.nanoevents.methods.nanoaod.behavior)
     extra_lep  = ak.with_name(extra_lep, "PtEtaPhiMLorentzVector")
 
-    has_single_pair = ak.sum(ak.num(hcand_pair, axis=-1), axis=-1) == 2
+    has_single_pair = ak.num(hcand_pair.pt, axis=1) == 2
     # keep all True -> [[True], [True], [True], ..., [True]]
     # because, not applying any veto if there is more than one higgs cand pair
     # and keeping those events for now
@@ -47,6 +47,8 @@ def extra_lepton_veto(
     hcand_lep1 = hcand_pair_p4[:,:1]
     hcand_lep2 = hcand_pair_p4[:,1:2]
 
+    #print(hcand_lep1.pt, hcand_lep2.pt)
+    #print("aksnjklansldjknalknxlk")
     dr_hlep1_extraleps = extra_lep.metric_table(hcand_lep1)
     dr_hlep2_extraleps = extra_lep.metric_table(hcand_lep2)
 
@@ -54,7 +56,7 @@ def extra_lepton_veto(
         ((dr_hlep2_extraleps > 0.5) 
          &  (dr_hlep1_extraleps > 0.001)) 
         | (dr_hlep1_extraleps > 0.5))
-
+    
     has_extra_lepton = ak.where(has_single_pair, 
                                 ak.any(dr_mask, axis=-1),
                                 dummy)

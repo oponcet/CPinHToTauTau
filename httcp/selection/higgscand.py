@@ -20,7 +20,7 @@ maybe_import("coffea.nanoevents.methods.nanoaod")
     #    # muon
     #},
     produces={
-        "hcand",
+        "hcand.*",
     },
     exposed=False,
 )

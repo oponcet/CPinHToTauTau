@@ -42,13 +42,11 @@ def keep_columns(cfg: od.Config) -> None:
             ColumnCollection.ALL_FROM_SELECTOR,
         },
         "cf.MergeSelectionMasks": {
-            #"normalization_weight", "cutflow.*", "process_id", "category_ids", 
-            #"channel_id",
+            "normalization_weight", "cutflow.*", "process_id", "category_ids", 
+            "channel_id",
             #"single_electron_triggered", "cross_electron_triggered",
             #"single_muon_triggered", "cross_muon_triggered",
             #"cross_muon_triggered",
-            #"hcand.*",
-            "*",
             ColumnCollection.ALL_FROM_SELECTOR,
         },
         "cf.UniteColumns": {

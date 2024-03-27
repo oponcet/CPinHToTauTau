@@ -102,7 +102,7 @@ def muon_selection(
     double_veto_muon_indices = ak.values_astype(double_veto_muon_indices, np.int32)
 
     return events, SelectionResult(
-        aux={"muon_selection": selection_steps},
+        aux=selection_steps,
     ), good_muon_indices, veto_muon_indices, double_veto_muon_indices
 
 
@@ -197,7 +197,7 @@ def electron_selection(
 
 
     return events, SelectionResult(
-        aux={"electron_selection":selection_steps},
+        aux=selection_steps,
     ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
 
 
@@ -261,7 +261,7 @@ def tau_selection(
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
 
     return events, SelectionResult(
-        aux={"tau_selection":selection_steps},
+        aux=selection_steps,
     ), good_tau_indices
 
 

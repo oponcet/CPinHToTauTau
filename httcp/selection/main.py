@@ -15,6 +15,7 @@ from columnflow.selection.cms.met_filters import met_filters
 
 from columnflow.production.processes import process_ids
 from columnflow.production.cms.mc_weight import mc_weight
+from columnflow.production.util import attach_coffea_behavior
 
 from columnflow.util import maybe_import
 from columnflow.columnar_util import optional_column as optional
@@ -99,12 +100,12 @@ def custom_increment_stats(
         etau_selection, mutau_selection, tautau_selection, get_categories,
         extra_lepton_veto, double_lepton_veto, match_trigobj,
         increment_stats, custom_increment_stats,
-        higgscand, #hcand_features,
+        higgscand, hcand_features, #attach_coffea_behavior,
     },
     produces={
         # selectors / producers whose newly created columns should be kept
         mc_weight, trigger_selection, get_categories, cutflow_features, process_ids,
-        custom_increment_stats, higgscand,
+        match_trigobj, hcand_features, #higgscand,
     },
     exposed=True,
 )
@@ -185,8 +186,9 @@ def main(
                                              call_force=True,
                                              **kwargs)
 
-    etau_pair         = ak.concatenate([events.Electron[etau_indices_pair[:,:1]], 
-                                        events.Tau[etau_indices_pair[:,1:2]]], axis=1)
+    etau_pair         = ak.concatenate([events.Electron[etau_indices_pair[:,0:1]], 
+                                        events.Tau[     etau_indices_pair[:,1:2]]], 
+                                       axis=1)
 
     # mu-tau pair i.e. hcand selection
     # e.g. [ [mu1, tau1], [], [mu1, tau2], [], [] ]
@@ -196,8 +198,9 @@ def main(
                                                call_force=True,
                                                **kwargs)
 
-    mutau_pair = ak.concatenate([events.Muon[mutau_indices_pair[:,:1]], 
-                                 events.Tau[mutau_indices_pair[:,1:2]]], axis=1)
+    mutau_pair = ak.concatenate([events.Muon[mutau_indices_pair[:,0:1]], 
+                                 events.Tau[ mutau_indices_pair[:,1:2]]],
+                                axis=1)
 
     # tau-tau pair i.e. hcand selection
     # e.g. [ [], [tau1, tau2], [], [], [] ]
@@ -206,8 +209,9 @@ def main(
                                                  call_force=True,
                                                  **kwargs)
 
-    tautau_pair = ak.concatenate([events.Tau[tautau_indices_pair[:,:1]], 
-                                  events.Tau[tautau_indices_pair[:,1:2]]], axis=1)
+    tautau_pair = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
+                                  events.Tau[tautau_indices_pair[:,1:2]]], 
+                                 axis=1)
 
     # channel selection
     # channel_id is now in columns
@@ -216,38 +220,37 @@ def main(
     #                              etau_indices_pair, 
     #                              mutau_indices_pair, 
     #                              tautau_indices_pair)
-    events, channel_results = self[get_categories](events, 
-                                                   trigger_results, 
-                                                   etau_indices_pair, 
-                                                   mutau_indices_pair, 
+    events, channel_results = self[get_categories](events,
+                                                   trigger_results,
+                                                   etau_indices_pair,
+                                                   mutau_indices_pair,
                                                    tautau_indices_pair)
     #results += channel_results
 
     # make sure events have at least one lepton pair
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
-    hcand_pair = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
+    hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
     
-    
-    #hcand_results = SelectionResult(
-    #    steps={
-    #        # ak.sum(ak.num(hcand_pair, axis=-1), axis=-1) = [ 2, 4, 2, 0, 2 ]
-    #        "Atleast_one_higgs_cand": ak.sum(ak.num(hcand_pair, axis=-1), axis=-1) > 0,
-    #    },
-    #)
-
-    #hcand_col = ak.firsts(hcand_pair, axis=1)
+    hcand_results = SelectionResult(
+        steps={
+            # ak.sum(ak.num(hcand_pair, axis=-1), axis=-1) = [ 2, 4, 2, 0, 2 ]
+            "Atleast_one_higgs_cand": ak.sum(ak.num(hcand_pairs.pt, axis=-1), axis=-1) > 0,
+        },
+    )
+    #hcand_pair = ak.firsts(hcand_pairs, axis=1)
     #events = set_ak_column(events, "hcand", hcand_col)
-    ###events = self[hcand_features](events, hcand_col)
+    events = self[hcand_features](events, hcand_pairs)
     
-    events, hcand_results = self[higgscand](events, hcand_pair)
+    #events, hcand_results = self[higgscand](events, hcand_pair)
     results += hcand_results
     
+    #print(ak.to_list(hcand_pair.pt))
 
     # extra lepton veto
     events, extra_lepton_veto_results = self[extra_lepton_veto](events, 
                                                                 veto_ele_indices,
                                                                 veto_muon_indices,
-                                                                hcand_pair)
+                                                                hcand_pairs)
     results += extra_lepton_veto_results
 
     # create process ids
@@ -258,15 +261,12 @@ def main(
     results.event = event_sel
 
     
-
-
     # add the mc weight
     if self.dataset_inst.is_mc:
         events = self[mc_weight](events, **kwargs)
 
     # add cutflow features, passing per-object masks
     events = self[cutflow_features](events, results.objects, **kwargs)
-
 
 
     # increment stats
