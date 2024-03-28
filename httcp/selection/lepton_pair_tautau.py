@@ -111,18 +111,17 @@ def tautau_selection(
     lep1_idx, lep2_idx = ak.unzip(lep_indices_pair)
 
     preselection = {
-        "is_pt_40"      : (lep1.pt > 40) & (lep2.pt > 40),
-        "is_eta_2p1"    : (np.abs(lep1.eta) < 2.1) & (np.abs(lep2.eta) < 2.1),
-        "is_os"         : (lep1.charge * lep2.charge) < 0,
-        "dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  #deltaR(lep1, lep2) > 0.5,
+        "tautau_is_pt_40"      : (lep1.pt > 40) & (lep2.pt > 40),
+        "tautau_is_eta_2p1"    : (np.abs(lep1.eta) < 2.1) & (np.abs(lep2.eta) < 2.1),
+        "tautau_is_os"         : (lep1.charge * lep2.charge) < 0,
+        "tautau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  #deltaR(lep1, lep2) > 0.5,
     }
 
     good_pair_mask = lep1_idx >= 0
     pair_selection_steps = {}
     for cut in preselection.keys():
-        #print(f"{cut}: {preselection[cut]}")
         good_pair_mask = good_pair_mask & preselection[cut]
-        pair_selection_steps[cut] = ak.sum(preselection[cut], axis=1) > 0
+        pair_selection_steps[cut] = good_pair_mask
         
     leps_pair_sel = leps_pair[good_pair_mask]
     lep_indices_pair_sel = lep_indices_pair[good_pair_mask]
@@ -138,7 +137,6 @@ def tautau_selection(
                                             lep_indices_pair_sel),
                             lep_indices_pair_sel_single)
 
-    #return events, SelectionResult(
-    #    steps = pair_selection_steps,
-    #), pair_indices
-    return pair_indices
+    return SelectionResult(
+        aux = pair_selection_steps,
+    ), pair_indices

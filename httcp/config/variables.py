@@ -44,10 +44,6 @@ def keep_columns(cfg: od.Config) -> None:
         "cf.MergeSelectionMasks": {
             "normalization_weight", "cutflow.*", "process_id", "category_ids", 
             "channel_id",
-            #"single_electron_triggered", "cross_electron_triggered",
-            #"single_muon_triggered", "cross_muon_triggered",
-            #"cross_muon_triggered",
-            ColumnCollection.ALL_FROM_SELECTOR,
         },
         "cf.UniteColumns": {
             "*",
@@ -228,7 +224,7 @@ def add_hcand_features(cfg: od.Config) -> None:
     )
     """
     cfg.add_variable(
-        name="hcand_invmass",
+        name="hcand_invm",
         expression="hcand_invm",
         null_value=EMPTY_FLOAT,
         binning=(50, 0, 400),

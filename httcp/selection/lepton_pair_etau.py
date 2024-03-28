@@ -134,17 +134,16 @@ def etau_selection(
     lep1_idx, lep2_idx = ak.unzip(lep_indices_pair)
 
     preselection = {
-        "is_os"         : (lep1.charge * lep2.charge) < 0,
-        "dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  # deltaR(lep1, lep2) > 0.5,
-        "mT_50"         : transverse_mass(lep1, events.MET) < 50
+        "etau_is_os"         : (lep1.charge * lep2.charge) < 0,
+        "etau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  # deltaR(lep1, lep2) > 0.5,
+        "etau_mT_50"         : transverse_mass(lep1, events.MET) < 50
     }
     # get preselected pairs
     good_pair_mask = lep1_idx >= 0
     pair_selection_steps = {}
     for cut in preselection.keys():
         good_pair_mask = good_pair_mask & preselection[cut]
-        #pair_selection_steps[cut] = ak.sum(preselection[cut], axis=1) > 0
-        pair_selection_steps[cut] = ak.sum(good_pair_mask, axis=1) > 0
+        pair_selection_steps[cut] = good_pair_mask
         
     # preselected etau pairs and their indices
     leps_pair_sel = leps_pair[good_pair_mask]
@@ -163,7 +162,6 @@ def etau_selection(
                                             lep_indices_pair_sel),
                             lep_indices_pair_sel_single)
 
-    #return events, SelectionResult(
-    #    steps = pair_selection_steps,
-    #), pair_indices
-    return pair_indices
+    return SelectionResult(
+        aux = pair_selection_steps,
+    ), pair_indices

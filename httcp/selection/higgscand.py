@@ -16,11 +16,11 @@ maybe_import("coffea.nanoevents.methods.nanoaod")
 
 
 @selector(
-    #uses={
-    #    # muon
-    #},
+    uses={
+        "channel_id",
+    },
     produces={
-        "hcand.*",
+        "hcand",
     },
     exposed=False,
 )
@@ -33,6 +33,7 @@ def higgscand(
     sel_hcand = ak.sum(ak.num(hcand_pair, axis=-1), axis=-1) > 0
     #print(ak.to_list(sel_hcand))
     hcand_col = ak.firsts(hcand_pair, axis=1)
+    #print(ak.to_list(hcand_col.pt))
     events = set_ak_column(events, "hcand", hcand_col)
     
     return events, SelectionResult(

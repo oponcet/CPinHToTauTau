@@ -39,30 +39,30 @@ def get_categories(
     empty_indices    = ak.zeros_like(1 * events.event, dtype=np.uint16)[..., None][..., :0]
 
     channel_selections = {
-        "is_etau"           : [ch_etau.id, 
-                               ((ak.num(etau_pair_indices, axis=1) == 2) 
-                                & (ak.num(mutau_pair_indices, axis=1) == 0) 
-                                & (ak.num(tautau_pair_indices, axis=1) == 0))],
-        "is_mutau"          : [ch_mutau.id, 
-                               ((ak.num(etau_pair_indices, axis=1) == 0) 
-                                & (ak.num(mutau_pair_indices, axis=1) == 2) 
-                                & (ak.num(tautau_pair_indices, axis=1) == 0))],
-        "is_tautau"         : [ch_tautau.id, 
-                               ((ak.num(etau_pair_indices, axis=1) == 0) 
-                                & (ak.num(mutau_pair_indices, axis=1) == 0) 
-                                & (ak.num(tautau_pair_indices, axis=1) == 2))],
-        "is_etau_mutau"     : [ch_etau.id + ch_mutau.id, 
-                               ((ak.num(etau_pair_indices, axis=1) == 2) 
-                                & (ak.num(mutau_pair_indices, axis=1) == 2) 
-                                & (ak.num(tautau_pair_indices, axis=1) == 0))],
-        "is_etau_tautau"    : [ch_etau.id + ch_tautau.id, 
-                               ((ak.num(etau_pair_indices, axis=1) == 2) 
-                                & (ak.num(mutau_pair_indices, axis=1) == 0) 
-                                & (ak.num(tautau_pair_indices, axis=1) == 2))], 
-        "is_mutau_tautau"   : [ch_mutau.id + ch_tautau.id, 
-                               ((ak.num(etau_pair_indices, axis=1) == 0) 
-                                & (ak.num(mutau_pair_indices, axis=1) == 2) 
-                                & (ak.num(tautau_pair_indices, axis=1) == 2))], 
+        "cat_is_etau"           : [ch_etau.id, 
+                                   ((ak.num(etau_pair_indices, axis=1) == 2) 
+                                    & (ak.num(mutau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(tautau_pair_indices, axis=1) == 0))],
+        "cat_is_mutau"          : [ch_mutau.id, 
+                                   ((ak.num(etau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(mutau_pair_indices, axis=1) == 2) 
+                                    & (ak.num(tautau_pair_indices, axis=1) == 0))],
+        "cat_is_tautau"         : [ch_tautau.id, 
+                                   ((ak.num(etau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(mutau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(tautau_pair_indices, axis=1) == 2))],
+        "cat_is_etau_mutau"     : [ch_etau.id + ch_mutau.id, 
+                                   ((ak.num(etau_pair_indices, axis=1) == 2) 
+                                    & (ak.num(mutau_pair_indices, axis=1) == 2) 
+                                    & (ak.num(tautau_pair_indices, axis=1) == 0))],
+        "cat_is_etau_tautau"    : [ch_etau.id + ch_tautau.id, 
+                                   ((ak.num(etau_pair_indices, axis=1) == 2) 
+                                    & (ak.num(mutau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(tautau_pair_indices, axis=1) == 2))], 
+        "cat_is_mutau_tautau"   : [ch_mutau.id + ch_tautau.id, 
+                                   ((ak.num(etau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(mutau_pair_indices, axis=1) == 2) 
+                                    & (ak.num(tautau_pair_indices, axis=1) == 2))], 
     }
 
     selection_steps  = {}
@@ -75,5 +75,4 @@ def get_categories(
     channel_id = ak.values_astype(channel_id, np.uint8)
     events = set_ak_column(events, "channel_id", channel_id)
 
-    return events, SelectionResult(steps=selection_steps)
-    #return events
+    return events, SelectionResult(aux=selection_steps)
