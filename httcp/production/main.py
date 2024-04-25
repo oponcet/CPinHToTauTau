@@ -42,12 +42,20 @@ def features(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
 
 
+#@producer
+#def push_hcand(self: Producer, events: ak.Array, hcand: ak.Array, **kwargs) -> ak.Array:
+#    # Set the "hcand" column in the events array with the h-cand information
+#    events = set_ak_column(events, "hcand", hcand)
+#    return events
+
+
 @producer(
     uses={
         # nano columns
-        "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass",
-        "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
-        "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
+        #"Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass",
+        #"Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
+        #"Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
+        "hcand.*"
     },
     produces={
         # new columns
@@ -57,16 +65,18 @@ def features(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 def hcand_features(
         self: Producer, 
         events: ak.Array,
-        hcand_pair: ak.Array,
         **kwargs
 ) -> ak.Array:
 
-    hcand_pair_p4 = ak.firsts(1 * hcand_pair, axis=1)
-    hcand1 = hcand_pair_p4[:,0:1]
-    hcand2 = hcand_pair_p4[:,1:2]
-
+    events = ak.Array(events, behavior=coffea.nanoevents.methods.nanoaod.behavior)
+    hcand_ = ak.with_name(ak.firsts(events.hcand, axis=1), "PtEtaPhiMLorentzVector")
+    hcand1 = hcand_[:,0:1]
+    hcand2 = hcand_[:,1:2]
+    
     mass = (hcand1 + hcand2).mass
     dr = ak.firsts(hcand1.metric_table(hcand2), axis=1)
+
+    from IPython import embed; embed()
     
     #from IPython import embed; embed()
     events = set_ak_column_f32(events, "hcand_invm", ak.firsts(mass))
@@ -115,10 +125,10 @@ def cutflow_features(
 
 @producer(
     uses={
-        features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
+        features, category_ids, normalization_weights, deterministic_seeds, hcand_features, #muon_weights,
     },
     produces={
-        features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
+        features, category_ids, normalization_weights, deterministic_seeds, hcand_features, #muon_weights,
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
@@ -126,6 +136,8 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     #1/0
     # features
     events = self[features](events, **kwargs)
+
+    events = self[hcand_features](events, **kwargs)
 
     # category ids
     events = self[category_ids](events, **kwargs)

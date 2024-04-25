@@ -15,7 +15,7 @@ def keep_columns(cfg: od.Config) -> None:
             # general event info
             "run", "luminosityBlock", "event",
             "PV.npvs", "Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-            #"deterministic_seed", "mc_weight", "cutflow.*",
+            "deterministic_seed", "mc_weight", "cutflow.*",
             # MET
             "MET.pt", "MET.phi", "MET.significance",
             "MET.covXX", "MET.covXY", "MET.covYY",
@@ -24,26 +24,27 @@ def keep_columns(cfg: od.Config) -> None:
             "Jet.btagDeepFlavB", "Jet.hadronFlavour",
             # Tau
             "Tau.pt", "Tau.eta","Tau.phi","Tau.mass","Tau.dxy","Tau.dz", 
-            "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet",
-            "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", 
-            "Tau.idDeepTau2018v2p5VSmu", 
+            "Tau.charge", "Tau.decayModePNet",
             # Muon
-            "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass", "Muon.dxy",
-            "Muon.dz", "Muon.charge", "Muon.pfRelIso03_all",
+            "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass", "Muon.dxy", "Muon.decayModePNet",
+            "Muon.dz", "Muon.charge", 
             # Electron
-            "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy",
-            "Electron.dz", "Electron.charge", "Electron.pfRelIso03_all",
+            "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy", 
+            "Electron.decayModePNet", "Electron.dz", "Electron.charge",
             # customized columns
-            #"channel_id", "process_id", "hcand.*",
-            #"single_electron_triggered", "cross_electron_triggered",
-            #"single_muon_triggered", "cross_muon_triggered",
-            #"cross_muon_triggered",
+            "channel_id", "process_id",
+            "single_electron_triggered", "cross_electron_triggered",
+            "single_muon_triggered", "cross_muon_triggered",
+            "cross_tau_triggered",
             # columns added during selection
-            ColumnCollection.ALL_FROM_SELECTOR,
+            "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.decayModePNet",
+            #ColumnCollection.ALL_FROM_SELECTOR,
         },
         "cf.MergeSelectionMasks": {
-            "normalization_weight", "cutflow.*", "process_id", "category_ids", 
+            "normalization_weight", 
+            "cutflow.*", "process_id", "category_ids", 
             "channel_id",
+            #ColumnCollection.ALL_FROM_SELECTOR,
         },
         "cf.UniteColumns": {
             "*",

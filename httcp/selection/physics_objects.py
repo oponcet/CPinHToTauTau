@@ -9,6 +9,7 @@ from collections import defaultdict
 from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.selection.util import sorted_indices_from_mask
 from columnflow.util import maybe_import, DotDict
+from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
 from httcp.util import IF_NANO_V9, IF_NANO_V11
 
@@ -28,6 +29,9 @@ ak = maybe_import("awkward")
         "Muon.pfRelIso04_all", "Muon.isGlobal", "Muon.isPFcand", 
         #"Muon.isTracker",
     },
+    produces={
+        "Muon.*",
+    },
     exposed=False,
 )
 def muon_selection(
@@ -42,6 +46,7 @@ def muon_selection(
       - Isolation working point: https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2?rev=59
       - ID und ISO : https://twiki.cern.ch/twiki/bin/view/CMS/MuonUL2017?rev=15
     """
+    events = set_ak_column(events, "Muon.decayModePNet", -2)
     good_selections = {
         "muon_pt_26"          : events.Muon.pt > 26,
         "muon_eta_2p4"        : abs(events.Muon.eta) < 2.4,
@@ -120,6 +125,9 @@ def muon_selection(
         IF_NANO_V11("Electron.mvaIso_WP80", "Electron.mvaIso_WP90", "Electron.mvaNoIso_WP90"),
         "Electron.cutBased",
     },
+    produces={
+        "Electron.*",
+    },
     exposed=False,
 )
 def electron_selection(
@@ -133,6 +141,7 @@ def electron_selection(
     References:
       - https://twiki.cern.ch/twiki/bin/view/CMS/EgammaNanoAOD?rev=4
     """
+    events = set_ak_column(events, "Electron.decayModePNet", -1)
     # >= nano v10
     mva_iso_wp80 = events.Electron.mvaIso_WP80
     mva_iso_wp90 = events.Electron.mvaIso_WP90
@@ -213,6 +222,10 @@ def electron_selection(
         "Tau.idDeepTau2018v2p5VSe",
         "Tau.idDeepTau2018v2p5VSmu", 
         "Tau.idDeepTau2018v2p5VSjet",
+        "Tau.decayModePNet",
+    },
+    produces={
+        "Tau.*",
     },
     exposed=False,
 )
@@ -241,6 +254,11 @@ def tau_selection(
         "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_vs_jet.medium,
         "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_vs_e.vvloose,
         "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_vs_mu.tight,
+        "DecayModePNet" : ((events.Tau.decayModePNet == 0) 
+                           | (events.Tau.decayModePNet == 1)
+                           | (events.Tau.decayModePNet == 2)
+                           | (events.Tau.decayModePNet == 10)
+                           | (events.Tau.decayModePNet == 11))
         #"CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
         #"CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
     }
@@ -255,6 +273,13 @@ def tau_selection(
     for cut in good_selections.keys():
         good_tau_mask = good_tau_mask & good_selections[cut]
         selection_steps[cut] = good_tau_mask
+        
+    if electron_indices is not None:
+        good_tau_mask = good_tau_mask & ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.2, axis=2)
+        selection_steps["clean against electrons"] = good_tau_mask 
+    if muon_indices is not None:
+        good_tau_mask = good_tau_mask & ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.2, axis=2)
+        selection_steps["clean against muons"] = good_tau_mask
 
     # convert to sorted indices
     good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
@@ -275,6 +300,9 @@ def tau_selection(
     uses={
         "Jet.pt", "Jet.eta", "Jet.phi", "Jet.mass",
         "Jet.jetId", "Jet.puId", "Jet.btagDeepFlavB"
+    },
+    produces={
+        "Jet.*",
     },
     exposed=False,
 )
