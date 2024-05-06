@@ -59,7 +59,6 @@ def manual_transform(col: ak.Array, decayMode_: Optional[int]=None):
             "phi": col.phi,
             "mass": col.mass,
             "charge": col.charge,
-            #"decayMode": col.decayMode if "decayMode" in col.fields else -99 * ak.ones_like(col.pt),
             "decayMode": decayMode,
         },
         with_name="PtEtaPhiMLorentzVector",
@@ -87,8 +86,6 @@ def custom_increment_stats(
     unique_process_ids = np.unique(events.process_id)
     # increment plain counts
     n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
-    #from IPython import embed
-    #embed()
     stats["num_events"] = n_evt_per_file
     stats["num_events_selected"] += ak.sum(event_mask, axis=0)
     if self.dataset_inst.is_mc:
@@ -145,18 +142,11 @@ def custom_increment_stats(
         match_trigobj,
         increment_stats, 
         custom_increment_stats,
-        #hcand_features,
         higgscand,
         higgscandprod, 
-        #push_hcand,
     },
     produces={
         # selectors / producers whose newly created columns should be kept
-        #"Muon.*",
-        #"Electron.*",
-        #"Tau.*",
-        #"PV.*",
-        #"MET.*",
         mc_weight, 
         trigger_selection, 
         muon_selection, 
@@ -172,11 +162,7 @@ def custom_increment_stats(
         extra_lepton_veto, 
         double_lepton_veto, 
         match_trigobj, 
-        #hcand_features, 
-        #higgscand,
         higgscandprod,
-        #push_hcand,
-        #"hcand.*",
     },
     exposed=True,
 )
@@ -186,8 +172,6 @@ def main(
     stats: defaultdict,
     **kwargs,
 ) -> tuple[ak.Array, SelectionResult]:
-    #events = set_ak_column(events, "Electron.decayMode", -1)
-    #events = set_ak_column(events, "Muon.decayMode", -2)
     
     # ensure coffea behaviors are loaded
     events = self[attach_coffea_behavior](events, **kwargs)
@@ -264,17 +248,9 @@ def main(
                                                            **kwargs)
     results += etau_results
 
-    
-
-    #etau_pair         = ak.concatenate([manual_transform(events.Electron[etau_indices_pair[:,0:1]], -1),
-    #                                    manual_transform(events.Tau[etau_indices_pair[:,1:2]])],
-    #                                   axis=1)
     etau_pair         = ak.concatenate([events.Electron[etau_indices_pair[:,0:1]],
                                         events.Tau[etau_indices_pair[:,1:2]]],
                                        axis=1)
-
-    #from IPython import embed; embed()
-    #1/0
 
     # mu-tau pair i.e. hcand selection
     # e.g. [ [mu1, tau1], [], [mu1, tau2], [], [] ]
@@ -285,9 +261,6 @@ def main(
                                                               **kwargs)
     results += mutau_results
 
-    #mutau_pair = ak.concatenate([manual_transform(events.Muon[mutau_indices_pair[:,0:1]], -2), 
-    #                             manual_transform(events.Tau[mutau_indices_pair[:,1:2]])],
-    #                            axis=1)
     mutau_pair = ak.concatenate([events.Muon[mutau_indices_pair[:,0:1]], 
                                  events.Tau[mutau_indices_pair[:,1:2]]],
                                 axis=1)
@@ -300,9 +273,6 @@ def main(
                                                                  **kwargs)
     results += tautau_results
 
-    #tautau_pair = ak.concatenate([manual_transform(events.Tau[tautau_indices_pair[:,0:1]]), 
-    #                              manual_transform(events.Tau[tautau_indices_pair[:,1:2]])], 
-    #                             axis=1)
     tautau_pair = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
                                   events.Tau[tautau_indices_pair[:,1:2]]], 
                                  axis=1)
@@ -320,8 +290,6 @@ def main(
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
 
-    #from IPython import embed; embed()
-
     # extra lepton veto
     # it is only applied on the events with one higgs candidate only
     events, extra_lepton_veto_results = self[extra_lepton_veto](events,
@@ -333,24 +301,15 @@ def main(
 
     # hcand results
     events, hcand_array, hcand_results = self[higgscand](events, hcand_pairs)
-    #events = self[higgscand](events, hcand_pairs)
-    #hcand_results = SelectionResult(steps={"atleast_one_higgs_cand_per_event": ak.num(ak.firsts(events.hcand.pt, axis=1), axis=1) == 2})
-    #events = self[push_hcand](events, hcand_array, **kwargs)    
+
     results += hcand_results
 
-    #print("ckajsndckjxkas kjdcnsdakj ")
     events, hcandprod_results = self[higgscandprod](events, hcand_array)
     results += hcandprod_results
     
-    #from IPython import embed; embed()
-
     # create process ids
     events = self[process_ids](events, **kwargs)
 
-    #print("ckajsndckjxkas kjdcnsdakj qwb cjhxb ashjbdjhabxhjk")
-
-    #from IPython import embed; embed()
-    
     # combined event selection after all steps
     event_sel = reduce(and_, results.steps.values())
     results.event = event_sel
@@ -403,6 +362,5 @@ def main(
         stats,
     )
     """
-    #from IPython import embed; embed()
-    #1/0
+
     return events, results

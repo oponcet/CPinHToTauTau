@@ -11,9 +11,6 @@ ak = maybe_import("awkward")
 
 
 @selector(
-    #uses={#
-    #
-    #   },
     produces={
         "channel_id",
     },

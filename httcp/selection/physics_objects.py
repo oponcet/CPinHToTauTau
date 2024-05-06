@@ -229,10 +229,9 @@ def electron_selection(
         "Tau.idDeepTau2018v2p5VSjet",
         "Tau.decayMode",
         "Tau.genPartFlav", "Tau.genPartIdx",
-        #tauprod_selection,
     },
     produces={
-        "Tau.rawIdx", #"Tau.tauIdx",
+        "Tau.rawIdx",
     },
     exposed=False,
 )
@@ -250,8 +249,8 @@ def tau_selection(
       - 
     """
     tau_local_indices = ak.local_index(events.Tau)
-    #events = set_ak_column(events, "Tau.tauIdx", tau_local_indices)
     events = set_ak_column(events, "Tau.rawIdx", tau_local_indices)
+
     # https://cms-nanoaod-integration.web.cern.ch/integration/cms-swmaster/data106Xul17v2_v10_doc.html#Tau
     tau_vs_e = DotDict(vvloose=2, vloose=3)
     tau_vs_mu = DotDict(vloose=1, tight=4)
@@ -294,8 +293,6 @@ def tau_selection(
     # convert to sorted indices
     good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
-
-    #events = self[tauprod_selection](events, good_tau_indices)
 
     return events, SelectionResult(
         aux=selection_steps,
@@ -346,7 +343,6 @@ def jet_selection(
     for cut in good_selections.keys():
         good_jet_mask = good_jet_mask & good_selections[cut]
         selection_steps[cut] = good_jet_mask
-        #selection_steps[cut] = ak.sum(good_jet_mask, axis=1) > 0
 
     # b-tagged jets, tight working point
     wp_tight = self.config_inst.x.btag_working_points.deepjet.tight
@@ -369,24 +365,3 @@ def jet_selection(
         },
         aux = selection_steps,
     )
-    
-    
-"""
-@selector(
-    uses={
-        "GenPart.*",
-    },
-    exposed=False
-)
-def gentau_selection(
-        self: Selector,
-        events: ak.Array,
-        **kwargs,
-) -> ak.Array:
-    genpart = events.GenPart
-    istau_mask = (np.abs(genpart.pdgId) == 15) & (genpart.status == 2)
-    
-    return istau_mask
-"""
-
-
