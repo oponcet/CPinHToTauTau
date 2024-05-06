@@ -22,7 +22,6 @@ from columnflow.util import maybe_import
 from columnflow.columnar_util import optional_column as optional
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
-#from httcp.production.main import hcand_features
 from httcp.production.main import cutflow_features
 
 from httcp.selection.physics_objects import *
@@ -33,14 +32,11 @@ from httcp.selection.lepton_pair_tautau import tautau_selection
 from httcp.selection.event_category import get_categories
 from httcp.selection.match_trigobj import match_trigobj
 from httcp.selection.lepton_veto import *
-from httcp.selection.higgscand import higgscand
-
-#from httcp.production.main import push_hcand
+from httcp.selection.higgscand import higgscand, higgscandprod
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
-#from coffea.nanoevents.methods import vector
 
 
 def manual_transform(col: ak.Array, decayMode_: Optional[int]=None):
@@ -50,8 +46,8 @@ def manual_transform(col: ak.Array, decayMode_: Optional[int]=None):
     phi = ak.values_astype(col.phi, "float64")
     mass = ak.values_astype(col.mass, "float64")
     charge = ak.values_astype(col.charge, "float64")
-    if "decayModePNet" in col.fields:
-        decayMode = col.decayModePNet
+    if "decayMode" in col.fields:
+        decayMode = col.decayMode
     else:
         if decayMode_ is not None:
             decayMode = decayMode_ * ak.ones_like(col.pt, dtype="float64")
@@ -63,7 +59,7 @@ def manual_transform(col: ak.Array, decayMode_: Optional[int]=None):
             "phi": col.phi,
             "mass": col.mass,
             "charge": col.charge,
-            #"decayMode": col.decayModePNet if "decayModePNet" in col.fields else -99 * ak.ones_like(col.pt),
+            #"decayMode": col.decayMode if "decayMode" in col.fields else -99 * ak.ones_like(col.pt),
             "decayMode": decayMode,
         },
         with_name="PtEtaPhiMLorentzVector",
@@ -150,7 +146,8 @@ def custom_increment_stats(
         increment_stats, 
         custom_increment_stats,
         #hcand_features,
-        higgscand, 
+        higgscand,
+        higgscandprod, 
         #push_hcand,
     },
     produces={
@@ -159,7 +156,7 @@ def custom_increment_stats(
         #"Electron.*",
         #"Tau.*",
         #"PV.*",
-        "MET.*",
+        #"MET.*",
         mc_weight, 
         trigger_selection, 
         muon_selection, 
@@ -176,7 +173,8 @@ def custom_increment_stats(
         double_lepton_veto, 
         match_trigobj, 
         #hcand_features, 
-        higgscand,
+        #higgscand,
+        higgscandprod,
         #push_hcand,
         #"hcand.*",
     },
@@ -188,8 +186,8 @@ def main(
     stats: defaultdict,
     **kwargs,
 ) -> tuple[ak.Array, SelectionResult]:
-    #events = set_ak_column(events, "Electron.decayModePNet", -1)
-    #events = set_ak_column(events, "Muon.decayModePNet", -2)
+    #events = set_ak_column(events, "Electron.decayMode", -1)
+    #events = set_ak_column(events, "Muon.decayMode", -2)
     
     # ensure coffea behaviors are loaded
     events = self[attach_coffea_behavior](events, **kwargs)
@@ -322,20 +320,8 @@ def main(
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
 
-    """
-    hcand_results = SelectionResult(
-        steps={
-            "Atleast_one_higgs_cand": ak.sum(ak.num(hcand_pairs.pt, axis=-1), axis=-1) > 0,
-        },
-    )
+    #from IPython import embed; embed()
 
-    events = self[hcand_features](events, hcand_pairs)
-
-    events, hcand_results = self[higgscand](events, hcand_pairs)
-    results += hcand_results
-
-    """
-    
     # extra lepton veto
     # it is only applied on the events with one higgs candidate only
     events, extra_lepton_veto_results = self[extra_lepton_veto](events,
@@ -346,15 +332,16 @@ def main(
 
 
     # hcand results
-    events, hcand_results = self[higgscand](events, hcand_pairs)
+    events, hcand_array, hcand_results = self[higgscand](events, hcand_pairs)
     #events = self[higgscand](events, hcand_pairs)
     #hcand_results = SelectionResult(steps={"atleast_one_higgs_cand_per_event": ak.num(ak.firsts(events.hcand.pt, axis=1), axis=1) == 2})
-    #events = self[push_hcand](events, hcand_array, **kwargs)
-    
+    #events = self[push_hcand](events, hcand_array, **kwargs)    
     results += hcand_results
 
-
     #print("ckajsndckjxkas kjdcnsdakj ")
+    events, hcandprod_results = self[higgscandprod](events, hcand_array)
+    results += hcandprod_results
+    
     #from IPython import embed; embed()
 
     # create process ids
@@ -363,7 +350,7 @@ def main(
     #print("ckajsndckjxkas kjdcnsdakj qwb cjhxb ashjbdjhabxhjk")
 
     #from IPython import embed; embed()
-
+    
     # combined event selection after all steps
     event_sel = reduce(and_, results.steps.values())
     results.event = event_sel

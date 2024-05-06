@@ -12,6 +12,8 @@ def keep_columns(cfg: od.Config) -> None:
     # columns to keep after certain steps
     cfg.x.keep_columns = DotDict.wrap({
         "cf.ReduceEvents": {
+            # TauProds
+            "TauProd.*",
             # general event info
             "run", "luminosityBlock", "event",
             "PV.npvs", "Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
@@ -24,21 +26,25 @@ def keep_columns(cfg: od.Config) -> None:
             "Jet.btagDeepFlavB", "Jet.hadronFlavour",
             # Tau
             "Tau.pt", "Tau.eta","Tau.phi","Tau.mass","Tau.dxy","Tau.dz", 
-            "Tau.charge", "Tau.decayModePNet",
+            "Tau.charge", "Tau.decayMode", "Tau.genPartFlav", "Tau.genPartIdx",
             # Muon
-            "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass", "Muon.dxy", "Muon.decayModePNet",
-            "Muon.dz", "Muon.charge", 
+            "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass", "Muon.dxy", "Muon.decayMode",
+            "Muon.dz", "Muon.charge", "Muon.genPartFlav", "Muon.genPartIdx",
             # Electron
             "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy", 
-            "Electron.decayModePNet", "Electron.dz", "Electron.charge",
+            "Electron.decayMode", "Electron.dz", "Electron.charge",
+            "Electron.genPartFlav", "Electron.genPartIdx",
             # customized columns
             "channel_id", "process_id",
             "single_electron_triggered", "cross_electron_triggered",
             "single_muon_triggered", "cross_muon_triggered",
             "cross_tau_triggered",
             # columns added during selection
-            "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.decayModePNet",
+            "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.decayMode",
+            "hcand.genPartFlav", "hcand.genPartIdx",
             #ColumnCollection.ALL_FROM_SELECTOR,
+            "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass", "hcandprod.charge",
+            "hcandprod.pdgId",
         },
         "cf.MergeSelectionMasks": {
             "normalization_weight", 
@@ -238,6 +244,13 @@ def add_hcand_features(cfg: od.Config) -> None:
         null_value=EMPTY_FLOAT,
         binning=(40, 0, 5),
         x_title=r"$\Delta R(l,l)$",
+    )
+    cfg.add_variable(
+        name="phicp_NP",
+        expression="phicp_NP",
+        null_value=EMPTY_FLOAT,
+        binning=(10, 0, 6.4),
+        x_title=r"$PhiCP_NP$",
     )
 
 

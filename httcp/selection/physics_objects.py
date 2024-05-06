@@ -27,10 +27,11 @@ ak = maybe_import("awkward")
     uses={
         "Muon.pt", "Muon.eta", "Muon.phi", "Muon.dxy", "Muon.dz", "Muon.mediumId", 
         "Muon.pfRelIso04_all", "Muon.isGlobal", "Muon.isPFcand", 
+        "Muon.genPartFlav", "Muon.genPartIdx",
         #"Muon.isTracker",
     },
     produces={
-        "Muon.*",
+        "Muon.rawIdx", "Muon.decayMode",
     },
     exposed=False,
 )
@@ -46,7 +47,8 @@ def muon_selection(
       - Isolation working point: https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonIdRun2?rev=59
       - ID und ISO : https://twiki.cern.ch/twiki/bin/view/CMS/MuonUL2017?rev=15
     """
-    events = set_ak_column(events, "Muon.decayModePNet", -2)
+    events = set_ak_column(events, "Muon.rawIdx",    ak.local_index(events.Muon))
+    events = set_ak_column(events, "Muon.decayMode", -2)
     good_selections = {
         "muon_pt_26"          : events.Muon.pt > 26,
         "muon_eta_2p4"        : abs(events.Muon.eta) < 2.4,
@@ -123,10 +125,10 @@ def muon_selection(
         "Electron.pfRelIso03_all", "Electron.convVeto", #"Electron.lostHits",
         IF_NANO_V9("Electron.mvaFall17V2Iso_WP80", "Electron.mvaFall17V2Iso_WP90", "Electron.mvaFall17V2noIso_WP90"),
         IF_NANO_V11("Electron.mvaIso_WP80", "Electron.mvaIso_WP90", "Electron.mvaNoIso_WP90"),
-        "Electron.cutBased",
+        "Electron.cutBased", "Electron.genPartFlav", "Electron.genPartIdx",
     },
     produces={
-        "Electron.*",
+        "Electron.rawIdx", "Electron.decayMode",
     },
     exposed=False,
 )
@@ -141,7 +143,9 @@ def electron_selection(
     References:
       - https://twiki.cern.ch/twiki/bin/view/CMS/EgammaNanoAOD?rev=4
     """
-    events = set_ak_column(events, "Electron.decayModePNet", -1)
+    events = set_ak_column(events, "Electron.rawIdx",    ak.local_index(events.Electron))
+    events = set_ak_column(events, "Electron.decayMode", -1)
+
     # >= nano v10
     mva_iso_wp80 = events.Electron.mvaIso_WP80
     mva_iso_wp90 = events.Electron.mvaIso_WP90
@@ -210,6 +214,7 @@ def electron_selection(
     ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
 
 
+
 # ------------------------------------------------------------------------------------------------------- #
 # Tau Selection
 # Reference:
@@ -222,10 +227,12 @@ def electron_selection(
         "Tau.idDeepTau2018v2p5VSe",
         "Tau.idDeepTau2018v2p5VSmu", 
         "Tau.idDeepTau2018v2p5VSjet",
-        "Tau.decayModePNet",
+        "Tau.decayMode",
+        "Tau.genPartFlav", "Tau.genPartIdx",
+        #tauprod_selection,
     },
     produces={
-        "Tau.*",
+        "Tau.rawIdx", #"Tau.tauIdx",
     },
     exposed=False,
 )
@@ -242,6 +249,9 @@ def tau_selection(
     References:
       - 
     """
+    tau_local_indices = ak.local_index(events.Tau)
+    #events = set_ak_column(events, "Tau.tauIdx", tau_local_indices)
+    events = set_ak_column(events, "Tau.rawIdx", tau_local_indices)
     # https://cms-nanoaod-integration.web.cern.ch/integration/cms-swmaster/data106Xul17v2_v10_doc.html#Tau
     tau_vs_e = DotDict(vvloose=2, vloose=3)
     tau_vs_mu = DotDict(vloose=1, tight=4)
@@ -254,11 +264,11 @@ def tau_selection(
         "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_vs_jet.medium,
         "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_vs_e.vvloose,
         "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_vs_mu.tight,
-        "DecayModePNet" : ((events.Tau.decayModePNet == 0) 
-                           | (events.Tau.decayModePNet == 1)
-                           | (events.Tau.decayModePNet == 2)
-                           | (events.Tau.decayModePNet == 10)
-                           | (events.Tau.decayModePNet == 11))
+        "DecayModePNet" : ((events.Tau.decayMode == 0) 
+                           | (events.Tau.decayMode == 1)
+                           | (events.Tau.decayMode == 2)
+                           | (events.Tau.decayMode == 10)
+                           | (events.Tau.decayMode == 11))
         #"CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
         #"CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
     }
@@ -285,6 +295,8 @@ def tau_selection(
     good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
 
+    #events = self[tauprod_selection](events, good_tau_indices)
+
     return events, SelectionResult(
         aux=selection_steps,
     ), good_tau_indices
@@ -300,9 +312,6 @@ def tau_selection(
     uses={
         "Jet.pt", "Jet.eta", "Jet.phi", "Jet.mass",
         "Jet.jetId", "Jet.puId", "Jet.btagDeepFlavB"
-    },
-    produces={
-        "Jet.*",
     },
     exposed=False,
 )
@@ -379,3 +388,5 @@ def gentau_selection(
     
     return istau_mask
 """
+
+
