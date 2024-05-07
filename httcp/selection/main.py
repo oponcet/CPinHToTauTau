@@ -231,7 +231,7 @@ def main(
                                                                                         good_ele_indices,
                                                                                         good_muon_indices,
                                                                                         good_tau_indices,
-                                                                                        False)
+                                                                                        True)
 
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,

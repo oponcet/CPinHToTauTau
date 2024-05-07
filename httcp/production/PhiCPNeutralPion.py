@@ -33,7 +33,7 @@ class PhiCPNPMethod:
 
     def get_pi_a1(self, p4_pi):
         #from IPython import embed; embed()
-        p4_pi = 1 * p4_pi
+        #p4_pi = 1 * p4_pi
         Minv1 = (p4_pi[:,:1] + p4_pi[:,1:2]).mass
         Minv2 = (p4_pi[:,:1] + p4_pi[:,2:3]).mass
         Pi = ak.where(np.abs(0.77526-Minv1) < np.abs(0.77526-Minv2), p4_pi[:,1:2], p4_pi[:,2:3])
@@ -41,14 +41,6 @@ class PhiCPNPMethod:
 
 
     def getPhiCP_NP(self, PiPlus, PiMinus, PiZeroPlus, PiZeroMinus):
-        PiPlus  = 1 * PiPlus
-        PiMinus = 1 * PiMinus
-        PiZeroPlus  = 1 * PiZeroPlus
-        PiZeroMinus = 1 * PiZeroMinus
-
-        #from IPython import embed; embed()
-        #1/0
-
         ZMF = PiPlus + PiMinus
         boostv = ZMF.boostvec
         # minus side
@@ -99,9 +91,6 @@ class PhiCPNPMethod:
             PiZeroMinus = p4hcand1_pi0
             PiPlus      = p4hcand2_pi
             PiZeroPlus  = p4hcand2_pi0
-
-            #from IPython import embed; embed()
-            #1/0
             
         elif tag == "a1rho":
             p4hcand1_pi_3 = ak.where(ak.num(p4hcand1_pi.pt, axis=1) == 3, p4hcand1_pi, p4hcand1_pi[:,:0])
@@ -120,9 +109,6 @@ class PhiCPNPMethod:
             PiZeroPlus = ak.where(ak.num(p4hcand2_pi.pt, axis=1) == 3, 
                                   p4hcand2_pi[:,:1],
                                   p4hcand2_pi0)
-
-            #from IPython import embed; embed()
-            #1/0
             
         elif tag == "a1a1":
             PiMinus     = self.get_pi_a1(p4hcand1_pi)
