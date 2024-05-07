@@ -95,12 +95,12 @@ def reArrangeDecayProducts(
     # hcand1 and its decay products
     p4_hcand1     = ak.with_name(hcand1, "PtEtaPhiMLorentzVector")
     p4_hcand1_pi  = ak.with_name(hcand1prod_pions, "PtEtaPhiMLorentzVector")
-    p4_hcand1_pi0 = reconstructPi0(hcand1prod_photons)
+    p4_hcand1_pi0 = reconstructPi0(p4_hcand1, hcand1prod_photons)
 
     # hcand2 and its decay products
     p4_hcand2     = ak.with_name(hcand2, "PtEtaPhiMLorentzVector")
     p4_hcand2_pi  = ak.with_name(hcand2prod_pions, "PtEtaPhiMLorentzVector")
-    p4_hcand2_pi0 = reconstructPi0(hcand2prod_photons)
+    p4_hcand2_pi0 = reconstructPi0(p4_hcand2, hcand2prod_photons)
 
     return events, {"p4_hcand1"     : p4_hcand1, 
                     "p4_hcand1_pi"  : p4_hcand1_pi, 
