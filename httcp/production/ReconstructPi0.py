@@ -62,7 +62,7 @@ def reconstructPi0(hcandp4, photons, method: Optional[str] = "simpleIC"):
                               photons_p4[:,0:1],
                               photons_p4[:,:0])
         
-        deta_photons_hcand = (photons_p4).metric_table(hcandp4, metric = lambda a,b: np.abs(a.eta - b.eta)))
+        deta_photons_hcand = (photons_p4).metric_table(hcandp4, metric = lambda a,b: np.abs(a.eta - b.eta))
         dphi_photons_hcand = (photons_p4).metric_table(hcandp4, metric = lambda a,b: np.abs(a.delta_phi(b)))
         
         maxeta_photons = getMaxEtaTauStrip(photons_p4.pt)
