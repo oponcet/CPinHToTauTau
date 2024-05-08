@@ -19,10 +19,10 @@ from columnflow.production.util import attach_coffea_behavior
 
 from columnflow.util import maybe_import
 from columnflow.columnar_util import optional_column as optional
-from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
+from columnflow.columnar_util import EMPTY_FLOAT, Route
 
 from httcp.production.main import hcand_features
-from httcp.production.main import cutflow_features
+#from httcp.production.main import cutflow_features
 
 from httcp.selection.physics_objects import *
 from httcp.selection.trigger import trigger_selection
@@ -95,7 +95,7 @@ def custom_increment_stats(
     uses={
         "event",
         # selectors / producers called within _this_ selector
-        json_filter, met_filters, mc_weight, cutflow_features, process_ids,
+        json_filter, met_filters, mc_weight, process_ids,
         trigger_selection, muon_selection, electron_selection, tau_selection, jet_selection,
         etau_selection, mutau_selection, tautau_selection, get_categories,
         extra_lepton_veto, double_lepton_veto, match_trigobj,
@@ -105,7 +105,7 @@ def custom_increment_stats(
     },
     produces={
         # selectors / producers whose newly created columns should be kept
-        mc_weight, trigger_selection, get_categories, cutflow_features, process_ids,
+        mc_weight, trigger_selection, get_categories, process_ids,
         match_trigobj, hcand_features, 
         #higgscand, 
     },
@@ -164,7 +164,13 @@ def main(
     results += tau_results
 
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    results.steps["At least two leptons of any sign"] = ak.num(_lepton_indices, axis=1) >= 2
+    
+    lepton_results = SelectionResult(
+        steps={
+            "multiple_leptons": ak.num(_lepton_indices, axis=1) >= 2
+        },
+    )
+    results += lepton_results
 
     # trigger obj matching
     # INFO: for now, it is switched off
@@ -234,7 +240,7 @@ def main(
     
     hcand_results = SelectionResult(
         steps={
-            "Atleast_one_higgs_cand": ak.sum(ak.num(hcand_pairs.pt, axis=-1), axis=-1) > 0,
+            "has_higgs_cand": ak.sum(ak.num(hcand_pairs.pt, axis=-1), axis=-1) > 0,
         },
     )
 
@@ -261,7 +267,7 @@ def main(
         events = self[mc_weight](events, **kwargs)
 
     # add cutflow features, passing per-object masks
-    events = self[cutflow_features](events, results.objects, **kwargs)
+    #events = self[cutflow_features](events, results.objects, **kwargs)
 
 
     # increment stats

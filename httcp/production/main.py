@@ -15,6 +15,11 @@ from columnflow.selection.util import create_collections_from_masks
 from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
+from httcp.production.mutau_vars import dilepton_mass, mT, rel_charge
+from httcp.production.weights import pu_weight, muon_weight, tau_weight
+from httcp.production.sample_split import split_dy
+from httcp.calibration.tau import tau_energy_scale
+
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
@@ -75,70 +80,60 @@ def hcand_features(
     return events
 
 
-
 @producer(
     uses={
-        mc_weight, category_ids,
-        # nano columns
-        "Jet.pt",
+        rel_charge, category_ids, features, normalization_weights , dilepton_mass, mT, pu_weight, muon_weight, tau_weight, split_dy
     },
     produces={
-        mc_weight, category_ids,
-        # new columns
-        "cutflow.jet1_pt",
-    },
-)
-def cutflow_features(
-    self: Producer,
-    events: ak.Array,
-    object_masks: dict[str, dict[str, ak.Array]],
-    **kwargs,
-) -> ak.Array:
-    if self.dataset_inst.is_mc:
-        events = self[mc_weight](events, **kwargs)
-
-    # apply object masks and create new collections
-    reduced_events = create_collections_from_masks(events, object_masks)
-
-    # create category ids per event and add categories back to the
-    events = self[category_ids](reduced_events, target_events=events, **kwargs)
-
-    # add cutflow columns
-    events = set_ak_column(
-        events,
-        "cutflow.jet1_pt",
-        Route("Jet.pt[:,0]").apply(events, EMPTY_FLOAT),
-    )
-
-    return events
-
-
-@producer(
-    uses={
-        features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
-    },
-    produces={
-        features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
+        rel_charge, category_ids, features, normalization_weights, dilepton_mass, mT, pu_weight, muon_weight, tau_weight, split_dy
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
-    #from IPython import embed; embed()
-    #1/0
-    # features
-    events = self[features](events, **kwargs)
-
-    # category ids
+    from IPython import embed; embed()
+    events = self[rel_charge](events, **kwargs)
     events = self[category_ids](events, **kwargs)
-
-    # deterministic seeds
-    events = self[deterministic_seeds](events, **kwargs)
-
-    # mc-only weights
     if self.dataset_inst.is_mc:
-        # normalization weights
         events = self[normalization_weights](events, **kwargs)
-
-        # muon weights
-        #events = self[muon_weights](events, **kwargs)
-    
+        processes = self.dataset_inst.processes.names()
+        if ak.any(['dy' in proc for proc in processes]):
+            print("Splitting Drell-Yan dataset...")
+            events = self[split_dy](events, **kwargs)
+        events = self[pu_weight](events, **kwargs)
+        events = self[muon_weight](events, **kwargs)
+        events = self[tau_weight](events, **kwargs) 
+           
+    # features
+    events = self[dilepton_mass](events, **kwargs)
+    events = self[mT](events, **kwargs)
     return events
+
+
+# @producer(
+#     uses={
+#         features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
+#     },
+#     produces={
+#         features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
+#     },
+# )
+# def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
+#     #from IPython import embed; embed()
+#     #1/0
+#     # features
+#     events = self[features](events, **kwargs)
+
+#     # category ids
+#     events = self[category_ids](events, **kwargs)
+
+#     # deterministic seeds
+#     events = self[deterministic_seeds](events, **kwargs)
+
+#     # mc-only weights
+#     if self.dataset_inst.is_mc:
+#         # normalization weights
+#         events = self[normalization_weights](events, **kwargs)
+
+#         # muon weights
+#         #events = self[muon_weights](events, **kwargs)
+    
+#     return events

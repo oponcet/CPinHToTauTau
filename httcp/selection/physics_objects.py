@@ -9,6 +9,7 @@ from collections import defaultdict
 from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.selection.util import sorted_indices_from_mask
 from columnflow.util import maybe_import, DotDict
+from columnflow.columnar_util import optional_column as optional
 
 from httcp.util import IF_NANO_V9, IF_NANO_V11
 
@@ -274,7 +275,8 @@ def tau_selection(
 @selector(
     uses={
         "Jet.pt", "Jet.eta", "Jet.phi", "Jet.mass",
-        "Jet.jetId", "Jet.puId", "Jet.btagDeepFlavB"
+        "Jet.jetId", "Jet.btagDeepFlavB",
+        optional("Jet.puId")# Column needed for Run2 dataset to reject jets comming from pile-up
     },
     exposed=False,
 )
@@ -284,42 +286,36 @@ def jet_selection(
         **kwargs
 ) -> tuple[ak.Array, SelectionResult]:
     """
-    Tau selection returning two sets of indidces for default and veto muons.
-    
-    References:
-      - 
+    This function vetoes b-jets with sufficiently high pt and incide eta region of interest
     """
-    is_2016 = self.config_inst.campaign.x.year == 2016
-    sorted_indices = ak.argsort(events.Jet.pt, axis=-1, ascending=False)
+    year = self.config_inst.campaign.x.year
+    is_run2 = (self.config_inst.campaign.x.year in [2016,2017,2018])
 
+    sorted_indices = ak.argsort(events.Jet.pt, axis=-1, ascending=False)
     # nominal selection
-    good_selections = {
+    jet_selections = {
         "jet_pt_30"               : events.Jet.pt > 30.0,
         "jet_eta_2.4"             : abs(events.Jet.eta) < 2.4,
-        "jet_id"                  : events.Jet.jetId == 6,  # tight plus lepton veto
-        "jet_puId"                : ((events.Jet.pt >= 50.0) 
-                                     | (events.Jet.puId == (1 if is_2016 else 4)))
+        "jet_id"                  : events.Jet.jetId == 0b110,  # Jet ID flag: bit2 is tight, bit3 is tightLepVeto 
     }
     
-    jet_mask  = ak.local_index(events.Jet.pt) >= 0
+    if is_run2: good_selections["jet_puId"] = ((events.Jet.pt >= 50.0) | (events.Jet.puId)) #For the Run2 there was an additional selection to mitigate pile-up jets
     
-    good_jet_mask = jet_mask
+    # b-tagged jets, tight working point
+    btag_wp = self.config_inst.x.btag_working_points[year].deepjet.medium
+    jet_selections["btag"] = events.Jet.btagDeepFlavB >= btag_wp
+    
+    jet_mask  = ak.local_index(events.Jet.pt) >= 0 #Create a mask filled with ones
     selection_steps = {}
 
-    for cut in good_selections.keys():
-        good_jet_mask = good_jet_mask & good_selections[cut]
-        selection_steps[cut] = good_jet_mask
-        #selection_steps[cut] = ak.sum(good_jet_mask, axis=1) > 0
+    for cut in jet_selections.keys():
+        jet_mask = jet_mask & jet_selections[cut]
+        selection_steps[cut] = jet_mask
 
-    # b-tagged jets, tight working point
-    wp_tight = self.config_inst.x.btag_working_points.deepjet.tight
-    bjet_mask = (good_jet_mask) & (events.Jet.btagDeepFlavB >= wp_tight)
-
-    good_jet_indices = sorted_indices[good_jet_mask[sorted_indices]]
-    good_jet_indices = ak.values_astype(good_jet_indices, np.int32)
-
+    jet_indices = ak.values_astype(sorted_indices[~jet_mask[sorted_indices]], np.int32) #Save the jets that do not satisfy veto criteria 
+   
     # bjet veto
-    bjet_veto = ak.sum(bjet_mask, axis=1) == 0
+    bjet_veto = ak.sum(jet_mask, axis=1) == 0
 
     return events, SelectionResult(
         steps = {
@@ -327,7 +323,7 @@ def jet_selection(
         }, 
         objects = {
             "Jet": {
-                "Jet": good_jet_indices,
+                "Jet": jet_indices,
             },
         },
         aux = selection_steps,

@@ -14,36 +14,40 @@ def keep_columns(cfg: od.Config) -> None:
         "cf.ReduceEvents": {
             # general event info
             "run", "luminosityBlock", "event",
-            "PV.npvs", "Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
+            "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
+            "hcand"
             #"deterministic_seed", "mc_weight", "cutflow.*",
-            # MET
-            "MET.pt", "MET.phi", "MET.significance",
-            "MET.covXX", "MET.covXY", "MET.covYY",
-            # Jet
-            "Jet.pt", "Jet.eta", "Jet.phi", "Jet.mass", 
-            "Jet.btagDeepFlavB", "Jet.hadronFlavour",
-            # Tau
-            "Tau.pt", "Tau.eta","Tau.phi","Tau.mass","Tau.dxy","Tau.dz", 
-            "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet",
-            "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", 
-            "Tau.idDeepTau2018v2p5VSmu", 
-            # Muon
-            "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass", "Muon.dxy",
-            "Muon.dz", "Muon.charge", "Muon.pfRelIso03_all",
-            # Electron
-            "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy",
-            "Electron.dz", "Electron.charge", "Electron.pfRelIso03_all",
-            # customized columns
-            #"channel_id", "process_id", "hcand.*",
-            #"single_electron_triggered", "cross_electron_triggered",
-            #"single_muon_triggered", "cross_muon_triggered",
-            #"cross_muon_triggered",
-            # columns added during selection
-            ColumnCollection.ALL_FROM_SELECTOR,
+        } | {f"PuppiMET.{var}" for var in [
+                "pt", "phi", "significance",
+                "covXX", "covXY", "covYY",
+                ]     
+        } | {f"Jet.{var}" for var in [
+                "pt", "eta", "phi", "mass", 
+                "btagDeepFlavB", "hadronFlavour"
+                ] 
+        } | {f"Tau.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", 
+                "rawDeepTau2018v2p5VSjet","idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", 
+                "decayMode", "decayModePNet", "genPartFlav",
+                "pt_no_tes", "mass_no_tes"
+                ] 
+        } | {f"Muon.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", 
+                "pfRelIso04_all","mT"
+                ] 
+        } | {f"Electron.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", 
+                "pfRelIso03_all","mT"
+                ] 
+        } | {
+        f"TrigObj.{var}" for var in [
+            "id", "pt", "eta", "phi", "filterBits",
+            ]
+        } | {
+        ColumnCollection.ALL_FROM_SELECTOR
         },
         "cf.MergeSelectionMasks": {
-            "normalization_weight", "cutflow.*", "process_id", "category_ids", 
-            "channel_id",
+            "normalization_weight", "cutflow.*", "process_id", "category_ids",
         },
         "cf.UniteColumns": {
             "*",
@@ -107,6 +111,14 @@ def add_lepton_features(cfg: od.Config) -> None:
                 binning=(25, -2.5, 2.5),
                 x_title=obj + r" $\eta$",
             )
+        cfg.add_variable(
+            name=f"{obj.lower()}_mT",
+            expression=f"{obj}.mT",
+            null_value=EMPTY_FLOAT,
+            binning=(40, 0.0, 200.0),
+            unit="GeV",
+            x_title=obj + r"$m_{T}$",
+    )
 
 
 def add_jet_features(cfg: od.Config) -> None:
@@ -151,6 +163,13 @@ def add_jet_features(cfg: od.Config) -> None:
         unit="GeV",
         x_title="HT",
     )
+    cfg.add_variable(
+        name="jet_raw_DeepJetFlavB",
+        expression="Jet.btagDeepFlavB",
+        null_value=EMPTY_FLOAT,
+        binning=(30, 0,1),
+        x_title=r"raw DeepJetFlawB",
+    )
 
 
 def add_highlevel_features(cfg: od.Config) -> None:    
@@ -164,6 +183,32 @@ def add_highlevel_features(cfg: od.Config) -> None:
         binning=(20, 0.0, 100.0),
         x_title=r"MET",
     )
+    cfg.add_variable(
+        name="puppi_met_pt",
+        expression="PuppiMET.pt",
+        null_value=EMPTY_FLOAT,
+        binning=(50, 0,100),
+        unit="GeV",
+        x_title=r"MET $p_T$",
+    )
+    cfg.add_variable(
+        name="puppi_met_phi",
+        expression="PuppiMET.phi",
+        null_value=EMPTY_FLOAT,
+        binning=(30, -3,3),
+        x_title=r"MET $\phi$",
+    )
+    cfg.add_variable(
+        name="mutau_mass",
+        expression="mutau_mass",
+        null_value=EMPTY_FLOAT,
+        binning=(40, 0.0, 200.0),
+        unit="GeV",
+        x_title=r"$m_{vis}$",
+    )
+    
+    
+    
     
 
 def add_weight_features(cfg: od.Config) -> None:
@@ -238,7 +283,56 @@ def add_hcand_features(cfg: od.Config) -> None:
         binning=(40, 0, 5),
         x_title=r"$\Delta R(l,l)$",
     )
-
+def add_test_variables(cfg: od.Config) -> None:
+        cfg.add_variable(
+            name="tau_pt_no_tes",
+            expression="Tau.pt_no_tes",
+            null_value=EMPTY_FLOAT,
+            binning=(30, 25, 85),
+            unit="GeV",
+            x_title=r"tau $p_{T}$ (no TES)",
+        )
+        cfg.add_variable(
+            name="mutau_mass_no_tes",
+            expression="mutau_mass_no_tes",
+            null_value=EMPTY_FLOAT,
+            binning=(40, 0.0, 200.0),
+            unit="GeV",
+            x_title=r"$m_{vis}$(no TES)",
+        )
+    
+         #single bin variables for transfer factor calculation
+        cfg.add_variable(
+            name="muon_eta_1bin",
+            expression="Muon.eta",
+            null_value=EMPTY_FLOAT,
+            binning=(1, -3.0, 3.0),
+            x_title=r"muon $\eta$",
+        )
+        cfg.add_variable(
+            name="muon_pt_1bin",
+            expression="Muon.pt",
+            null_value=EMPTY_FLOAT,
+            binning=(1, 20.0, 80.0),
+            unit="GeV",
+            x_title=r"muon $p_{T}$",
+        )
+        cfg.add_variable(
+            name="muon_phi_1bin",
+            expression="Muon.phi",
+            null_value=EMPTY_FLOAT,
+            binning=(1, -3.14159, 3.14159),
+            x_title=r"muon $\varphi$",
+        )
+        cfg.add_variable(
+            name="mutau_mass_1bin",
+            expression="mutau_mass",
+            null_value=EMPTY_FLOAT,
+            binning=(1, 0.0, 200.0),
+            unit="GeV",
+            x_title=r"$m_{vis}$",
+        )
+        
 
 
 def add_variables(cfg: od.Config) -> None:
@@ -252,3 +346,4 @@ def add_variables(cfg: od.Config) -> None:
     add_hcand_features(cfg)
     add_weight_features(cfg)
     add_cutflow_features(cfg)
+    add_test_variables(cfg)
