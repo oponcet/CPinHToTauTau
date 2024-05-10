@@ -12,10 +12,12 @@ def keep_columns(cfg: od.Config) -> None:
     # columns to keep after certain steps
     cfg.x.keep_columns = DotDict.wrap({
         "cf.ReduceEvents": {
+            # TauProds
+            "TauProd.*",
             # general event info
             "run", "luminosityBlock", "event",
             "PV.npvs", "Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-            #"deterministic_seed", "mc_weight", "cutflow.*",
+            "deterministic_seed", "mc_weight", "cutflow.*",
             # MET
             "MET.pt", "MET.phi", "MET.significance",
             "MET.covXX", "MET.covXY", "MET.covYY",
@@ -24,26 +26,33 @@ def keep_columns(cfg: od.Config) -> None:
             "Jet.btagDeepFlavB", "Jet.hadronFlavour",
             # Tau
             "Tau.pt", "Tau.eta","Tau.phi","Tau.mass","Tau.dxy","Tau.dz", 
-            "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet",
-            "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", 
-            "Tau.idDeepTau2018v2p5VSmu", 
+            "Tau.charge", "Tau.decayMode", "Tau.genPartFlav", "Tau.genPartIdx",
             # Muon
-            "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass", "Muon.dxy",
-            "Muon.dz", "Muon.charge", "Muon.pfRelIso03_all",
+            "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass", "Muon.dxy", "Muon.decayMode",
+            "Muon.dz", "Muon.charge", "Muon.genPartFlav", "Muon.genPartIdx",
             # Electron
-            "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy",
-            "Electron.dz", "Electron.charge", "Electron.pfRelIso03_all",
+            "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy", 
+            "Electron.decayMode", "Electron.dz", "Electron.charge",
+            "Electron.genPartFlav", "Electron.genPartIdx",
             # customized columns
-            #"channel_id", "process_id", "hcand.*",
-            #"single_electron_triggered", "cross_electron_triggered",
-            #"single_muon_triggered", "cross_muon_triggered",
-            #"cross_muon_triggered",
+            "channel_id", "process_id",
+            "single_electron_triggered", "cross_electron_triggered",
+            "single_muon_triggered", "cross_muon_triggered",
+            "cross_tau_triggered",
             # columns added during selection
-            ColumnCollection.ALL_FROM_SELECTOR,
+            "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.decayMode",
+            "hcand.genPartFlav", "hcand.rawIdx",
+            #ColumnCollection.ALL_FROM_SELECTOR,
+            "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass", "hcandprod.charge",
+            "hcandprod.pdgId", "hcandprod.tauIdx",
+            # GenPart
+            "GenTau.*","GenTauProd.*",
         },
         "cf.MergeSelectionMasks": {
-            "normalization_weight", "cutflow.*", "process_id", "category_ids", 
+            "normalization_weight", 
+            "cutflow.*", "process_id", "category_ids", 
             "channel_id",
+            #ColumnCollection.ALL_FROM_SELECTOR,
         },
         "cf.UniteColumns": {
             "*",
@@ -237,6 +246,13 @@ def add_hcand_features(cfg: od.Config) -> None:
         null_value=EMPTY_FLOAT,
         binning=(40, 0, 5),
         x_title=r"$\Delta R(l,l)$",
+    )
+    cfg.add_variable(
+        name="phicp_NP",
+        expression="phicp_NP",
+        null_value=EMPTY_FLOAT,
+        binning=(10, 0, 6.4),
+        x_title=r"$PhiCP_NP$",
     )
 
 

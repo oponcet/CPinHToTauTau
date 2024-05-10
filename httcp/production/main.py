@@ -5,6 +5,7 @@ Column production methods related to higher-level features.
 """
 import functools
 
+from typing import Optional
 from columnflow.production import Producer, producer
 from columnflow.production.categories import category_ids
 from columnflow.production.normalization import normalization_weights
@@ -14,6 +15,10 @@ from columnflow.production.cms.mc_weight import mc_weight
 from columnflow.selection.util import create_collections_from_masks
 from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
+
+from httcp.production.PhiCPNeutralPion import PhiCPNPMethod
+from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArrangeGenDecayProducts
+#from httcp.production.ReconstructPi0 import reconstructPi0
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -44,34 +49,89 @@ def features(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
 @producer(
     uses={
+        "channel_id", 
+        "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.decayMode",
+        "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass","hcandprod.pdgId",
+        #"GenTau.*", "GenPart.*",
+        reArrangeDecayProducts, reArrangeGenDecayProducts,
+    },
+)
+def ProducePhiCP(
+        self: Producer,
+        events: ak.Array,
+        **kwargs
+) -> ak.Array:
+    events, P4_dict = self[reArrangeDecayProducts](events)
+
+    events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
+    #from IPython import embed; embed()
+    #1/0
+
+    is_rho_rho = ak.sum(events.hcand.decayMode == 1, axis=1) == 2
+    is_a1_rho  = ak.sum((((events.hcand.decayMode[:,0:1]    == 10) 
+                         & (events.hcand.decayMode[:,1:2]   == 1))
+                        | ((events.hcand.decayMode[:,0:1]   == 1)
+                           & (events.hcand.decayMode[:,1:2] == 10))), axis=1) == 1
+    is_a1_a1   = ak.sum(events.hcand.decayMode == 10, axis=1) == 2
+
+    #from IPython import embed; embed()
+    #1/0
+
+    dummy_phicp = P4_dict["p4_hcand1"].pt[:,:0]
+    phicp_NP_obj = PhiCPNPMethod(P4_dict["p4_hcand1_pi"], P4_dict["p4_hcand1_pi0"], 
+                                 P4_dict["p4_hcand2_pi"], P4_dict["p4_hcand2_pi0"])    
+    #from IPython import embed; embed()
+    phicp = ak.where(is_rho_rho, 
+                     phicp_NP_obj.comp_PhiCPNP("rhorho", is_rho_rho),
+                     ak.where(is_a1_rho,
+                              phicp_NP_obj.comp_PhiCPNP("a1rho", is_a1_rho),
+                              ak.where(is_a1_a1,
+                                       phicp_NP_obj.comp_PhiCPNP("a1a1", is_a1_a1),
+                                       dummy_phicp
+                                   )
+                          )
+                 )
+    #from IPython import embed; embed()
+    phicp = ak.enforce_type(phicp, "var * float64")
+    
+    return events, phicp
+
+
+@producer(
+    uses={
         # nano columns
-        "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass",
-        "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
-        "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
+        "hcand.*", #"hcandprod.*", #reArrangeDecayProducts,
+        ProducePhiCP, #"GenTau.*", "GenPart.*",
     },
     produces={
         # new columns
-        "hcand_invm", "hcand_dr",
+        "hcand_invm", "hcand_dr", "phicp_NP",
     },
 )
 def hcand_features(
         self: Producer, 
         events: ak.Array,
-        hcand_pair: ak.Array,
         **kwargs
 ) -> ak.Array:
 
-    hcand_pair_p4 = ak.firsts(1 * hcand_pair, axis=1)
-    hcand1 = hcand_pair_p4[:,0:1]
-    hcand2 = hcand_pair_p4[:,1:2]
-
+    events = ak.Array(events, behavior=coffea.nanoevents.methods.nanoaod.behavior)
+    #hcand_ = ak.with_name(ak.firsts(events.hcand, axis=1), "PtEtaPhiMLorentzVector")
+    hcand_ = ak.with_name(events.hcand, "PtEtaPhiMLorentzVector")
+    hcand1 = hcand_[:,0:1]
+    hcand2 = hcand_[:,1:2]
+    
     mass = (hcand1 + hcand2).mass
     dr = ak.firsts(hcand1.metric_table(hcand2), axis=1)
-    
-    #from IPython import embed; embed()
-    events = set_ak_column_f32(events, "hcand_invm", ak.firsts(mass))
-    events = set_ak_column_f32(events, "hcand_dr", ak.firsts(dr))
+    dr = ak.enforce_type(dr, "var * float32")
 
+    events, phicp_NP = self[ProducePhiCP](events)
+
+    #from IPython import embed; embed()
+    #1/0
+    events = set_ak_column(events, "hcand_invm", mass)
+    events = set_ak_column(events, "hcand_dr",   dr)
+    events = set_ak_column(events, "phicp_NP",   phicp_NP)
+    
     return events
 
 
@@ -115,17 +175,19 @@ def cutflow_features(
 
 @producer(
     uses={
-        features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
+        features, category_ids, normalization_weights, deterministic_seeds, 
+        hcand_features, #muon_weights,
     },
     produces={
-        features, category_ids, normalization_weights, deterministic_seeds, #muon_weights,
+        features, category_ids, normalization_weights, deterministic_seeds, hcand_features,
+        #muon_weights,
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
-    #from IPython import embed; embed()
-    #1/0
     # features
     events = self[features](events, **kwargs)
+
+    events = self[hcand_features](events, **kwargs)
 
     # category ids
     events = self[category_ids](events, **kwargs)
