@@ -59,7 +59,7 @@ def higgscand(
                                       "phi"           : "float64",
                                       "mass"          : "float64",
                                       "charge"        : "int64",
-                                      "decayMode" : "int64",
+                                      "decayMode"     : "int64",
                                       "genPartFlav"   : "int64",
                                       "genPartIdx"    : "int64",
                                       "rawIdx"        : "int64"}
@@ -106,6 +106,10 @@ def higgscandprod(
         hcand_array: ak.Array,
         **kwargs
 ) -> tuple[ak.Array, SelectionResult]:
+    etau_id   = self.config_inst.get_channel("etau").id
+    mutau_id  = self.config_inst.get_channel("mutau").id
+    tautau_id = self.config_inst.get_channel("tautau").id
+
     tauprods = events.TauProd
     hcand    = hcand_array #events.hcand
     hcand1 = ak.firsts(hcand[:,:,0:1], axis=1)
@@ -116,10 +120,10 @@ def higgscandprod(
     hcand1_idx = hcand1.rawIdx
     hcand2_idx = hcand2.rawIdx
 
-    hcand1prods = ak.where(events.channel_id == 4,
+    hcand1prods = ak.where(events.channel_id == tautau_id,
                            select_tauprods(hcand1_idx, tauprods), 
                            tauprods[:,:0])
-    hcand2prods = ak.where(((events.channel_id == 1) | (events.channel_id == 2) | (events.channel_id == 4)), 
+    hcand2prods = ak.where(((events.channel_id == etau_id) | (events.channel_id == mutau_id) | (events.channel_id == tautau_id)), 
                            select_tauprods(hcand2_idx, tauprods),
                            tauprods[:,:0])
 

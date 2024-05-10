@@ -17,7 +17,8 @@ from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
 from httcp.production.PhiCPNeutralPion import PhiCPNPMethod
-from httcp.production.ReconstructPi0 import reconstructPi0
+from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArrangeGenDecayProducts
+#from httcp.production.ReconstructPi0 import reconstructPi0
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -45,80 +46,15 @@ def features(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     return events
 
 
-@producer(
-    uses={
-        "channel_id", 
-        "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.decayMode",
-        "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass","hcandprod.pdgId",
-    },
-)
-def reArrangeDecayProducts(
-        self: Producer,
-        events: ak.Array,
-        **kwargs
-) :
-    hcand      = events.hcand
-    hcandprod  = events.hcandprod
-
-    hcand1     = hcand[:, 0:1]
-    hcand2     = hcand[:, 1:2]
-    hcand1prod = ak.firsts(hcandprod[:,0:1], axis=1)
-    hcand2prod = ak.firsts(hcandprod[:,1:2], axis=1)
-
-    ispion_pos = lambda prod: ((prod.pdgId ==  211) | (prod.pdgId ==  321))
-    ispion_neg = lambda prod: ((prod.pdgId == -211) | (prod.pdgId == -321))
-    isphoton   = lambda prod: (prod.pdgId == 22)
-
-    hcand1prod_pions   = hcand1prod[(ispion_pos(hcand1prod) | ispion_neg(hcand1prod))]
-    hcand1prod_photons = hcand1prod[isphoton(hcand1prod)]
-    hcand2prod_pions   = hcand2prod[(ispion_pos(hcand2prod) | ispion_neg(hcand2prod))]
-    hcand2prod_photons = hcand2prod[isphoton(hcand2prod)]
-
-    has_three_pions   = lambda prod : ak.sum((ispion_pos(prod) | ispion_neg(prod)), axis=1) == 3
-    has_two_pos_one_neg_pions = lambda prod : has_three_pions(prod) & (ak.sum(ispion_pos(prod), axis=1) == 2) & (ak.sum(ispion_neg(prod), axis=1) == 1)
-    has_two_neg_one_pos_pions = lambda prod : has_three_pions(prod) & (ak.sum(ispion_pos(prod), axis=1) == 1) & (ak.sum(ispion_neg(prod), axis=1) == 2)
-    get_sorted_pion_indices   = lambda pions: ak.where(has_two_pos_one_neg_pions(pions),
-                                                       ak.argsort(pions.pdgId, ascending=True),
-                                                       ak.where(has_two_neg_one_pos_pions(pions),
-                                                                ak.argsort(pions.pdgId, ascending=False),
-                                                                ak.local_index(pions.pdgId)))
-    
-    hcand1pions_sorted_indices = get_sorted_pion_indices(hcand1prod_pions)
-    hcand2pions_sorted_indices = get_sorted_pion_indices(hcand2prod_pions)
-
-    #from IPython import embed; embed()
-    #1/0
-    
-    hcand1prod_pions = hcand1prod_pions[hcand1pions_sorted_indices]
-    hcand2prod_pions = hcand2prod_pions[hcand2pions_sorted_indices]
-    
-    # hcand1 and its decay products
-    p4_hcand1     = ak.with_name(hcand1, "PtEtaPhiMLorentzVector")
-    p4_hcand1_pi  = ak.with_name(hcand1prod_pions, "PtEtaPhiMLorentzVector")
-    p4_hcand1_pi0 = reconstructPi0(p4_hcand1, hcand1prod_photons)
-
-    # hcand2 and its decay products
-    p4_hcand2     = ak.with_name(hcand2, "PtEtaPhiMLorentzVector")
-    p4_hcand2_pi  = ak.with_name(hcand2prod_pions, "PtEtaPhiMLorentzVector")
-    p4_hcand2_pi0 = reconstructPi0(p4_hcand2, hcand2prod_photons)
-
-    return events, {"p4_hcand1"     : p4_hcand1, 
-                    "p4_hcand1_pi"  : p4_hcand1_pi, 
-                    "p4_hcand1_pi0" : p4_hcand1_pi0, 
-                    "p4_hcand2"     : p4_hcand2, 
-                    "p4_hcand2_pi"  : p4_hcand2_pi, 
-                    "p4_hcand2_pi0" : p4_hcand2_pi0}
 
 @producer(
     uses={
         "channel_id", 
         "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.decayMode",
         "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass","hcandprod.pdgId",
-        reArrangeDecayProducts,
+        #"GenTau.*", "GenPart.*",
+        reArrangeDecayProducts, reArrangeGenDecayProducts,
     },
-    #produces={
-    #    "phicp_NP",
-    #},
 )
 def ProducePhiCP(
         self: Producer,
@@ -126,6 +62,10 @@ def ProducePhiCP(
         **kwargs
 ) -> ak.Array:
     events, P4_dict = self[reArrangeDecayProducts](events)
+
+    events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
+    #from IPython import embed; embed()
+    #1/0
 
     is_rho_rho = ak.sum(events.hcand.decayMode == 1, axis=1) == 2
     is_a1_rho  = ak.sum((((events.hcand.decayMode[:,0:1]    == 10) 
@@ -151,10 +91,8 @@ def ProducePhiCP(
                                    )
                           )
                  )
-    #print(f"phicp: {phicp}")
     #from IPython import embed; embed()
     phicp = ak.enforce_type(phicp, "var * float64")
-    #events = set_ak_column(events, "phicp_NP", phicp)
     
     return events, phicp
 
@@ -162,8 +100,8 @@ def ProducePhiCP(
 @producer(
     uses={
         # nano columns
-        "hcand.*", "hcandprod.*", #reArrangeDecayProducts,
-        ProducePhiCP,
+        "hcand.*", #"hcandprod.*", #reArrangeDecayProducts,
+        ProducePhiCP, #"GenTau.*", "GenPart.*",
     },
     produces={
         # new columns
@@ -191,8 +129,8 @@ def hcand_features(
     #from IPython import embed; embed()
     #1/0
     events = set_ak_column(events, "hcand_invm", mass)
-    events = set_ak_column(events, "hcand_dr", dr)
-    events = set_ak_column(events, "phicp_NP", phicp_NP)
+    events = set_ak_column(events, "hcand_dr",   dr)
+    events = set_ak_column(events, "phicp_NP",   phicp_NP)
     
     return events
 
@@ -238,10 +176,10 @@ def cutflow_features(
 @producer(
     uses={
         features, category_ids, normalization_weights, deterministic_seeds, 
-        hcand_features, #ProducePhiCP, #muon_weights,
+        hcand_features, #muon_weights,
     },
     produces={
-        features, category_ids, normalization_weights, deterministic_seeds, hcand_features, #ProducePhiCP,
+        features, category_ids, normalization_weights, deterministic_seeds, hcand_features,
         #muon_weights,
     },
 )
@@ -250,9 +188,6 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = self[features](events, **kwargs)
 
     events = self[hcand_features](events, **kwargs)
-
-    #from IPython import embed; embed()
-    #events = self[ProducePhiCP](events, **kwargs)
 
     # category ids
     events = self[category_ids](events, **kwargs)

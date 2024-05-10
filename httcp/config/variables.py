@@ -41,10 +41,12 @@ def keep_columns(cfg: od.Config) -> None:
             "cross_tau_triggered",
             # columns added during selection
             "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.decayMode",
-            "hcand.genPartFlav", "hcand.genPartIdx",
+            "hcand.genPartFlav", "hcand.rawIdx",
             #ColumnCollection.ALL_FROM_SELECTOR,
             "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass", "hcandprod.charge",
-            "hcandprod.pdgId",
+            "hcandprod.pdgId", "hcandprod.tauIdx",
+            # GenPart
+            "GenTau.*","GenTauProd.*",
         },
         "cf.MergeSelectionMasks": {
             "normalization_weight", 

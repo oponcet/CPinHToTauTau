@@ -34,6 +34,7 @@ from httcp.selection.match_trigobj import match_trigobj
 from httcp.selection.lepton_veto import *
 from httcp.selection.higgscand import higgscand, higgscandprod
 
+
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
@@ -143,7 +144,8 @@ def custom_increment_stats(
         increment_stats, 
         custom_increment_stats,
         higgscand,
-        higgscandprod, 
+        gentau_selection,
+        higgscandprod,        
     },
     produces={
         # selectors / producers whose newly created columns should be kept
@@ -161,8 +163,9 @@ def custom_increment_stats(
         process_ids,
         extra_lepton_veto, 
         double_lepton_veto, 
-        match_trigobj, 
+        match_trigobj,
         higgscandprod,
+        gentau_selection,
     },
     exposed=True,
 )
@@ -221,17 +224,24 @@ def main(
                                                                 **kwargs)
     results += tau_results
 
+    # check if there are at least two leptons with at least one tau [before trigger obj matching]
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    results.steps["At least two leptons of any sign"] = ak.num(_lepton_indices, axis=1) >= 2
+    results.steps["At least two leptons [PreTrigObjMatching]"] = ((ak.num(_lepton_indices, axis=1) >= 2)
+                                                                  & (ak.num(good_tau_indices, axis=1) >= 1))
 
     # trigger obj matching
-    # INFO: for now, it is switched off
+    # INFO: The end bool is the switch to make it on or off
     events, good_ele_indices, good_muon_indices, good_tau_indices = self[match_trigobj](events,
                                                                                         trigger_results,
                                                                                         good_ele_indices,
                                                                                         good_muon_indices,
                                                                                         good_tau_indices,
                                                                                         True)
+
+    # check if there are at least two leptons with at least one tau [after trigger obj matching]
+    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
+    results.steps["At least two leptons [PostTrigObjMatching]"] = ((ak.num(_lepton_indices, axis=1) >= 2)
+                                                                   & (ak.num(good_tau_indices, axis=1) >= 1))
 
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
@@ -247,10 +257,9 @@ def main(
                                                            call_force=True,
                                                            **kwargs)
     results += etau_results
-
-    etau_pair         = ak.concatenate([events.Electron[etau_indices_pair[:,0:1]],
-                                        events.Tau[etau_indices_pair[:,1:2]]],
-                                       axis=1)
+    etau_pair = ak.concatenate([events.Electron[etau_indices_pair[:,0:1]],
+                                events.Tau[etau_indices_pair[:,1:2]]],
+                               axis=1)
 
     # mu-tau pair i.e. hcand selection
     # e.g. [ [mu1, tau1], [], [mu1, tau2], [], [] ]
@@ -260,7 +269,6 @@ def main(
                                                               call_force=True,
                                                               **kwargs)
     results += mutau_results
-
     mutau_pair = ak.concatenate([events.Muon[mutau_indices_pair[:,0:1]], 
                                  events.Tau[mutau_indices_pair[:,1:2]]],
                                 axis=1)
@@ -272,7 +280,6 @@ def main(
                                                                  call_force=True,
                                                                  **kwargs)
     results += tautau_results
-
     tautau_pair = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
                                   events.Tau[tautau_indices_pair[:,1:2]]], 
                                  axis=1)
@@ -301,12 +308,19 @@ def main(
 
     # hcand results
     events, hcand_array, hcand_results = self[higgscand](events, hcand_pairs)
-
     results += hcand_results
 
+    # hcand prod results
     events, hcandprod_results = self[higgscandprod](events, hcand_array)
     results += hcandprod_results
-    
+
+    # gen particles info
+    # hcand-gentau match = True/False
+    events, gentau_results = self[gentau_selection](events, True)
+    results += gentau_results
+
+    #from IPython import embed; embed()
+
     # create process ids
     events = self[process_ids](events, **kwargs)
 
@@ -320,7 +334,6 @@ def main(
 
     # add cutflow features, passing per-object masks
     events = self[cutflow_features](events, results.objects, **kwargs)
-
 
     # increment stats
     weight_map = {
