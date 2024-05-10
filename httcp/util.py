@@ -88,6 +88,13 @@ def getGenTauDecayMode(prod: ak.Array):
                            (5 * (Nc - 1) + Np))
               )
 
-    #dm = 5 * (Nc - 1) + Np
-    
     return dm
+
+
+def enforce_hcand_type(hcand_pair_concat, field_type_dict):
+    temp = {}
+    for field, typename in field_type_dict.items():
+        temp[field] = ak.enforce_type(ak.values_astype(hcand_pair_concat[field], typename), f"var * var * {typename}")
+    hcand_array = ak.zip(temp)
+    return hcand_array
+    

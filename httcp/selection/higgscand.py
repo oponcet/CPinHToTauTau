@@ -9,18 +9,12 @@ from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
+from httcp.util import enforce_hcand_type
+
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 
-
-def enforce_hcand_type(hcand_pair_concat, field_type_dict):
-    temp = {}
-    for field, typename in field_type_dict.items():
-        temp[field] = ak.enforce_type(ak.values_astype(hcand_pair_concat[field], typename), f"var * var * {typename}")
-    hcand_array = ak.zip(temp)
-    return hcand_array
-    
 
 
 @selector(
