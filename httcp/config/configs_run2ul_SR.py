@@ -75,8 +75,9 @@ def add_config(
         dataset = cfg.add_dataset(campaign.get_dataset(dataset_name))
         
         # for testing purposes, limit the number of files to 2
+        
         for info in dataset.info.values():
-            info.n_files = min(info.n_files, 2)
+            if limit_dataset_files: info.n_files = min(info.n_files, limit_dataset_files)
 
     # verify that the root process of all datasets is part of any of the registered processes
     verify_config_processes(cfg, warn=True)
@@ -201,12 +202,12 @@ def add_config(
     
     # external files
     json_mirror = "/afs/cern.ch/user/m/mrieger/public/mirrors/jsonpog-integration-849c6a6e"
-    json_local = "/home/gsaha/Work/ColumnflowAnalyses/jsonpog-integration"
+    json_local = "/afs/cern.ch/work/g/gsaha/public/TEMP/jsonpog-integration"
     cfg.x.external_files = DotDict.wrap({
         # lumi files
         "lumi": {
-            "golden": ("/home/gsaha/Work/ColumnflowAnalyses/jsonpog-integration/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt", "v1"),  # noqa
-            "normtag": ("/home/gsaha/Work/ColumnflowAnalyses/jsonpog-integration/normtag_PHYSICS.json", "v1"),
+            "golden": (f"{json_local}/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt", "v1"),  # noqa
+            "normtag": (f"{json_local}/normtag_PHYSICS.json", "v1"),
         },
 
         # electron scale factor 

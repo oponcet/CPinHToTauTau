@@ -12,12 +12,16 @@ def keep_columns(cfg: od.Config) -> None:
     # columns to keep after certain steps
     cfg.x.keep_columns = DotDict.wrap({
         "cf.ReduceEvents": {
+            # TauProds
+            "TauProd.*",
             # general event info
             "run", "luminosityBlock", "event",
             "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-            "hcand"
-            #"deterministic_seed", "mc_weight", "cutflow.*",
         } | {f"PuppiMET.{var}" for var in [
+                "pt", "phi", "significance",
+                "covXX", "covXY", "covYY",
+                ]     
+        } | {f"MET.{var}" for var in [
                 "pt", "phi", "significance",
                 "covXX", "covXY", "covYY",
                 ]     
@@ -28,26 +32,34 @@ def keep_columns(cfg: od.Config) -> None:
         } | {f"Tau.{var}" for var in [
                 "pt","eta","phi","mass","dxy","dz", "charge", 
                 "rawDeepTau2018v2p5VSjet","idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", 
-                "decayMode", "decayModePNet", "genPartFlav",
+                "decayMode", "decayModePNet", "genPartFlav", "rawIdx",
                 "pt_no_tes", "mass_no_tes"
                 ] 
         } | {f"Muon.{var}" for var in [
-                "pt","eta","phi","mass","dxy","dz", "charge", 
-                "pfRelIso04_all","mT"
+                "pt","eta","phi","mass","dxy","dz", "charge",
+		"decayMode", "pfRelIso04_all","mT", "rawIdx"
                 ] 
         } | {f"Electron.{var}" for var in [
                 "pt","eta","phi","mass","dxy","dz", "charge", 
-                "pfRelIso03_all","mT"
+                "decayMode", "pfRelIso03_all", "mT", "rawIdx"
                 ] 
-        } | {
-        f"TrigObj.{var}" for var in [
+        } | {f"{var}_triggerd" for var in [ #Trigger variables to have a track of a particular trigger fired
+            "single_electron", "cross_electron",
+            "single_muon", "cross_muon",
+            "cross_tau",
+            ]
+        } | {f"TrigObj.{var}" for var in [
             "id", "pt", "eta", "phi", "filterBits",
             ]
-        } | {
-        ColumnCollection.ALL_FROM_SELECTOR
-        },
+        } | {f"hcand.{var}" for var in [
+            "pt","eta","phi","mass", "charge", 
+             "decayMode", "rawIdx"
+            ]
+        } | {"GenTau.*", "GenTauProd.*",
+        } | {ColumnCollection.ALL_FROM_SELECTOR},
         "cf.MergeSelectionMasks": {
-            "normalization_weight", "cutflow.*", "process_id", "category_ids",
+            "normalization_weight", 
+            "cutflow.*", "process_id", "category_ids",
         },
         "cf.UniteColumns": {
             "*",
@@ -199,8 +211,8 @@ def add_highlevel_features(cfg: od.Config) -> None:
         x_title=r"MET $\phi$",
     )
     cfg.add_variable(
-        name="mutau_mass",
-        expression="mutau_mass",
+        name="hcand_mass",
+        expression="hcand_obj.mass",
         null_value=EMPTY_FLOAT,
         binning=(40, 0.0, 200.0),
         unit="GeV",
@@ -283,6 +295,14 @@ def add_hcand_features(cfg: od.Config) -> None:
         binning=(40, 0, 5),
         x_title=r"$\Delta R(l,l)$",
     )
+    cfg.add_variable(
+        name="phicp_NP",
+        expression="phicp_NP",
+        null_value=EMPTY_FLOAT,
+        binning=(10, 0, 6.4),
+        x_title=r"$PhiCP_NP$",
+    )
+
 def add_test_variables(cfg: od.Config) -> None:
         cfg.add_variable(
             name="tau_pt_no_tes",
@@ -333,7 +353,6 @@ def add_test_variables(cfg: od.Config) -> None:
             x_title=r"$m_{vis}$",
         )
         
-
 
 def add_variables(cfg: od.Config) -> None:
     """

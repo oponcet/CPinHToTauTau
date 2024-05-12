@@ -21,10 +21,10 @@ ak = maybe_import("awkward")
         "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass",
         "Muon.pt"    , "Muon.eta"    , "Muon.phi"    , "Muon.mass",
         "Tau.pt",      "Tau.eta",      "Tau.phi",      "Tau.mass",
-        "TrigObj.pt", "TrigObj.eta", "TrigObj.phi",
+        "TrigObj.pt",  "TrigObj.eta",  "TrigObj.phi",
     },
     produces={"single_electron_triggered", "cross_electron_triggered", 
-              "single_muon_triggered", "cross_muon_triggered",
+              "single_muon_triggered",     "cross_muon_triggered",
               "cross_tau_triggered",
           },
     exposed=False

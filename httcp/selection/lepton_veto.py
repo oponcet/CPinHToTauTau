@@ -47,8 +47,6 @@ def extra_lepton_veto(
     hcand_lep1 = hcand_pair_p4[:,:1]
     hcand_lep2 = hcand_pair_p4[:,1:2]
 
-    #print(hcand_lep1.pt, hcand_lep2.pt)
-    #print("aksnjklansldjknalknxlk")
     dr_hlep1_extraleps = extra_lep.metric_table(hcand_lep1)
     dr_hlep2_extraleps = extra_lep.metric_table(hcand_lep2)
 

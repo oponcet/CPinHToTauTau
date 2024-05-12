@@ -1,4 +1,5 @@
 # coding: utf-8
+
 """
 main calibration script
 """
@@ -26,5 +27,6 @@ ak = maybe_import("awkward")
 def main(self: Calibrator, events: ak.Array, **kwargs) -> ak.Array:
     events = self[deterministic_seeds](events, **kwargs)
     if self.dataset_inst.is_mc: 
+    #Apply tau energy scale correction
         events = self[tau_energy_scale](events, **kwargs)
     return events

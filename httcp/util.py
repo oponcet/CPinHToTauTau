@@ -69,3 +69,32 @@ def get_dataset_lfns(
     paths = [lfn_base.child(basename, type="f").path for basename in lfn_base.listdir(pattern="*.root")]
 
     return paths
+
+
+def getGenTauDecayMode(prod: ak.Array):
+    pids = prod.pdgId
+    is_ele  = np.abs(pids) == 11
+    is_muon = np.abs(pids) == 13
+    is_charged = ((np.abs(pids) == 211) | (np.abs(pids) == 321))
+    is_neutral = ((pids == 111) | (pids == 311) | (pids == 130) | (pids == 310))
+
+    edecay = ak.sum(is_ele,  axis=-1)
+    mdecay = ak.sum(is_muon, axis=-1)
+    Nc = ak.sum(is_charged, axis=-1)
+    Np = ak.sum(is_neutral, axis=-1)
+
+    dm = ak.where(edecay, -1, 
+                  ak.where(mdecay, -2, 
+                           (5 * (Nc - 1) + Np))
+              )
+
+    return dm
+
+
+def enforce_hcand_type(hcand_pair_concat, field_type_dict):
+    temp = {}
+    for field, typename in field_type_dict.items():
+        temp[field] = ak.enforce_type(ak.values_astype(hcand_pair_concat[field], typename), f"var * var * {typename}")
+    hcand_array = ak.zip(temp)
+    return hcand_array
+    
