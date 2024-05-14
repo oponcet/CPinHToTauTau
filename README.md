@@ -25,7 +25,11 @@ A Columnflow based analysis framework from IPHC and DESY
 ```bash
 git clone https://github.com/your_babushka_username/CPinHToTauTau.git
 ```
-3. Inside CPinHTauTau repository do:
+3. Go inside CPinHTauTau repository
+```bash
+cd CPinHToTauTau/
+```
+and do:
 ```bash
 git submodule update --init --recursive
 ```
@@ -35,7 +39,7 @@ cd CPinHToTauTau/modules/cmsdb
 git remote remove origin
 git remote add desytau https://github.com/DesyTau/cmsdb.git (common repository)
 git remote add upstream https://github.com/uhh-cms/cmsdb.git (original repository)
-git remote add origin git@github.com:your_github_username/cmsdb.git (personal repository, the link here is the ssh one)
+git remote add origin git@github.com:your_babushka_username/cmsdb.git (your personal repository)
 ```
 5. Check if everiything is in place by:
 ```bash
