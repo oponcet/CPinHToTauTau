@@ -23,7 +23,7 @@ A Columnflow based analysis framework from IPHC and DESY
 
 2. From your workspace do:
 ```bash
-git clone https://github.com/your_github_username/CPinHToTauTau.git
+git clone https://github.com/your_babushka_username/CPinHToTauTau.git
 ```
 3. Inside CPinHTauTau repository do:
 ```bash
