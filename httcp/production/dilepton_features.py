@@ -20,7 +20,7 @@ set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
         "hcand_obj.mass"
     },
 )
-def hcand_mass(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
+def hcand_mass_(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     print("Producing dilepton mass...")
     from coffea.nanoevents.methods import vector
     events = self[attach_coffea_behavior](events, **kwargs)
@@ -61,14 +61,12 @@ def rel_charge(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 @producer(
     uses = 
     {
-        f"Muon.{var}" for var in ["pt","phi"]
-    } | {
-        f"Electron.{var}" for var in ["pt","phi"]
+        f"hcand.{var}" for var in ["pt","phi"]
     } | {
         f"PuppiMET.{var}" for var in ["pt","phi"] 
     } | {attach_coffea_behavior},
     produces={
-        "Muon.mT"
+        "hcand_obj.mT"
     },
 )
 def mT(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
@@ -79,7 +77,46 @@ def mT(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     mT_values = ak.fill_none(mT_values, EMPTY_FLOAT)
     events = set_ak_column_f32(events, Route("Muon.mT"), mT_values)
     return events
-    
+
+
+@producer(
+    uses = 
+    {
+        f"hcand.{var}" for var in ["pt", "eta","phi", "mass","charge"]
+    } | {
+        f"Muon.{var}" for var in ["pt", "eta","phi", "mass","charge"]
+    } | {
+        f"Electron.{var}" for var in ["pt", "eta","phi", "mass","charge"]
+    } | {
+        f"Tau.{var}" for var in ["pt", "eta","phi", "mass","charge"]
+    } | {attach_coffea_behavior} | {"channel_id"},
+    produces={
+        "hcand_obj.mass"
+    },
+)
+def hcand_mass(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
+    print("Producing dilepton mass...")
+    from coffea.nanoevents.methods import vector
+    events = self[attach_coffea_behavior](events, **kwargs)
+    lep = []
+    for i in range(2):
+        
+        hcand_lep = events.hcand[:,i]
+        lep.append( ak.zip(
+            {
+                "pt": hcand_lep.pt,
+                "eta": hcand_lep.eta,
+                "phi": hcand_lep.phi,
+                "mass": hcand_lep.mass,
+            },
+            with_name="PtEtaPhiMLorentzVector",
+            behavior=vector.behavior,
+        ))
+    hcand_obj = lep[0] + lep[1]
+    events = set_ak_column_f32(events,f"hcand_obj.mass", ak.where(hcand_obj.mass2 >=0, hcand_obj.mass, EMPTY_FLOAT))
+    from IPython import embed; embed()
+     
+    return events 
 
     
    

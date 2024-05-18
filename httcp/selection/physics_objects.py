@@ -32,7 +32,6 @@ ak = maybe_import("awkward")
         f"Muon.{var}" for var in [
             "pt", "eta", "phi", "dxy", "dz", "mediumId", 
             "pfRelIso04_all", "isGlobal", "isPFcand", 
-            "genPartFlav", "genPartIdx",
             #"isTracker",
         ]
     },
@@ -135,7 +134,7 @@ def muon_selection(
         "Electron.pfRelIso03_all", "Electron.convVeto", #"lostHits",
         IF_NANO_V9("Electron.mvaFall17V2Iso_WP80", "Electron.mvaFall17V2Iso_WP90", "Electron.mvaFall17V2noIso_WP90"),
         IF_NANO_V11("Electron.mvaIso_WP80", "Electron.mvaIso_WP90", "Electron.mvaNoIso_WP90"),
-        "Electron.cutBased", "Electron.genPartFlav", "Electron.genPartIdx",
+        "Electron.cutBased",
     },
     produces={
         f"Electron.{var}" for var in [
@@ -239,7 +238,7 @@ def electron_selection(
         f"Tau.{var}" for var in [
             "pt", "eta", "phi", "dz", 
             "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", "idDeepTau2018v2p5VSjet",
-            "decayMode", "genPartFlav", "genPartIdx",
+            "decayMode",
         ]
     },
     produces={
@@ -494,7 +493,7 @@ def gentau_selection(
     
     #from IPython import embed; embed()
     #1/0
-
+    from IPython import embed; embed()
     events = set_ak_column(events, "GenTau",           ak.Array(ak.to_list(matched_gentaus)))
     events = set_ak_column(events, "GenTau.decayMode",                            gentaus_dm)
     events = set_ak_column(events, "GenTauProd",         ak.Array(ak.to_list(decay_gentaus)))

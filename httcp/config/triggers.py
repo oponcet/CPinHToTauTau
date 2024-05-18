@@ -284,3 +284,27 @@ def add_triggers_run3_2022_preEE(config: od.Config) -> None:
             tags={"single_trigger", "single_mu", "channel_mu_tau"},
         ),
     ])
+
+def add_triggers_run2_UL2017(config: od.Config) -> None:
+    """
+    Adds all triggers to a *config*. For the conversion from filter names to trigger bits, see
+    https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/NanoAOD/python/triggerObjects_cff.py.
+    """
+    config.x.triggers = od.UniqueObjectIndex(Trigger,[
+        
+        #
+        # single muon
+        #
+        Trigger(
+            name="HLT_IsoMu24",
+            id=131, #13 is for muon pdg_id, 1 because it's first muon trigger
+            legs=[
+                TriggerLeg(
+                    pdg_id=13,
+                    min_pt=25.0,
+                    trigger_bits=2,
+                ),
+            ],
+            tags={"single_trigger", "single_mu", "channel_mu_tau"},
+        ),
+    ])
