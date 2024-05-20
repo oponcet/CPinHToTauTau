@@ -284,8 +284,8 @@ def main(
 
     # gen particles info
     # hcand-gentau match = True/False
-    events, gentau_results = self[gentau_selection](events, True)
-    results += gentau_results
+    #events, gentau_results = self[gentau_selection](events, True)
+    #results += gentau_results
 
     #from IPython import embed; embed()
 

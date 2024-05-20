@@ -11,9 +11,9 @@ case $1 in
         processes="data"
     ;;
     "run2_ul17_test" )
-        config=run3_2022_preEE_nano_tau_v12_limited
-        datasets='signal'
-        processes="h_ggf_tautau"
+        config=run2_UL2017_nano_tau_v10_limited
+        datasets='data_mu_f,wj_incl,dy_incl'
+        processes="data_mu,wj,dy_lep,"
     ;;
     "run3lim")
         config="run3_2022_preEE_nano_tau_v12_limited"

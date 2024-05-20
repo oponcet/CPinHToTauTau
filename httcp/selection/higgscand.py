@@ -54,8 +54,6 @@ def higgscand(
                                       "mass"          : "float64",
                                       "charge"        : "int64",
                                       "decayMode"     : "int64",
-                                      "genPartFlav"   : "int64",
-                                      "genPartIdx"    : "int64",
                                       "rawIdx"        : "int64"}
     )
 
@@ -88,7 +86,7 @@ has_no_photons  = lambda prods : (ak.sum(is_photon(prods), axis = 1) == 0)[:,Non
     },
     produces={
         "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.charge", "hcand.rawIdx",
-        "hcand.decayMode", "hcand.genPartFlav", "hcand.genPartIdx",
+        "hcand.decayMode",
         "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass", 
         "hcandprod.charge", "hcandprod.pdgId", "hcandprod.tauIdx",
     },
