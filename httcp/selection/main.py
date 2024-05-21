@@ -186,9 +186,7 @@ def main(
     # tau selection
     # e.g. tau_idx: [ [1], [0,1], [1,2], [], [0,1] ] 
     events, tau_results, good_tau_indices = self[tau_selection](events,
-                                                                good_ele_indices,
-                                                                good_muon_indices,
-                                                                call_force=True, 
+                                                                call_force=True,
                                                                 **kwargs)
     results += tau_results
 
@@ -204,7 +202,7 @@ def main(
                                                                                         good_ele_indices,
                                                                                         good_muon_indices,
                                                                                         good_tau_indices,
-                                                                                        True)
+                                                                                        False)
 
     # check if there are at least two leptons with at least one tau [after trigger obj matching]
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
@@ -288,6 +286,7 @@ def main(
     #results += gentau_results
 
     #from IPython import embed; embed()
+    #1/0
 
     # create process ids
     events = self[process_ids](events, **kwargs)
