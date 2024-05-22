@@ -56,6 +56,10 @@ def keep_columns(cfg: od.Config) -> None:
                 "cross_tau",
             ]
         } | {
+            f"matched_triggerID_{var}" for var in [
+                "e", "mu", "tau",
+            ]
+        } | {
             f"TrigObj.{var}" for var in [
                 "id", "pt", "eta", "phi", "filterBits",
             ]

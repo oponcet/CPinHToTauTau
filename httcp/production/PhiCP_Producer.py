@@ -27,10 +27,6 @@ from IPython import embed
         optional("GenTau.decayMode"), optional("GenTau.charge"), optional("GenTauProd.pt"),
         optional("GenTauProd.eta"), optional("GenTauProd.phi"), optional("GenTauProd.mass"),
     },
-    #produces={
-    #    "PhiCP_PVPV", "PhiCP_DPDP", #"PhiCP_IPIP", "PhiCP_PVIP", "PhiCP_DPIP",
-    #    "PhiCPGen_PVPV", "PhiCPGen_DPDP", #"PhiCPGen_IPIP", "PhiCPGen_PVIP", "PhiCPGen_DPIP",        
-    #},
 )
 def ProducePhiCP(
         self: Producer,

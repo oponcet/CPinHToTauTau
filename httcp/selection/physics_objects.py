@@ -96,15 +96,15 @@ def muon_selection(
 
     selection_steps = {"Starts with": good_muon_mask}
     for cut in good_selections.keys():
-        good_muon_mask = good_muon_mask & good_selections[cut]
+        good_muon_mask = good_muon_mask & ak.fill_none(good_selections[cut], False)
         selection_steps[cut] = good_muon_mask
 
     for cut in single_veto_selections.keys():
-        single_veto_muon_mask = single_veto_muon_mask & single_veto_selections[cut]
+        single_veto_muon_mask = single_veto_muon_mask & ak.fill_none(single_veto_selections[cut], False)
     #single_veto_muon_mask = single_veto_muon_mask & ~good_muon_mask
 
     for cut in double_veto_selections.keys():
-        double_veto_muon_mask = double_veto_muon_mask & double_veto_selections[cut]
+        double_veto_muon_mask = double_veto_muon_mask & ak.fill_none(double_veto_selections[cut], False)
     #double_veto_muon_mask = double_veto_muon_mask & ~good_muon_mask
 
     # convert to sorted indices
@@ -118,6 +118,13 @@ def muon_selection(
     double_veto_muon_indices = ak.values_astype(double_veto_muon_indices, np.int32)
 
     return events, SelectionResult(
+        objects={
+            "Muon": {
+                "Muon": good_muon_indices,
+                "VetoMuon": veto_muon_indices,
+                "DoubleVetoMuon": double_veto_muon_indices,
+            },
+        },
         aux=selection_steps,
     ), good_muon_indices, veto_muon_indices, double_veto_muon_indices
 
@@ -200,15 +207,15 @@ def electron_selection(
 
     selection_steps = {"Starts with": good_electron_mask}
     for cut in good_selections.keys():
-        good_electron_mask = good_electron_mask & good_selections[cut]
+        good_electron_mask = good_electron_mask & ak.fill_none(good_selections[cut], False)
         selection_steps[cut] = good_electron_mask
 
     for cut in single_veto_selections.keys():
-        single_veto_electron_mask = single_veto_electron_mask & single_veto_selections[cut]
+        single_veto_electron_mask = single_veto_electron_mask & ak.fill_none(single_veto_selections[cut], False)
     #single_veto_electron_mask = single_veto_electron_mask & ~good_electron_mask
 
     for cut in double_veto_selections.keys():
-        double_veto_electron_mask = double_veto_electron_mask & double_veto_selections[cut]
+        double_veto_electron_mask = double_veto_electron_mask & ak.fill_none(double_veto_selections[cut], False)
     #double_veto_electron_mask = double_veto_electron_mask & ~good_electron_mask
 
     # convert to sorted indices
@@ -223,6 +230,13 @@ def electron_selection(
 
 
     return events, SelectionResult(
+        objects={
+            "Electron": {
+                "Electron": good_electron_indices,
+                "VetoElectron": veto_electron_indices,
+                "DoubleVetoElectron": double_veto_electron_indices,
+            },
+        },
         aux=selection_steps,
     ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
 
@@ -296,7 +310,7 @@ def tau_selection(
 
     selection_steps = {"Starts with": good_tau_mask}
     for cut in good_selections.keys():
-        good_tau_mask = good_tau_mask & good_selections[cut]
+        good_tau_mask = good_tau_mask & ak.fill_none(good_selections[cut], False)
         selection_steps[cut] = good_tau_mask
         
     if electron_indices is not None:
@@ -312,6 +326,11 @@ def tau_selection(
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
 
     return events, SelectionResult(
+        objects={
+            "Tau": {
+                "Tau": good_tau_indices,
+            },
+        },
         aux=selection_steps,
     ), good_tau_indices
 
@@ -349,16 +368,17 @@ def jet_selection(
         #"jet_id"                  : events.Jet.jetId == 0b110,  # Jet ID flag: bit2 is tight, bit3 is tightLepVeto 
     }
     
-    if is_run2: good_selections["jet_puId"] = ((events.Jet.pt >= 50.0) | (events.Jet.puId)) #For the Run2 there was
+    #if is_run2: 
+    #    good_selections["jet_puId"] = ((events.Jet.pt >= 50.0) | (events.Jet.puId)) #For the Run2 there was
     
     # b-tagged jets, tight working point
     
     jet_mask  = ak.local_index(events.Jet.pt) >= 0 #Create a mask filled with ones
     selection_steps = {}
 
-    selection_steps = {"Starts with": good_jet_mask}
+    selection_steps = {"Starts with": jet_mask}
     for cut in good_selections.keys():
-        jet_mask = jet_mask & good_selections[cut]
+        jet_mask = jet_mask & ak.fill_none(good_selections[cut], False)
         selection_steps[cut] = jet_mask
     
     sorted_indices = ak.argsort(events.Jet.pt, axis=-1, ascending=False)
@@ -368,10 +388,11 @@ def jet_selection(
     # b-tagged jets, tight working point
     btag_wp = self.config_inst.x.btag_working_points[year].deepjet.medium
     b_jet_mask = jet_mask & (events.Jet.btagDeepFlavB >= btag_wp)
-    selection_steps["btag"]	= b_jet_mask
+    selection_steps["btag"] = ak.fill_none(b_jet_mask, False)
 
     # bjet veto
     bjet_veto = ak.sum(b_jet_mask, axis=1) == 0
+    #from IPython import embed; embed()
 
     return events, SelectionResult(
         steps = {
@@ -428,7 +449,7 @@ def gentau_selection(
         "genpart_pdgId"           : np.abs(events.GenPart.pdgId) == 15,
         "genpart_status"          : events.GenPart.status == 2,
         "genpart_status_flags"    : events.GenPart.hasFlags(["isPrompt", "isFirstCopy"]),
-        #"genpart_pt_10"           : events.GenPart.pt > 10.0,
+        "genpart_pt_10"           : events.GenPart.pt > 10.0,
         "genpart_eta_2p3"         : np.abs(events.GenPart.eta) < 2.3,
         "genpart_momid_25"        : events.GenPart[events.GenPart.distinctParent.genPartIdxMother].pdgId == 25,
         "genpart_mom_status_22"   : events.GenPart[events.GenPart.distinctParent.genPartIdxMother].status == 22,
@@ -482,8 +503,6 @@ def gentau_selection(
 
     mask_genmatchedtaus   = mask_genmatchedtaus_1 & mask_genmatchedtaus_2
     
-    #events = set_ak_column(events, "GenTau", matched_gentaus)
-    #events = set_ak_column(events, "GenTau.decayMode", gentaus_dm)
 
     # check decaymodes
     # make sure that the decay mode of hcand is the same as decay mode of GenTau
@@ -511,13 +530,6 @@ def gentau_selection(
     events = set_ak_column(events, "GenTau",           ak.Array(ak.to_list(matched_gentaus)))
     events = set_ak_column(events, "GenTau.decayMode", gentaus_dm)
     events = set_ak_column(events, "GenTau.mass",      ak.ones_like(events.GenTau.mass) * 1.777)
-    """
-    events = set_ak_column(events, "GenTau.charge",    ak.where(events.GenTau.pdgId > 0,
-                                                                1, 
-                                                                ak.where(events.GenTau.pdgId < 0, 
-                                                                         -1, 
-                                                                         events.GenTau.pdgId)))
-    """
     events = set_ak_column(events, "GenTau.charge",    ak.where(events.GenTau.pdgId > 0,
                                                                 -1, 
                                                                 ak.where(events.GenTau.pdgId < 0, 
@@ -535,11 +547,5 @@ def gentau_selection(
             "valid decay products"     : mask_genmatchedtaus,
             "gen DMs same as hcands"   : dm_match_evt_mask,
         },
-        #objects = {
-        #    "GenPart": {
-        #        #"GenTau": matched_gentaus.rawIdx,
-        #        "GenTau": gentau_indices,
-        #    },
-        #},
         aux = selection_steps,
     )

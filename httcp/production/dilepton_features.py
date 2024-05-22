@@ -114,7 +114,7 @@ def hcand_mass(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         ))
     hcand_obj = lep[0] + lep[1]
     events = set_ak_column_f32(events,f"hcand_obj.mass", ak.where(hcand_obj.mass2 >=0, hcand_obj.mass, EMPTY_FLOAT))
-    from IPython import embed; embed()
+    #from IPython import embed; embed()
      
     return events 
 
