@@ -21,6 +21,8 @@ from columnflow.columnar_util import optional_column as optional
 from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArrangeGenDecayProducts
 from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 from IPython import embed
+from httcp.production.svfit import svfit, fastMTT
+
 
 
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
@@ -42,12 +44,12 @@ set_ak_column_i32 = functools.partial(set_ak_column, value_type=np.int32)
         # nano columns
         "hcand.*", #optional("GenTau.*"), optional("GenTauProd.*"),
         reArrangeDecayProducts, reArrangeGenDecayProducts,
-        ProduceGenPhiCP, ProduceDetPhiCP,
+        ProduceGenPhiCP, ProduceDetPhiCP, svfit, fastMTT
     },
     produces={
         # new columns
         "hcand_invm", "hcand_dr",
-        ProduceGenPhiCP, ProduceDetPhiCP,
+        ProduceGenPhiCP, ProduceDetPhiCP, svfit, fastMTT
     },
 )
 def hcand_features(
@@ -68,12 +70,16 @@ def hcand_features(
     events = set_ak_column(events, "hcand_dr",   dr)
 
     events, P4_dict     = self[reArrangeDecayProducts](events)
-    events              = self[ProduceDetPhiCP](events, P4_dict)
+    # events              = self[ProduceDetPhiCP](events, P4_dict)
 
     if "is_signal" in list(self.dataset_inst.aux.keys()):
         if self.dataset_inst.aux["is_signal"]:
             events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
-            events = self[ProduceGenPhiCP](events, P4_gen_dict)
+            # events = self[ProduceGenPhiCP](events, P4_gen_dict)
+            # SVFIT for signal only
+            # events, P4_svfit_dict = self[svfit](events, P4_dict, P4_gen_dict)
+            # FastMTT for signal only
+            events, P4_fastmtt_dict = self[fastMTT](events, P4_dict, P4_gen_dict)
     
     return events
 
