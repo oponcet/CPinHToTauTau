@@ -4,3 +4,7 @@
 [submodule "modules/cmsdb"]
 	path = modules/cmsdb
 	url = https://github.com/uhh-cms/cmsdb.git
+
+[submodule "modules/extern/TauAnalysis/ClassicSVfit"]
+	path = modules/extern/TauAnalysis/ClassicSVfit
+	url = https://github.com/SVfit/ClassicSVfit.git

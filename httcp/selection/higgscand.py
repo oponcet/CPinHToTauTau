@@ -100,6 +100,7 @@ def higgscandprod(
     etau_id   = self.config_inst.get_channel("etau").id
     mutau_id  = self.config_inst.get_channel("mutau").id
     tautau_id = self.config_inst.get_channel("tautau").id
+    
 
     tauprods = events.TauProd
     hcand    = hcand_array #events.hcand

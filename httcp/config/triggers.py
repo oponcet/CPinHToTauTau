@@ -308,3 +308,123 @@ def add_triggers_run2_UL2017(config: od.Config) -> None:
             tags={"single_trigger", "single_mu", "channel_mu_tau"},
         ),
     ])
+
+
+def add_triggers_run3_2022_tau_tau_postEE(config: od.Config) -> None:
+
+    """                                                                                                                                                                                                                                
+    Adds all triggers to a config. For the conversion from filter names to trigger bits, see                                                                                                                                         
+    https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/NanoAOD/python/triggerObjects_cff.py.                                                                                                                                     
+                                                                                                                                                                                                                                       
+    HLT_DoubleMediumDeepTauPFTauHPS30_L2NN_eta2p1_PFJet60                                                                                                                                                                              
+    HLT_DoubleMediumDeepTauPFTauHPS30_L2NN_eta2p1_PFJet75                                                                                                                                                                              
+    HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1                                                                                                                                                                                      
+    """
+    config.x.triggers = od.UniqueObjectIndex(Trigger,[
+        #                                                                                                                                                                                                                              
+        # cross-tau                                                                                                                                                                                                                    
+        #                                                                                                                                                                                                                              
+        Trigger(
+            name="HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1",
+            id=151,
+            legs=[
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    # filter names:                                                                                                                                                                                                    
+                    # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg                                                                                                                                          
+                    trigger_bits=64,
+                ),
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    # filter names:                                                                                                                                                                                                    
+                    # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg                                                                                                                                          
+                    trigger_bits=64,
+                ),
+            ],
+            tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
+        ),
+
+        Trigger(
+            name="HLT_DoubleTightChargedIsoPFTauHPS35_Trk1_eta2p1",
+            id=152,
+            legs=[
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    # filter names:                                                                                                                                                                                                    
+                    # hltDoublePFTau40TrackPt1MediumChargedIsolationAndTightOOSCPhotonsDz02Reg                                                                                                                                         
+                    trigger_bits=64,
+                ),
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    # filter names:                                                                                                                                                                                                    
+                    # hltDoublePFTau40TrackPt1MediumChargedIsolationAndTightOOSCPhotonsDz02Reg                                                                                                                                         
+                    trigger_bits=64,
+                ),
+            ],
+            tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
+        ),
+    ])
+
+
+
+def add_triggers_run3_2022_tau_tau_preEE(config: od.Config) -> None:
+    """                                                                                                                                                                                                                                
+    Adds all triggers to a config. For the conversion from filter names to trigger bits, see                                                                                                                                         
+    https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/NanoAOD/python/triggerObjects_cff.py.                                                                                                                                     
+                                                                                                                                                                                                                                       
+    HLT_DoubleMediumDeepTauPFTauHPS30_L2NN_eta2p1_PFJet60                                                                                                                                                                              
+    HLT_DoubleMediumDeepTauPFTauHPS30_L2NN_eta2p1_PFJet75                                                                                                                                                                              
+    HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1                                                                                                                                                                                      
+    """
+    config.x.triggers = od.UniqueObjectIndex(Trigger,[
+        #                                                                                                                                                                                                                              
+        # cross-tau                                                                                                                                                                                                                    
+        #                                                                                                                                                                                                                              
+        Trigger(
+            name="HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1",
+            id=151,
+            legs=[
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    # filter names:                                                                                                                                                                                                    
+                    # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg                                                                                                                                          
+                    trigger_bits=64,
+                ),
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    # filter names:                                                                                                                                                                                                    
+                    # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg                                                                                                                                          
+                    trigger_bits=64,
+                ),
+            ],
+            tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
+        ),
+
+        Trigger(
+            name="HLT_DoubleTightChargedIsoPFTauHPS35_Trk1_eta2p1",
+            id=152,
+            legs=[
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    # filter names:                                                                                                                                                                                                    
+                    # hltDoublePFTau40TrackPt1MediumChargedIsolationAndTightOOSCPhotonsDz02Reg                                                                                                                                         
+                    trigger_bits=64,
+                ),
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    # filter names:                                                                                                                                                                                                    
+                    # hltDoublePFTau40TrackPt1MediumChargedIsolationAndTightOOSCPhotonsDz02Reg                                                                                                                                         
+                    trigger_bits=64,
+                ),
+            ],
+            tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
+        ),
+    ])

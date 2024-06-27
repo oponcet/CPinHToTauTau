@@ -125,14 +125,18 @@ def add_run3_preEE (ana: od.Analysis,
   
     from httcp.config.triggers import add_triggers_run3_2022_preEE
     add_triggers_run3_2022_preEE(cfg)
+
+    # from httcp.config.triggers import add_triggers_run3_2022_tau_tau_preEE
+    # add_triggers_run3_2022_tau_tau_preEE(cfg)
+    
     
     from httcp.config.met_filters import add_met_filters
     add_met_filters(cfg)
 
     # default objects, such as calibrator, selector, producer, ml model, inference model, etc
     cfg.x.default_calibrator = "main"
-    cfg.x.default_selector = "main"
-    cfg.x.default_producer = "main"
+    cfg.x.default_selector = "main_FF"
+    cfg.x.default_producer = "main_FF"
     cfg.x.default_ml_model = None
     cfg.x.default_inference_model = "example"
     cfg.x.default_categories = ("incl",)
@@ -244,11 +248,11 @@ def add_run3_preEE (ana: od.Analysis,
         },
         "pileup":{
             #"json": ("/eos/user/c/cmsdqm/www/CAF/certification/Collisions22/PileUp/EFG/pileup_JSON.txt", "v1")
-            "data" : "/afs/cern.ch/user/s/stzakhar/work/CPinHToTauTau/httcp/data/corrections/Data_PileUp_2022_preEE.root", #TODO: make a link to the common correction repo
-            "mc"   : "/afs/cern.ch/user/s/stzakhar/work/CPinHToTauTau/httcp/data/corrections/MC_PileUp_2022.root" #TODO: make a link to the common correction repo
+            "data" : "/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/data/corrections/Data_PileUp_2022_preEE.root", #TODO: make a link to the common correction repo
+            "mc"   : "/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/data/corrections/MC_PileUp_2022.root" #TODO: make a link to the common correction repo
         },
-        "muon_correction" : "/afs/cern.ch/user/s/stzakhar/work/CPinHToTauTau/httcp/data/corrections/muon_SFs_2022_preEE.root", #TODO: make a link to the common correction repo
-        "tau_correction"  : "/afs/cern.ch/user/s/stzakhar/work/CPinHToTauTau/httcp/data/corrections/tau_DeepTau2018v2p5_2022_preEE.json.gz" #TODO: make a link to the common correction repo
+        "muon_correction" : "/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/data/corrections/muon_SFs_2022_preEE.root", #TODO: make a link to the common correction repo
+        "tau_correction"  : "/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/data/corrections/tau_DeepTau2018v2p5_2022_preEE.json.gz" #TODO: make a link to the common correction repo
     })
 
     # target file size after MergeReducedEvents in MB
@@ -263,7 +267,7 @@ def add_run3_preEE (ana: od.Analysis,
         "normalization_weight"  : [],
         "pu_weight"             : [],
         "muon_weight"           : [],
-        "tau_id_sf"             : [],
+        #"tau_id_sf"             : [],
     })
     
     cfg.x.default_weight_producer = "all_weights"
@@ -289,6 +293,9 @@ def add_run3_preEE (ana: od.Analysis,
     cfg.add_channel(name="etau",   id=1)
     cfg.add_channel(name="mutau",  id=2)
     cfg.add_channel(name="tautau", id=4)
+    # cfg.add_channel(name="FFDR_tautau", id=8)
+    cfg.add_channel(name="FFDRIso_tautau", id=9)
+    cfg.add_channel(name="FFDRantiIso_tautau", id=10)
     
     if cfg.campaign.x("custom").get("creator") == "desy":  
         def get_dataset_lfns(dataset_inst: od.Dataset, shift_inst: od.Shift, dataset_key: str) -> list[str]:

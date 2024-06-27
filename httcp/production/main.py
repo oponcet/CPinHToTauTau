@@ -21,7 +21,7 @@ from columnflow.columnar_util import optional_column as optional
 from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArrangeGenDecayProducts
 from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 from IPython import embed
-from httcp.production.svfit import svfit, fastMTT
+# from httcp.production.svfit import svfit, fastMTT
 
 
 
@@ -44,12 +44,12 @@ set_ak_column_i32 = functools.partial(set_ak_column, value_type=np.int32)
         # nano columns
         "hcand.*", #optional("GenTau.*"), optional("GenTauProd.*"),
         reArrangeDecayProducts, reArrangeGenDecayProducts,
-        ProduceGenPhiCP, ProduceDetPhiCP, svfit, fastMTT
+        ProduceGenPhiCP, ProduceDetPhiCP, #svfit, fastMTT
     },
     produces={
         # new columns
         "hcand_invm", "hcand_dr",
-        ProduceGenPhiCP, ProduceDetPhiCP, svfit, fastMTT
+        ProduceGenPhiCP, ProduceDetPhiCP, #svfit, fastMTT
     },
 )
 def hcand_features(
@@ -79,7 +79,7 @@ def hcand_features(
             # SVFIT for signal only
             # events, P4_svfit_dict = self[svfit](events, P4_dict, P4_gen_dict)
             # FastMTT for signal only
-            events, P4_fastmtt_dict = self[fastMTT](events, P4_dict, P4_gen_dict)
+            # events, P4_fastmtt_dict = self[fastMTT](events, P4_dict, P4_gen_dict)
     
     return events
 

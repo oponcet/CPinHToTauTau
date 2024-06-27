@@ -87,6 +87,7 @@ def tau_energy_scale_setup(
     import correctionlib
     correctionlib.highlevel.Correction.__call__ = correctionlib.highlevel.Correction.evaluate
     
+    
     correction_set = correctionlib.CorrectionSet.from_string(
         bundle.files.tau_correction.load(formatter="gzip").decode("utf-8"),
     )

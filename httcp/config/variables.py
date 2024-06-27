@@ -40,9 +40,16 @@ def keep_columns(cfg: od.Config) -> None:
                 "pt_no_tes", "mass_no_tes"
             ] 
         } | {
+            f"TauAntiIso.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", 
+                "rawDeepTau2018v2p5VSjet","idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", 
+                "decayMode", "decayModePNet", "genPartFlav", "rawIdx",
+                "pt_no_tes", "mass_no_tes"
+            ] 
+        } | {
             f"Muon.{var}" for var in [
                 "pt","eta","phi","mass","dxy","dz", "charge",
-		"decayMode", "pfRelIso04_all","mT", "rawIdx"
+		    "decayMode", "pfRelIso04_all","mT", "rawIdx"
             ] 
         } | {
             f"Electron.{var}" for var in [
@@ -118,7 +125,7 @@ def add_lepton_features(cfg: od.Config) -> None:
     """
     Adds lepton features only , ex electron_1_pt
     """
-    for obj in ["Electron", "Muon", "Tau"]:
+    for obj in ["Electron", "Muon", "Tau", "TauAntiIso"]:
         for i in range(2):
             cfg.add_variable(
                 name=f"{obj.lower()}_{i+1}_pt",

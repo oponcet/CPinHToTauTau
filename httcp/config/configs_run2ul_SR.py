@@ -270,6 +270,9 @@ def add_config(
     cfg.add_channel(name="etau",   id=1)
     cfg.add_channel(name="mutau",  id=2)
     cfg.add_channel(name="tautau", id=4)
+    #cfg.add_channel(name="FFDR_tautau", id=8)
+    cfg.add_channel(name="FFDRIso_tautau", id=9)
+    # cfg.add_channel(name="FFDRantiIso_tautau", id=10)
 
 
     # add categories using the "add_category" tool which adds auto-generated ids

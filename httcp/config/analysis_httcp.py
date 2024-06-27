@@ -81,3 +81,19 @@ add_run3_preEE(analysis_httcp,
                   config_id = 5,
                   limit_dataset_files=1)
 # ------------------------------------------------------------- #
+
+
+# -------------------------- Run3 2022 ------------------------ #
+# run3_2022_postEE_nano_tau_v12_limited
+from httcp.config.run3_postEE import add_run3_postEE
+from cmsdb.campaigns.run3_2022_postEE_nano_tau_v12 import campaign_run3_2022_postEE_nano_tau_v12
+add_run3_postEE(analysis_httcp,
+                  campaign_run3_2022_postEE_nano_tau_v12.copy(),
+                  config_name=f"{campaign_run3_2022_postEE_nano_tau_v12.name}",
+                  config_id = 6)
+add_run3_postEE(analysis_httcp,
+                  campaign_run3_2022_postEE_nano_tau_v12.copy(),
+                  config_name=f"{campaign_run3_2022_postEE_nano_tau_v12.name}_limited",
+                  config_id = 7,
+                  limit_dataset_files=1)
+# ------------------------------------------------------------- #

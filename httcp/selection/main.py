@@ -28,6 +28,7 @@ from httcp.selection.trigger import trigger_selection
 from httcp.selection.lepton_pair_etau import etau_selection
 from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
+from httcp.selection.lepton_pair_FFDRtautau import FFDR_tautau_selection
 from httcp.selection.event_category import get_categories
 from httcp.selection.match_trigobj import match_trigobj
 from httcp.selection.lepton_veto import *
@@ -110,7 +111,8 @@ def custom_increment_stats(
         jet_selection,
         etau_selection, 
         mutau_selection, 
-        tautau_selection, 
+        tautau_selection,
+        FFDR_tautau_selection, 
         get_categories,
         extra_lepton_veto, 
         double_lepton_veto, 
@@ -134,6 +136,7 @@ def custom_increment_stats(
         etau_selection, 
         mutau_selection, 
         tautau_selection, 
+        FFDR_tautau_selection,
         get_categories, 
         process_ids,
         extra_lepton_veto, 
@@ -194,7 +197,7 @@ def main(
 
     # tau selection
     # e.g. tau_idx: [ [1], [0,1], [1,2], [], [0,1] ] 
-    events, tau_results, good_tau_indices = self[tau_selection](events,
+    events, tau_results, good_tau_indices, good_antitau_indices = self[tau_selection](events,
                                                                 call_force=True,
                                                                 **kwargs)
     results += tau_results
@@ -210,7 +213,7 @@ def main(
                                                                                         good_ele_indices,
                                                                                         good_muon_indices,
                                                                                         good_tau_indices,
-                                                                                        True)
+                                                                                        False)
 
     # check if there are at least two leptons with at least one tau [after trigger obj matching]
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
@@ -267,7 +270,7 @@ def main(
     tautau_pair = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
                                   events.Tau[tautau_indices_pair[:,1:2]]], 
                                  axis=1)
-
+                        
     # channel selection
     # channel_id is now in columns
     events, channel_results = self[get_categories](events,

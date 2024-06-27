@@ -89,6 +89,11 @@ def add_run2_UL2017 (ana: od.Analysis,
         "data_mu_d",
         "data_mu_e",
         "data_mu_f",
+        "data_tau_b",
+        "data_tau_c",
+        "data_tau_d",
+        "data_tau_e",
+        "data_tau_f",
         #Drell-Yan
         "dy_incl",
         #W+jets
@@ -136,8 +141,8 @@ def add_run2_UL2017 (ana: od.Analysis,
 
     # default objects, such as calibrator, selector, producer, ml model, inference model, etc
     cfg.x.default_calibrator = "main"
-    cfg.x.default_selector = "main"
-    cfg.x.default_producer = "main"
+    cfg.x.default_selector = "main_FF" # main_FF
+    cfg.x.default_producer = "main_FF" # main_FF
     cfg.x.default_ml_model = None
     cfg.x.default_inference_model = "example"
     cfg.x.default_categories = ("incl",)
@@ -240,8 +245,8 @@ def add_run2_UL2017 (ana: od.Analysis,
             "normtag": (f"{external_path}/normtag_PHYSICS.json", "v1"),
         },
         "pileup":{
-            "data" : f"{external_path}/Data_PileUp_2022_preEE.root", #TODO: make a link to the common correction repo
-            "mc"   : f"{external_path}/MC_PileUp_2022.root" #TODO: make a link to the common correction repo
+            "data" : f"{external_path}/Data_PileUp_UL2017_69p2.root", #TODO: make a link to the common correction repo
+            "mc"   : f"{external_path}/MC_PileUp_UL2017.root" #TODO: make a link to the common correction repo
         },
         "muon_correction" : f"{external_path}/muon_SFs_2022_preEE.root", #TODO: make a link to the common correction repo
         "tau_correction"  : f"{external_path}/tau_DeepTau2018v2p5_2022_preEE.json.gz", #TODO: make a link to the common correction repo
@@ -257,9 +262,9 @@ def add_run2_UL2017 (ana: od.Analysis,
     #get_shifts = functools.partial(get_shifts_from_sources, cfg)
     cfg.x.event_weights = DotDict({
         "normalization_weight"  : [],
-        "pu_weight"             : [],
-        "muon_weight"           : [],
-        "tau_id_sf"             : [],
+        # "pu_weight"             : [],
+        # "muon_weight"           : [],
+        # "tau_id_sf"             : [],
     })
     
     cfg.x.default_weight_producer = "all_weights"
@@ -285,6 +290,9 @@ def add_run2_UL2017 (ana: od.Analysis,
     cfg.add_channel(name="etau",   id=1)
     cfg.add_channel(name="mutau",  id=2)
     cfg.add_channel(name="tautau", id=4)
+    # cfg.add_channel(name="FFDR_tautau", id=8)
+    cfg.add_channel(name="FFDRIso_tautau", id=9)
+    cfg.add_channel(name="FFDRantiIso_tautau", id=10)
     
     if cfg.campaign.x("custom").get("creator") == "desy":  
         def get_dataset_lfns(dataset_inst: od.Dataset, shift_inst: od.Shift, dataset_key: str) -> list[str]:

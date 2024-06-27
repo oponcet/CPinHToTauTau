@@ -284,7 +284,28 @@ def tau_selection(
     tau_vs_e = DotDict(vvloose=2, vloose=3)
     tau_vs_mu = DotDict(vloose=1, tight=4)
     tau_vs_jet = DotDict(vvloose=2, loose=4, medium=5)
+
     
+    # Anti Isolated Tau : pass VVLoose but not Medium 
+    print("Anti Isolated Tau")
+    good_antiIso_selections = {
+        "tau_pt_20"     : events.Tau.pt > 20,
+        "tau_eta_2p3"   : abs(events.Tau.eta) < 2.3,
+        "tau_dz_0p2"    : abs(events.Tau.dz) < 0.2,
+        # "DeepTauVSjet"  : (events.Tau.idDeepTau2018v2p5VSjet >= tau_vs_jet.vvloose),
+        "DeepTauVSjet"  : ((events.Tau.idDeepTau2018v2p5VSjet < tau_vs_jet.medium) 
+                        & (events.Tau.idDeepTau2018v2p5VSjet >= tau_vs_jet.vvloose)),
+        "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_vs_e.vvloose,
+        "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_vs_mu.tight,
+        "DecayMode"     : ((events.Tau.decayMode == 0) 
+                        | (events.Tau.decayMode == 1)
+                        | (events.Tau.decayMode == 2)
+                        | (events.Tau.decayMode == 10)
+                        | (events.Tau.decayMode == 11))
+        #"CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
+        #"CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
+    }
+    # Isolated Tau : pass Medium
     good_selections = {
         "tau_pt_20"     : events.Tau.pt > 20,
         "tau_eta_2p3"   : abs(events.Tau.eta) < 2.3,
@@ -293,14 +314,15 @@ def tau_selection(
         "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_vs_e.vvloose,
         "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_vs_mu.tight,
         "DecayMode"     : ((events.Tau.decayMode == 0) 
-                           | (events.Tau.decayMode == 1)
-                           | (events.Tau.decayMode == 2)
-                           | (events.Tau.decayMode == 10)
-                           | (events.Tau.decayMode == 11))
+                        | (events.Tau.decayMode == 1)
+                        | (events.Tau.decayMode == 2)
+                        | (events.Tau.decayMode == 10)
+                        | (events.Tau.decayMode == 11))
         #"CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
         #"CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
     }
 
+    # Tau selection 
     # pt sorted indices for converting masks to indices
     sorted_indices = ak.argsort(events.Tau.pt, axis=-1, ascending=False)
     tau_mask  = ak.local_index(events.Tau.pt) >= 0
@@ -325,14 +347,34 @@ def tau_selection(
     good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
 
+    #####################
+    # Anti Isolated Tau 
+    # pt sorted indices for converting masks to indices
+    sorted_indices_antiIso = ak.argsort(events.Tau.pt, axis=-1, ascending=False)
+    tau_antIso_mask  = ak.local_index(events.Tau.pt) >= 0
+
+    selection_steps_antiIso = {}
+
+    selection_steps_antiIso = {"Starts with": tau_antIso_mask}
+    for cut in good_antiIso_selections.keys():
+        tau_antIso_mask = tau_antIso_mask & ak.fill_none(good_antiIso_selections[cut], False)
+        selection_steps_antiIso[cut] = tau_antIso_mask
+        
+    # convert to sorted indices
+    good_antiIsotau_indices = sorted_indices[tau_antIso_mask[sorted_indices]]
+    good_antiIsotau_indices = ak.values_astype(good_antiIsotau_indices, np.int32)
+
+
     return events, SelectionResult(
         objects={
             "Tau": {
                 "Tau": good_tau_indices,
+                "TauAntiIso": good_antiIsotau_indices,
             },
         },
         aux=selection_steps,
-    ), good_tau_indices
+    ), good_tau_indices, good_antiIsotau_indices
+
 
 
 # ------------------------------------------------------------------------------------------------------- #
