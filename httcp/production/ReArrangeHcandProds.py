@@ -157,6 +157,7 @@ def getgenpizeros(decay_gentau: ak.Array) -> ak.Array :
     uses={
         "channel_id", 
         "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.decayMode",
+        "hcand.charge", "hcand.IPx", "hcand.IPy", "hcand.IPz",
         "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass","hcandprod.pdgId",
     },
 )

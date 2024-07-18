@@ -9,6 +9,10 @@ from typing import Optional
 from columnflow.production import Producer, producer
 from columnflow.production.categories import category_ids
 from columnflow.production.normalization import normalization_weights
+from columnflow.production.cms.electron import electron_weights
+from columnflow.production.cms.muon import muon_weights
+from columnflow.production.cms.pileup import pu_weight
+from columnflow.production.cms.pdf import pdf_weights
 from columnflow.production.cms.seeds import deterministic_seeds
 from columnflow.production.cms.mc_weight import mc_weight
 #from columnflow.production.cms.muon import muon_weights
@@ -20,11 +24,12 @@ from columnflow.columnar_util import optional_column as optional
 #from httcp.production.PhiCPNeutralPion import PhiCPNPMethod
 from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArrangeGenDecayProducts
 from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
-from IPython import embed
+#from IPython import embed
 
 
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
-from httcp.production.weights import pu_weight, muon_weight, tau_weight
+#from httcp.production.weights import pu_weight, muon_weight, tau_weight
+from httcp.production.weights import tau_weight
 from httcp.production.sample_split import split_dy
 
 np = maybe_import("numpy")
@@ -82,9 +87,12 @@ def hcand_features(
     uses={
         #deterministic_seeds,
         normalization_weights,
-        split_dy,
+        #split_dy,
         pu_weight,
-        muon_weight,
+        #pdf_weights,
+        #muon_weight,
+        muon_weights,
+        electron_weights,
         tau_weight,
         hcand_features,
         hcand_mass,
@@ -92,9 +100,12 @@ def hcand_features(
     produces={
         #deterministic_seeds,
         normalization_weights,
-        split_dy,
+        #split_dy,
         pu_weight,
-        muon_weight,
+        #pdf_weights,
+        #muon_weight,
+        muon_weights,
+        electron_weights,
         tau_weight,
         hcand_features,
         hcand_mass,
@@ -104,19 +115,27 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
     # deterministic seeds
     #events = self[deterministic_seeds](events, **kwargs)
-
+    #from IPython import embed
     if self.dataset_inst.is_mc:
         events = self[normalization_weights](events, **kwargs)
+        #embed()
         processes = self.dataset_inst.processes.names()
         #if ak.any(['dy' in proc for proc in processes]):
         #print("Splitting Drell-Yan dataset...")
         #events = self[split_dy](events, **kwargs)
         events = self[pu_weight](events, **kwargs)
-        events = self[muon_weight](events, **kwargs)
+        #embed()
+        #events = self[pdf_weights](events, **kwargs)
+        #embed()
+        events = self[muon_weights](events, **kwargs)
+        #embed()
+        events = self[electron_weights](events, **kwargs)
+        #embed()
         #from IPython import embed; embed()
         events = self[tau_weight](events, **kwargs) 
-    
+        #embed()
     events = self[hcand_features](events, **kwargs)       
+    #embed()
     # features
     events = self[hcand_mass](events, **kwargs)
     # events = self[mT](events, **kwargs)

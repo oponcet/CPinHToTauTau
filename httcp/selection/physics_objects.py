@@ -32,6 +32,7 @@ ak = maybe_import("awkward")
         f"Muon.{var}" for var in [
             "pt", "eta", "phi", "dxy", "dz", "mediumId", 
             "pfRelIso04_all", "isGlobal", "isPFcand", 
+            "IPx", "IPy", "IPz",
             #"isTracker",
         ]
     },
@@ -142,7 +143,7 @@ def muon_selection(
         "Electron.pfRelIso03_all", "Electron.convVeto", #"lostHits",
         IF_NANO_V9("Electron.mvaFall17V2Iso_WP80", "Electron.mvaFall17V2Iso_WP90", "Electron.mvaFall17V2noIso_WP90"),
         IF_NANO_V11("Electron.mvaIso_WP80", "Electron.mvaIso_WP90", "Electron.mvaNoIso_WP90"),
-        "Electron.cutBased",
+        "Electron.cutBased", "Electron.IPx", "Electron.IPy", "Electron.IPz",
     },
     produces={
         f"Electron.{var}" for var in [
@@ -254,7 +255,7 @@ def electron_selection(
         f"Tau.{var}" for var in [
             "pt", "eta", "phi", "dz", 
             "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", "idDeepTau2018v2p5VSjet",
-            "decayMode",
+            "decayMode","IPx","IPy","IPz",
         ]
     },
     produces={
@@ -285,13 +286,20 @@ def tau_selection(
     tau_vs_mu = DotDict(vloose=1, tight=4)
     tau_vs_jet = DotDict(vvloose=2, loose=4, medium=5)
     
+    tau_tagger         = self.config_inst.x.deep_tau_tagger
+    tau_tagger_wps     = self.config_inst.x.deep_tau_info[tau_tagger].wp
+    
+    #vs_e_wp   = self.config_inst.x.deep_tau_info[tau_tagger].vs_e
+    #vs_mu_wp  = self.config_inst.x.deep_tau_wp[tau_tagger].vs_m
+    #vs_jet_wp = self.config_inst.x.deep_tau_wp[tau_tagger].vs_j
+    
     good_selections = {
         "tau_pt_20"     : events.Tau.pt > 20,
         "tau_eta_2p3"   : abs(events.Tau.eta) < 2.3,
         "tau_dz_0p2"    : abs(events.Tau.dz) < 0.2,
-        "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_vs_jet.medium,
-        "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_vs_e.vvloose,
-        "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_vs_mu.tight,
+        "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium,
+        "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose,
+        "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.Tight,
         "DecayMode"     : ((events.Tau.decayMode == 0) 
                            | (events.Tau.decayMode == 1)
                            | (events.Tau.decayMode == 2)
@@ -386,7 +394,8 @@ def jet_selection(
     good_jet_indices = ak.values_astype(good_jet_indices, np.int32)
 
     # b-tagged jets, tight working point
-    btag_wp = self.config_inst.x.btag_working_points[year].deepjet.medium
+    # btag_wp = self.config_inst.x.btag_working_points[year].deepjet.medium
+    btag_wp = self.config_inst.x.btag_working_points.deepjet.medium
     b_jet_mask = jet_mask & (events.Jet.btagDeepFlavB >= btag_wp)
     selection_steps["btag"] = ak.fill_none(b_jet_mask, False)
 
@@ -419,10 +428,12 @@ def jet_selection(
     uses={
         "GenPart.*",
         "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass",
+        "PV.x", "PV.y", "PV.z",
     },
     produces={
         'GenPart.rawIdx',
-        'GenTau.rawIdx', 'GenTau.eta', 'GenTau.mass', 'GenTau.phi', 'GenTau.pt', 'GenTau.pdgId', 'GenTau.decayMode', 'GenTau.charge',
+        'GenTau.rawIdx', 'GenTau.eta', 'GenTau.mass', 'GenTau.phi', 'GenTau.pt', 'GenTau.pdgId', 'GenTau.decayMode', 
+        'GenTau.charge', 'GenTau.IPx', 'GenTau.IPy', 'GenTau.IPz',
         'GenTauProd.rawIdx', 'GenTauProd.eta', 'GenTauProd.mass', 'GenTauProd.phi', 'GenTauProd.pt', 'GenTauProd.pdgId',
     },
     mc_only=True,
@@ -488,16 +499,16 @@ def gentau_selection(
     decay_gentaus = events.GenPart._apply_global_index(decay_gentau_indices)
     gentaus_dm = getGenTauDecayMode(decay_gentaus)
 
-    mask_genmatchedtaus_1 = ak.fill_none(ak.firsts((( gentaus_dm[:,:1] == -2)
-                                                    |(gentaus_dm[:,:1] == -1)
-                                                    |(gentaus_dm[:,:1] == 0) 
-                                                    |(gentaus_dm[:,:1] == 1)
-                                                    |(gentaus_dm[:,:1] == 2)
-                                                    |(gentaus_dm[:,:1] == 10)
-                                                    |(gentaus_dm[:,:1] == 11)), axis=1), False) # ele/had
-    mask_genmatchedtaus_2 = ak.fill_none(ak.firsts((( gentaus_dm[:,1:2] == 0) 
-                                                    |(gentaus_dm[:,1:2] == 1)
-                                                    |(gentaus_dm[:,1:2] == 2)
+    mask_genmatchedtaus_1 = ak.fill_none(ak.firsts(((gentaus_dm[:,:1]   == -2)
+                                                    |(gentaus_dm[:,:1]  == -1)
+                                                    |(gentaus_dm[:,:1]  ==  0) 
+                                                    |(gentaus_dm[:,:1]  ==  1)
+                                                    |(gentaus_dm[:,:1]  ==  2)
+                                                    |(gentaus_dm[:,:1]  == 10)
+                                                    |(gentaus_dm[:,:1]  == 11)), axis=1), False) # ele/mu/had
+    mask_genmatchedtaus_2 = ak.fill_none(ak.firsts(((gentaus_dm[:,1:2]  ==  0) 
+                                                    |(gentaus_dm[:,1:2] ==  1)
+                                                    |(gentaus_dm[:,1:2] ==  2)
                                                     |(gentaus_dm[:,1:2] == 10)
                                                     |(gentaus_dm[:,1:2] == 11)), axis=1), False) # had only
 
@@ -536,9 +547,11 @@ def gentau_selection(
                                                                          1, 
                                                                          0)))
     events = set_ak_column(events, "GenTauProd",       ak.Array(ak.to_list(decay_gentaus)))
-
     #from IPython import embed; embed()
     #1/0
+    events = set_ak_column(events, "GenTau.IPx",       events.GenTau.vx - ak.broadcast_arrays(events.PV.x, events.GenTau.vx)[0])
+    events = set_ak_column(events, "GenTau.IPy",       events.GenTau.vy - ak.broadcast_arrays(events.PV.y, events.GenTau.vy)[0])
+    events = set_ak_column(events, "GenTau.IPz",       events.GenTau.vz - ak.broadcast_arrays(events.PV.z, events.GenTau.vz)[0])
 
     return events, SelectionResult(
         steps = {

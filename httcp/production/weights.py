@@ -41,7 +41,8 @@ def pu_weight_setup(
     """
     from coffea.lookup_tools import extractor
     ext = extractor()
-    data_full_fname = self.config_inst.x.external_files.pileup.data
+    #data_full_fname = self.config_inst.x.external_files.pileup.data
+    data_full_fname = self.config_inst.x.external_files.pu_sf.data
     data_name = data_full_fname.split('/')[-1].split('.')[0]
     mc_full_fname = self.config_inst.x.external_files.pileup.mc
     mc_name = mc_full_fname.split('/')[-1].split('.')[0]
@@ -67,7 +68,7 @@ def pu_weight_setup(
     # only run on mc
     mc_only=True,
 )
-def get_mc_weight(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
+def scale_mc_weight(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     """
     Reads the genWeight and LHEWeight columns and makes a decision about which one to save. This
     should have been configured centrally [1] and stored in genWeight, but there are some samples
@@ -115,7 +116,8 @@ def muon_weight_setup(
 ) -> None:
     from coffea.lookup_tools import extractor
     ext = extractor()
-    full_fname = self.config_inst.x.external_files.muon_correction
+    #full_fname = self.config_inst.x.external_files.muon_correction
+    full_fname = self.config_inst.x.external_files.muon_sf
     ext.add_weight_sets([f'sf_trig ScaleFactor_trg {full_fname}',
                          f'sf_id ScaleFactor_id {full_fname}',
                          f'sf_iso ScaleFactor_iso {full_fname}'])
@@ -157,7 +159,8 @@ def tau_weight(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     match = flat_np_view(events.Tau.genPartFlav, axis=1)
     
     syst = "nom" # TODO define this systematics inside config file
-    deep_tau = self.config_inst.x.deep_tau
+    #deep_tau = self.config_inst.x.deep_tau
+    deep_tau_tagger = self.config_inst.x.deep_tau_tagger
     #Get working points of the DeepTau tagger
     #Create scale factor for tau vs jet classifier 
     sf_nom = np.ones_like(pt, dtype=np.float32)
@@ -178,8 +181,10 @@ def tau_weight(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     sf_nom[tau_mask] = self.id_vs_jet_corrector.evaluate(pt[tau_mask],
                                                          dm[tau_mask],
                                                          match[tau_mask],
-                                                         deep_tau.vs_jet,
-                                                         deep_tau.vs_e, 
+                                                         self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_j,
+                                                         self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_e,
+                                                         #deep_tau.vs_jet,
+                                                         #deep_tau.vs_e, 
                                                          syst,
                                                          "dm")
     
@@ -190,16 +195,18 @@ def tau_weight(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     sf_nom[e_mask] = self.id_vs_e_corrector.evaluate(abseta[e_mask],
                                                      dm[e_mask],
                                                      match[e_mask],
-                                                     deep_tau.vs_e, 
+                                                     self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_e,
+                                                     #deep_tau.vs_e, 
                                                      syst)
     
     #Calculate tau ID scale factors for muon fakes
     #from IPython import embed; embed()
     mu_mask = ((match == tau_part_flav["prompt_mu"]) | (match == tau_part_flav["tau->mu"]))
     sf_nom[mu_mask] = self.id_vs_mu_corrector.evaluate(abseta[mu_mask],
-                                                      match[mu_mask],
-                                                      deep_tau.vs_mu, 
-                                                      syst)
+                                                       match[mu_mask],
+                                                       self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_m,
+                                                       #deep_tau.vs_mu, 
+                                                       syst)
     
     #get the original shape of Tau array
     tau_arr_shape = ak.num(events.Tau.pt, axis=1)
@@ -237,8 +244,10 @@ def tau_weight_setup(
     
     correction_set = correctionlib.CorrectionSet.from_string(
         bundle.files.tau_correction.load(formatter="gzip").decode("utf-8"),
+        #bundle.files.tau_sf.load(formatter="gzip").decode("utf-8"),
     )
-    tagger_name = self.config_inst.x.deep_tau.tagger
+    #tagger_name = self.config_inst.x.deep_tau.tagger
+    tagger_name = self.config_inst.x.deep_tau_tagger
     self.id_vs_jet_corrector    = correction_set[f"{tagger_name}VSjet"]
     self.id_vs_e_corrector      = correction_set[f"{tagger_name}VSe"]
     self.id_vs_mu_corrector     = correction_set[f"{tagger_name}VSmu"]

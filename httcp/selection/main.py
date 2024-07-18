@@ -34,9 +34,10 @@ from httcp.selection.lepton_veto import *
 from httcp.selection.higgscand import higgscand, higgscandprod
 
 #from httcp.production.main import cutflow_features
+from httcp.production.weights import scale_mc_weight
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
 
-from IPython import embed
+#from IPython import embed
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -63,7 +64,9 @@ def custom_increment_stats(
     # increment plain counts
     n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
     stats["num_events"] = n_evt_per_file
-    stats["num_events_selected"] += ak.sum(event_mask, axis=0)
+    stats["num_events_selected"] += float(ak.sum(event_mask, axis=0))
+    print(f"stats : {stats}")
+    #from IPython import embed; embed()
     if self.dataset_inst.is_mc:
         stats[f"sum_mc_weight"] = n_evt_per_file
         stats.setdefault(f"sum_mc_weight_per_process", defaultdict(float))
@@ -81,13 +84,13 @@ def custom_increment_stats(
         joinable_mask = True if mask is Ellipsis else mask
 
         # sum of different weights in weight_map for all processes
-        stats[f"sum_{name}"] += ak.sum(weights[mask])
+        stats[f"sum_{name}"] += float(ak.sum(weights[mask]))
         # sums per process id
         stats.setdefault(f"sum_{name}_per_process", defaultdict(float))
         for p in unique_process_ids:
-            stats[f"sum_{name}_per_process"][int(p)] += ak.sum(
+            stats[f"sum_{name}_per_process"][int(p)] += float(ak.sum(
                 weights[(events.process_id == p) & joinable_mask],
-            )
+            ))
 
     return events, results
 
@@ -101,7 +104,7 @@ def custom_increment_stats(
         attach_coffea_behavior,
         json_filter, 
         met_filters, 
-        mc_weight, 
+        scale_mc_weight, 
         process_ids,
         trigger_selection, 
         muon_selection, 
@@ -125,7 +128,7 @@ def custom_increment_stats(
     },
     produces={
         # selectors / producers whose newly created columns should be kept
-        mc_weight, 
+        scale_mc_weight, 
         trigger_selection, 
         muon_selection, 
         electron_selection, 
@@ -223,6 +226,8 @@ def main(
         },
     )
     results += match_res
+    
+    #from IPython import embed; embed()
 
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
@@ -317,7 +322,7 @@ def main(
     
     # add the mc weight
     if self.dataset_inst.is_mc:
-        events = self[mc_weight](events, **kwargs)
+        events = self[scale_mc_weight](events, **kwargs)
 
     # rel-charge
     events = self[rel_charge](events, **kwargs)
@@ -327,8 +332,8 @@ def main(
 
     events = self[process_ids](events, **kwargs)
     events = self[category_ids](events, **kwargs)     
-
-   
+    
+    """
     # increment stats
     weight_map = {
         "num_events": Ellipsis,
@@ -368,6 +373,6 @@ def main(
         results,
         stats,
     )
-    """
+
     #from IPython import embed; embed()
     return events, results

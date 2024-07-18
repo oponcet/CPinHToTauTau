@@ -6,7 +6,7 @@ ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 
 from httcp.production.PolarimetricA1 import PolarimetricA1
-from IPython import embed
+#from IPython import embed
 
 
 def GetPhiCP(
@@ -262,13 +262,22 @@ def _prepareVecs(
         R = hcand_pi
 
     elif leg_method == "IP":
-        pass
+        if leg_mode == "e" or leg_mode == "mu":
+            P = hcand
+            R = hcand
+        elif leg_mode == "pi":
+            P = hcand_pi
+            R = hcand
+        #pass
 
     else:
         raise RuntimeError(f"Wrong {leg_method}")
 
     #embed()
     hcand_charge = hcand.charge
+    #print(f"leg_method: {leg_method}, leg_mode: {leg_mode}")
+    #print(f"P: {P}")
+    #print(f"R: {R}")
     return P, R, hcand_charge
 
 
@@ -342,7 +351,18 @@ def _reStructureVecs(
         P, R, H = _pv(boostv, V1, V2, V3, leg_mode)
 
     elif leg_method == "IP":
-        pass
+        P_ZMF = V1.boost(boostv.negative())
+        # build the IP vector and then apply negative boost
+        _R_ZMF = ak.zip({"x":V2.IPx, "y":V2.IPy, "z":V2.IPz, "t":ak.ones_like(V2.IPz)}, with_name="LorentzVector", behavior=coffea.nanoevents.methods.vector.behavior)
+        R_ZMF  = _R_ZMF.boost(boostv.negative())
+        P_ZMF_unit = P_ZMF.pvec.unit
+        R_ZMF_unit = R_ZMF.pvec.unit
+        R_ZMF_unit_T = (R_ZMF_unit - P_ZMF_unit*(P_ZMF_unit.dot(R_ZMF_unit))).unit
+        
+        P = P_ZMF_unit
+        R = R_ZMF_unit_T
+        H = R
+        #pass
 
 
     else:
