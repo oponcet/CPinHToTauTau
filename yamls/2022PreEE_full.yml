@@ -5,13 +5,13 @@ era     : 2022
 postfix : PreEE
 wrapper : true
 limited : false
-workers : 3
+workers : 6
 
 args:
   config    : run3_2022_preEE_nano_cp_tau_v12
   workflow  : htcondor
   branch    : -1
-  version   : dummy 
+  version   : Run3_2022PreEE_full_20240718_193825
 
   datasets  :
     # == data ==

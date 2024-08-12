@@ -67,7 +67,8 @@ def add_config (ana: od.Analysis,
         ## TTJets
         "tt",
         ## Single top
-        "st",
+        "st_tchannel",
+        "st_twchannel",
         ## VV [diboson inclusive]
         "vv",
         ## Signal

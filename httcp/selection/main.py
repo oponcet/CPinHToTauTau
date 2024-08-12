@@ -65,7 +65,7 @@ def custom_increment_stats(
     n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
     stats["num_events"] = n_evt_per_file
     stats["num_events_selected"] += float(ak.sum(event_mask, axis=0))
-    print(f"stats : {stats}")
+    #print(f"stats : {stats}")
     #from IPython import embed; embed()
     if self.dataset_inst.is_mc:
         stats[f"sum_mc_weight"] = n_evt_per_file
@@ -333,41 +333,6 @@ def main(
     events = self[process_ids](events, **kwargs)
     events = self[category_ids](events, **kwargs)     
     
-    """
-    # increment stats
-    weight_map = {
-        "num_events": Ellipsis,
-        "num_events_selected": event_sel,
-    }
-    group_map = {}
-    if self.dataset_inst.is_mc:
-        weight_map = {
-            **weight_map,
-            # mc weight for all events
-            "sum_mc_weight": (events.mc_weight, Ellipsis),
-            "sum_mc_weight_selected": (events.mc_weight, results.event),
-        }
-        group_map = {
-            # per process
-            "process": {
-                "values": events.process_id,
-                "mask_fn": (lambda v: events.process_id == v),
-            },
-            # per channel
-            "channel": {
-                "values": events.channel_id,
-                "mask_fn": (lambda v: events.channel_id == v),
-            },
-        }
-    events, results = self[increment_stats](
-        events,
-        results,
-        stats,
-        weight_map=weight_map,
-        group_map=group_map,
-        **kwargs,
-    )
-    """
     events, results = self[custom_increment_stats]( 
         events,
         results,
