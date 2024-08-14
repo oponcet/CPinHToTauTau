@@ -47,12 +47,12 @@ set_ak_column_i32 = functools.partial(set_ak_column, value_type=np.int32)
         # nano columns
         "hcand.*", #optional("GenTau.*"), optional("GenTauProd.*"),
         reArrangeDecayProducts, reArrangeGenDecayProducts,
-        ProduceGenPhiCP, ProduceDetPhiCP,
+        #ProduceGenPhiCP, ProduceDetPhiCP,
     },
     produces={
         # new columns
         "hcand_invm", "hcand_dr",
-        ProduceGenPhiCP, ProduceDetPhiCP,
+        #ProduceGenPhiCP, ProduceDetPhiCP,
     },
 )
 def hcand_features(
@@ -73,12 +73,12 @@ def hcand_features(
     events = set_ak_column(events, "hcand_dr",   dr)
 
     events, P4_dict     = self[reArrangeDecayProducts](events)
-    events              = self[ProduceDetPhiCP](events, P4_dict)
+    #events              = self[ProduceDetPhiCP](events, P4_dict)
 
     if "is_signal" in list(self.dataset_inst.aux.keys()):
         if self.dataset_inst.aux["is_signal"]:
             events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
-            events = self[ProduceGenPhiCP](events, P4_gen_dict)
+            #events = self[ProduceGenPhiCP](events, P4_gen_dict)
     
     return events
 
@@ -88,12 +88,12 @@ def hcand_features(
         #deterministic_seeds,
         normalization_weights,
         #split_dy,
-        pu_weight,
-        #pdf_weights,
-        #muon_weight,
-        muon_weights,
-        electron_weights,
-        tau_weight,
+        #pu_weight,
+        ##pdf_weights,
+        ##muon_weight,
+        #muon_weights,
+        #electron_weights,
+        #tau_weight,
         hcand_features,
         hcand_mass,
     },
@@ -101,12 +101,12 @@ def hcand_features(
         #deterministic_seeds,
         normalization_weights,
         #split_dy,
-        pu_weight,
-        #pdf_weights,
-        #muon_weight,
-        muon_weights,
-        electron_weights,
-        tau_weight,
+        #pu_weight,
+        ##pdf_weights,
+        ##muon_weight,
+        #muon_weights,
+        #electron_weights,
+        #tau_weight,
         hcand_features,
         hcand_mass,
     },
@@ -123,16 +123,16 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         #if ak.any(['dy' in proc for proc in processes]):
         #print("Splitting Drell-Yan dataset...")
         #events = self[split_dy](events, **kwargs)
-        events = self[pu_weight](events, **kwargs)
+        #events = self[pu_weight](events, **kwargs)
         #embed()
         #events = self[pdf_weights](events, **kwargs)
         #embed()
-        events = self[muon_weights](events, **kwargs)
+        #events = self[muon_weights](events, **kwargs)
         #embed()
-        events = self[electron_weights](events, **kwargs)
+        #events = self[electron_weights](events, **kwargs)
         #embed()
         #from IPython import embed; embed()
-        events = self[tau_weight](events, **kwargs) 
+        #events = self[tau_weight](events, **kwargs) 
         #embed()
     events = self[hcand_features](events, **kwargs)       
     #embed()

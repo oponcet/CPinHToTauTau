@@ -87,6 +87,7 @@ def get_sorted_pair(
     uses={
         "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
         "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet",
+        "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", "Tau.idDeepTau2018v2p5VSmu",
     },
     exposed=False,
 )
@@ -99,6 +100,20 @@ def tautau_selection(
 
     #from IPython import embed; embed()
 
+    # Extra channel specific selections on tau
+    # -------------------- #
+    taus            = events.Tau[lep_indices]
+    tau_tagger      = self.config_inst.x.deep_tau_tagger
+    tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
+    is_good_tau     = (
+        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j.Medium)
+        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
+        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose)
+    )
+    lep_indices    = lep_indices[is_good_tau]
+    # -------------------- # 
+
+    
     # Sorting leps [Tau] by deeptau [descending]
     lep_sort_key       = events.Tau[lep_indices].rawDeepTau2018v2p5VSjet
     lep_sorted_indices = ak.argsort(lep_sort_key, axis=-1, ascending=False)

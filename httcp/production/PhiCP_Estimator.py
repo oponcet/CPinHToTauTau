@@ -22,10 +22,20 @@ def GetPhiCP(
     """
     Inputs:
       p4hcandinfodict : full hcand dict
+        e.g. 
+          hcand : [h1 (i.e. e/mu/tau), h2 (i.e. tau)]
+          p4hcandinfodict = {
+            "p4h1"    : p4 of e/mu/tau i.e. the 1st component of hcand,
+            "p4h1pi"  : p4 of charged pion if tau else empty,
+            "p4h1pi0" : p4 of reconstructed pi0 if tau else empty,
+            "p4h2"    : p4 of tau (always) i.e. the 2nd component of hcand,
+            "p4h2pi"  : p4 of charged pion from tau,
+            "p4h2pi0" : p4 of reconstructed pi0 from tau,
+          }
       method_leg1     : "DP/PV/IP"
-      method_leg1     : "DP/PV/IP"
+      method_leg2     : "DP/PV/IP"
       mode_leg1       : "e/mu/pi/rho/a1"
-      mode_leg1       : "pi/rho/a1"
+      mode_leg2       : "pi/rho/a1" because the 2nd component of hcand is always tauh
     Output:
       Final PhiCP array for any methods / configurations
     Steps:
@@ -33,9 +43,12 @@ def GetPhiCP(
       Compute the PhiCP
     """
     phicp_input_vec_dict = PrepareVecsForPhiCP(p4hcandinfodict,
-                                               method_leg1, method_leg2, 
-                                               mode_leg1, mode_leg2)
-    phicp = ak.values_astype(ComputeAcopAngle(phicp_input_vec_dict), np.float32)
+                                               method_leg1,
+                                               method_leg2, 
+                                               mode_leg1,
+                                               mode_leg2)
+    phicp = ak.values_astype(ComputeAcopAngle(phicp_input_vec_dict),
+                             np.float32)
     phicp = ak.enforce_type(phicp, "var * float32")
     
     return phicp
@@ -52,22 +65,20 @@ def PrepareVecsForPhiCP(
     Inputs:
       p4hcandinfodict : full hcand dict
       method_leg1     : "DP/PV/IP"
-      method_leg1     : "DP/PV/IP"
+      method_leg2     : "DP/PV/IP"
       mode_leg1       : "e/mu/pi/rho/a1"
-      mode_leg1       : "pi/rho/a1"
+      mode_leg2       : "pi/rho/a1"
     Output:
-      dict{
-        P1 : tau/pi/... for hcand1
-        R1 : k/pi0/...  for hcand1  [to get phicp]
-        H1 : h/pi0/...  for hcand1  [to calculate angle]
-        C1 : charge of hcand1
-        P2 : tau/pi/... for hcand2
-        R2 : h/pi0/...  for hcand2  [to get phicp]
-        H2 : k/pi0/...  for hcand2  [to calculate angle]
-        C2 : charge of hcand2
-        Y1 : Phase-shift for hacnd1 [only for DP]
-        Y2 : Phase-shift for hacnd2 [only for DP]
-      }
+      DP method:
+          P : Pion at zero momentum frame
+          R : Pi0 (Transverse) at zero momentum frame
+          H : R [same, it will be used to compute the sign]
+          Y : Phase shift
+          C : Charge of Tau or hcand1/2
+      IP method:
+          P : e/mu(for etau/mutau channel) or pion(for tautau channel) at zero momentum frame
+          R : IP vector at zero momentum frame
+          H : R
     Steps:
       Prepare input vectors for PhiCP calculation
     """
@@ -101,6 +112,10 @@ def PrepareVecsForPhiCP(
 def ComputeAcopAngle(vecsdict):
     """
     Geometrical estimation of PhiCP
+    For PVPV:
+       P1/P2  --> full tau p4
+       R1/R2  --> k i.e. full tau x polarimetric vector
+       H1/H2  --> h i.e. polarimetric vector
     For DPDP: 
        P1/P2  --> vecPiPlus
        R1/R2  --> vecPiZeroPlustransv
@@ -120,6 +135,7 @@ def ComputeAcopAngle(vecsdict):
     C2 = vecsdict["C2"]
     Y1 = vecsdict["Y1"]
     Y2 = vecsdict["Y2"]
+
     Y  = None
     if Y1 is not None:
         if Y2 is not None:
@@ -148,8 +164,8 @@ def _getSign(P1,H1,P2,H2,C1,C2):
     Pm = ak.where(C1 < 0, P1, P2) # check tau-
     Hm = ak.where(C1 < 0, H1, H2) # Sort according to tau charge
     Hp = ak.where(C1 < 0, H2, H1) # Same
-    angle = Pm.dot(Hp.cross(Hm))
-    return angle
+    sign = Pm.dot(Hp.cross(Hm))
+    return sign
     
 
 def _getBoost(
@@ -163,7 +179,17 @@ def _getBoost(
         leg2_mode: str,
         **kwargs
 ) -> ak.Array:
+    """
+    A function to get the boostvec of the corresponding frame
+    To get the frame:
+      for leg1_method == "DP" and leg2_method == "DP":
+        frame = P1 + P2 i.e. Pion from tau1 and Pion from tau2
+      for leg1_method == "IP" and leg2_method == "IP":  
+        frame = P1 + P2 i.e. e/mu/pion from tau1 and pion from tau2
 
+    returns:
+      boostvec of the frame
+    """
     frame = None
     if leg1_method == "PV" and leg2_method == "PV":
         # P1/P2 -- tau1/2, R1/R2 -- pion_tau1/2
@@ -173,45 +199,7 @@ def _getBoost(
             frame = P1 + P2
     else:
         frame = P1 + P2
-    """
-    elif leg1_method == "DP" and leg2_method == "DP":
-        #v1p -- pi+
-        #v2p -- pi0 from tau+
-        #v1m -- pi-
-        #v2m -- pi0 from tau-
-        #frame -- pi+ + pi-
-        frame = v1p+ v1m
-    elif leg1_method == "IP" and leg2_method == "IP":
-        # v1p -- pion+
-        # v2p -- eta+
-        # v1m -- pion-
-        # v2m -- eta-
-        frame = v1p+ v1m
-    elif leg1_method == "PV" and leg2_method == "IP":
-        # v1p -- tau+
-        # v2p -- pion+
-        # v1m -- pion-
-        # v2m -- eta-
-        frame = v1p + v1m
-    elif leg1_method == "IP" and leg2_method == "PV":
-        # v1p -- pion+
-        # v2p -- eta+
-        # v1m -- tau-
-        # v2m -- pion-
-        frame = v1p + v1m
-    elif leg1_method == "DP" and leg2_method == "IP":
-        # v1p -- pion+
-        # v2p -- pi0+
-        # v1m -- pion-
-        # v2m -- eta-
-        frame = v1p  + v1m
-    elif leg1_method == "IP" and leg2_method == "DP":
-        # v1p -- pion+
-        # v2p -- eta+
-        # v1m -- pion-
-        # v2m -- pi0-
-        frame = v1p + v1m
-    """
+
     return frame.boostvec
 
 
@@ -226,33 +214,35 @@ def _prepareVecs(
     A private function to be used in PrepareVecsForPhiCP
     This mainly returns the required vectors for different modes and methods
     Returned vectors will further be modified in the reStructure step
+    -- Output:
     Method : PV
       Mode : Pi, Rho, a1 [only possible modes]
         WARNING: Frame will be different for Pi
                  and it will use R instead of P
-        P --> tau (hcand)
-        R --> pi  (pions)
+        _P --> tau (hcand)
+        _R --> pi  (pions)
         It will be converted to polarimertric vector in next function
     Method : DP
       Mode : Rho, a1 [only possible modes]
-        P --> pi  (diff for a1)
-        R --> pi0 (diff for a1)
+        _P --> pi  (diff for a1)
+        _R --> pi0 (diff for a1)
     Method : IP
       Mode : e, mu, pi [only needed]
-        P -->
-        R -->
+        _P --> pion if mode == pi else e/mu
+        _R --> e/mu/tau
       
     """
-    P = None
-    R = None
+    _P = None
+    _R = None
 
     if leg_method == "DP":
+        # https://github.com/alebihan/IPHCProductionTools/blob/master/HiggsCPinTauDecays/TauDecaysInterface/src/SCalculator.cc#L363-L366
         if leg_mode == "rho":
-            P = hcand_pi
-            R = hcand_pi0
+            _P = hcand_pi      # charged pion
+            _R = hcand_pi0     # pi0
         elif leg_mode == "a1":
-            P = _get_pi_a1_DP(hcand_pi)
-            R = hcand_pi[:,:1]
+            _P = _get_pi_a1_DP(hcand_pi) # check invMass of (osPi + ss1Pi) and (osPi + ss2Pi), then select the one closest to rho mass
+            _R = hcand_pi[:,:1]          # osPion
         else:
             raise RuntimeError(f"Wrong mode : {leg_mode}")
 
@@ -300,14 +290,14 @@ def _reStructureVecs(
         H --> h   (pv)
     Method : DP
       Mode : Rho, a1 [only possible modes]
-        P --> pi  (diff for a1)
-        R --> pi0 (diff for a1)
+        P --> charged pion at ZMF  (diff for a1: checking the closest one by requiring rho invm)
+        R --> transverse component of pi0 at ZMF (diff for a1: get the os pi)
         H --> pi0 (same as R)
     Method : IP
       Mode : e, mu, pi [only needed]
-        P -->
-        R -->
-        H -->
+        P --> e/mu/pion at ZMF
+        R --> transverse component of IP at ZMF
+        H --> R
     """
     P = None
     R = None
@@ -318,8 +308,8 @@ def _reStructureVecs(
     if leg_method == "DP":
         """
         Input
-          V1   : Pi   [from _prepareVecs]
-          V2   : Pi0  [from _prepareVecs]
+          V1   : Pi   [_P from _prepareVecs]
+          V2   : Pi0  [_R from _prepareVecs]
           V3   : hcand_pi0 [not required]
         Output
           P : Pion at zero momentum frame
@@ -353,8 +343,17 @@ def _reStructureVecs(
     elif leg_method == "IP":
         P_ZMF = V1.boost(boostv.negative())
         # build the IP vector and then apply negative boost
-        _R_ZMF = ak.zip({"x":V2.IPx, "y":V2.IPy, "z":V2.IPz, "t":ak.ones_like(V2.IPz)}, with_name="LorentzVector", behavior=coffea.nanoevents.methods.vector.behavior)
-        R_ZMF  = _R_ZMF.boost(boostv.negative())
+        _IP = ak.zip(
+            {
+                "x":V2.IPx,
+                "y":V2.IPy,
+                "z":V2.IPz,
+                "t":ak.ones_like(V2.IPz),
+            },
+            with_name="LorentzVector",
+            behavior=coffea.nanoevents.methods.vector.behavior
+        )
+        R_ZMF  = _IP.boost(boostv.negative())
         P_ZMF_unit = P_ZMF.pvec.unit
         R_ZMF_unit = R_ZMF.pvec.unit
         R_ZMF_unit_T = (R_ZMF_unit - P_ZMF_unit*(P_ZMF_unit.dot(R_ZMF_unit))).unit

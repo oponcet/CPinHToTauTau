@@ -40,7 +40,7 @@ def ProducePhiCP(
     PrepareP4 = lambda p4dict, mask : {key: ak.where(mask, val, val[:,:0]) for key, val in p4dict.items()}
 
     is_e      = lambda leg: ak.fill_none(ak.firsts(leg.decayMode == -1, axis=1), False)
-    is_mu     = lambda leg: ak.fill_none(ak.firsts(leg.decayMode == -1, axis=1), False)
+    is_mu     = lambda leg: ak.fill_none(ak.firsts(leg.decayMode == -2, axis=1), False)
     is_pi     = lambda leg: ak.fill_none(ak.firsts(leg.decayMode ==  0, axis=1), False)
     is_rho    = lambda leg: ak.fill_none(ak.firsts(leg.decayMode ==  1, axis=1), False)
     is_a1DM2  = lambda leg: ak.fill_none(ak.firsts(leg.decayMode ==  2, axis=1), False)

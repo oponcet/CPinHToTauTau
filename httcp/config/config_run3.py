@@ -582,8 +582,8 @@ def add_config (ana: od.Analysis,
         "normalization_weight": [],
         #"pdf_weight": get_shifts("pdf"),
         #"normalized_pu_weight": get_shifts("minbias_xs"),
-        "electron_weight": get_shifts("e"),
-        "muon_weight": get_shifts("mu"),
+        #"electron_weight": get_shifts("e"),
+        #"muon_weight": get_shifts("mu"),
         #"tau_weight": get_shifts(*(f"tau_{unc}" for unc in cfg.x.tau_unc_names)),
     })
 

@@ -50,10 +50,14 @@ def extra_lepton_veto(
     dr_hlep1_extraleps = extra_lep.metric_table(hcand_lep1)
     dr_hlep2_extraleps = extra_lep.metric_table(hcand_lep2)
 
+    #dr_mask = (
+    #    ((dr_hlep2_extraleps > 0.5) 
+    #     &  (dr_hlep1_extraleps > 0.001)) 
+    #    | (dr_hlep1_extraleps > 0.5))
     dr_mask = (
-        ((dr_hlep2_extraleps > 0.5) 
-         &  (dr_hlep1_extraleps > 0.001)) 
-        | (dr_hlep1_extraleps > 0.5))
+        (dr_hlep1_extraleps > 0.5) 
+        & (dr_hlep2_extraleps > 0.5)
+    )
     
     has_extra_lepton = ak.where(has_single_pair, 
                                 ak.any(dr_mask, axis=-1),

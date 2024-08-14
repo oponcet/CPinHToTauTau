@@ -202,18 +202,22 @@ def main(
                                                                 **kwargs)
     results += tau_results
 
+    #from IPython import embed; embed()
+    
     # check if there are at least two leptons with at least one tau [before trigger obj matching]
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
     prematch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
 
     # trigger obj matching
     # INFO: The end bool is the switch to make it on or off
-    events, good_ele_indices, good_muon_indices, good_tau_indices = self[match_trigobj](events,
-                                                                                        trigger_results,
-                                                                                        good_ele_indices,
-                                                                                        good_muon_indices,
-                                                                                        good_tau_indices,
-                                                                                        True)
+    events, \
+        good_ele_indices, good_muon_indices, good_tau_indices, \
+        matched_triggerID_e, matched_triggerID_mu, matched_triggerID_tau = self[match_trigobj](events,
+                                                                                               trigger_results,
+                                                                                               good_ele_indices,
+                                                                                               good_muon_indices,
+                                                                                               good_tau_indices,
+                                                                                               False)
 
     # check if there are at least two leptons with at least one tau [after trigger obj matching]
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
@@ -227,13 +231,12 @@ def main(
     )
     results += match_res
     
-    #from IPython import embed; embed()
-
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
                                                                         dlveto_ele_indices,
                                                                         dlveto_muon_indices)
     results += extra_double_lepton_veto_results
+
     
     # e-tau pair i.e. hcand selection
     # e.g. [ [], [e1, tau1], [], [], [e1, tau2] ]
@@ -247,6 +250,11 @@ def main(
                                 events.Tau[etau_indices_pair[:,1:2]]],
                                axis=1)
 
+    #etau_pair_matched_triggerID = ak.concatenate([matched_triggerID_e[etau_indices_pair[:,0:1]],
+    #                                              matched_triggerID_tau[etau_indices_pair[:,1:2]]],
+    #                                             axis=1)
+    
+    
     # mu-tau pair i.e. hcand selection
     # e.g. [ [mu1, tau1], [], [mu1, tau2], [], [] ]
     mutau_results, mutau_indices_pair = self[mutau_selection](events,
@@ -259,6 +267,13 @@ def main(
                                  events.Tau[mutau_indices_pair[:,1:2]]],
                                 axis=1)
 
+    #from IPython import embed; embed()
+
+    #mutau_pair_matched_triggerID = ak.concatenate([matched_triggerID_mu[mutau_indices_pair[:,0:1]],
+    #                                               matched_triggerID_tau[mutau_indices_pair[:,1:2]]],
+    #                                              axis=1)
+
+    
     #embed()
     # tau-tau pair i.e. hcand selection
     # e.g. [ [], [tau1, tau2], [], [], [] ]
@@ -273,6 +288,12 @@ def main(
                                   events.Tau[tautau_indices_pair[:,1:2]]], 
                                  axis=1)
 
+    #tautau_pair_matched_triggerID = ak.concatenate([matched_triggerID_tau[tautau_indices_pair[:,0:1]],
+    #                                                matched_triggerID_tau[tautau_indices_pair[:,1:2]]],
+    #                                               axis=1)
+
+    #from IPython import embed; embed()
+    
     # channel selection
     # channel_id is now in columns
     events, channel_results = self[get_categories](events,

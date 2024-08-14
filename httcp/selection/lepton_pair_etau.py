@@ -95,6 +95,9 @@ def get_sorted_pair(
         # Tau
         "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
         "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet", "Tau.rawIdx",
+        "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", "Tau.idDeepTau2018v2p5VSmu",
+        # triggerID
+        #"matched_triggerID_e", "matched_triggerID_tau",
         # MET
         IF_RUN2("MET.pt", "MET.phi"),
         IF_RUN3("PuppiMET.pt", "PuppiMET.phi"),
@@ -113,6 +116,24 @@ def etau_selection(
     # lep1: [ [e1], [e1],    [e1,e2], [],   [e1,e2] ]
     # lep2: [ [t1], [t1,t2], [t1],    [t1], [t1,t2] ]
 
+    #matched_trigID_lep1 = events.matched_triggedID_e
+    #matched_trigID_lep2 = events.matched_triggedID_tau
+
+    # Extra channel specific selections on e or tau
+    # -------------------- #
+    taus            = events.Tau[lep2_indices]
+    tau_tagger      = self.config_inst.x.deep_tau_tagger
+    tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
+    is_good_tau     = (
+        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j.Tight)
+        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.Tight)
+        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.Loose)
+    )
+    lep2_indices    = lep2_indices[is_good_tau]
+    # -------------------- #
+    #matched_trigID_lep2 = matched_trigID_lep2[is_good_tau]
+
+    # puppi for Run3
     met = events.MET if self.config_inst.campaign.x.year < 2022 else events.PuppiMET
 
     # Sorting lep1 [Electron] by isolation [ascending]
@@ -130,6 +151,9 @@ def etau_selection(
                                      events.Tau[lep2_indices]], axis=1)
     lep_indices_pair = ak.cartesian([lep1_indices, lep2_indices], axis=1)
 
+    # new
+    #matched_trigID_pair = ak.cartesian([matched_trigID_lep1, matched_trigID_lep2], axis=1)
+    
     # unzip to get individuals
     # e.g.
     # lep1 -> lep_pair["0"] -> [ [e1], [e1,e1], [e1,e2], [], [e1,e1,e2,e2] ]

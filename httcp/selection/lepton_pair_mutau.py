@@ -96,6 +96,7 @@ def get_sorted_pair(
         # tau
         "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
         "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet",
+        "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", "Tau.idDeepTau2018v2p5VSmu",
         # met
         IF_RUN2("MET.pt", "MET.phi"),
         IF_RUN3("PuppiMET.pt", "PuppiMET.phi"),
@@ -110,6 +111,23 @@ def mutau_selection(
         **kwargs,
 ) -> tuple[ak.Array, SelectionResult, ak.Array]:
 
+    # lep1 and lep2 e.g.
+    # lep1: [ [m1], [m1],    [m1,m2], [],   [m1,m2] ]
+    # lep2: [ [t1], [t1,t2], [t1],    [t1], [t1,t2] ]
+
+    # Extra channel specific selections on m or tau
+    # -------------------- #
+    taus            = events.Tau[lep2_indices]
+    tau_tagger      = self.config_inst.x.deep_tau_tagger
+    tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
+    is_good_tau     = (
+        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j.Medium)
+        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
+        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.Tight)
+    )
+    lep2_indices    = lep2_indices[is_good_tau]
+    # -------------------- # 
+    
     met = events.MET if self.config_inst.campaign.x.year < 2022 else events.PuppiMET
 
     # Sorting lep1 [Electron] by isolation [ascending]
