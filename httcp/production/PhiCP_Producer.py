@@ -86,7 +86,7 @@ def ProducePhiCP(
     PhiCP_DPDP = ak.where(mask_rho_a1,  GetPhiCP(PrepareP4(p4hcandinfo, mask_rho_a1 ), "DP", "DP", "rho", "a1" ), PhiCP_DPDP)
     PhiCP_DPDP = ak.where(mask_a1_rho,  GetPhiCP(PrepareP4(p4hcandinfo, mask_a1_rho ), "DP", "DP", "a1",  "rho"), PhiCP_DPDP)
     PhiCP_DPDP = ak.where(mask_a1_a1,   GetPhiCP(PrepareP4(p4hcandinfo, mask_a1_a1  ), "DP", "DP", "a1",  "a1" ), PhiCP_DPDP)
-
+    
     # PVPV
     PhiCP_PVPV = ak.where(mask_pi_pi,   GetPhiCP(PrepareP4(p4hcandinfo, mask_pi_pi  ), "PV", "PV", "pi",  "pi" ), dummyPhiCP)
     PhiCP_PVPV = ak.where(mask_pi_rho,  GetPhiCP(PrepareP4(p4hcandinfo, mask_pi_rho ), "PV", "PV", "pi",  "rho"), PhiCP_PVPV)
@@ -104,13 +104,14 @@ def ProducePhiCP(
     PhiCP_IPIP = ak.where(mask_pi_pi,   GetPhiCP(PrepareP4(p4hcandinfo, mask_pi_pi  ), "IP", "IP", "pi",  "pi" ), PhiCP_IPIP)
 
     # IPPV
+    """
     PhiCP_IPPV = ak.where(mask_e_rho,   GetPhiCP(PrepareP4(p4hcandinfo, mask_e_rho  ), "IP", "PV", "e",   "rho"), dummyPhiCP)
     PhiCP_IPPV = ak.where(mask_e_a1,    GetPhiCP(PrepareP4(p4hcandinfo, mask_e_a1   ), "IP", "PV", "e",   "a1" ), PhiCP_IPPV)
     PhiCP_IPPV = ak.where(mask_mu_rho,  GetPhiCP(PrepareP4(p4hcandinfo, mask_mu_rho ), "IP", "PV", "mu",  "rho"), PhiCP_IPPV)
     PhiCP_IPPV = ak.where(mask_mu_a1,   GetPhiCP(PrepareP4(p4hcandinfo, mask_mu_a1  ), "IP", "PV", "mu",  "a1" ), PhiCP_IPPV)
     PhiCP_IPPV = ak.where(mask_pi_rho,  GetPhiCP(PrepareP4(p4hcandinfo, mask_pi_rho ), "IP", "PV", "pi",  "rho"), PhiCP_IPPV)
     PhiCP_IPPV = ak.where(mask_pi_a1,   GetPhiCP(PrepareP4(p4hcandinfo, mask_pi_a1  ), "IP", "PV", "pi",  "a1" ), PhiCP_IPPV)
-
+    """
     # IPDP
     PhiCP_IPDP = ak.where(mask_e_rho,   GetPhiCP(PrepareP4(p4hcandinfo, mask_e_rho  ), "IP", "DP", "e",   "rho"), dummyPhiCP)
     PhiCP_IPDP = ak.where(mask_e_a1,    GetPhiCP(PrepareP4(p4hcandinfo, mask_e_a1   ), "IP", "DP", "e",   "a1" ), PhiCP_IPDP)
@@ -118,9 +119,8 @@ def ProducePhiCP(
     PhiCP_IPDP = ak.where(mask_mu_a1,   GetPhiCP(PrepareP4(p4hcandinfo, mask_mu_a1  ), "IP", "DP", "mu",  "a1" ), PhiCP_IPDP)
     PhiCP_IPDP = ak.where(mask_pi_rho,  GetPhiCP(PrepareP4(p4hcandinfo, mask_pi_rho ), "IP", "DP", "pi",  "rho"), PhiCP_IPDP)
     PhiCP_IPDP = ak.where(mask_pi_a1,   GetPhiCP(PrepareP4(p4hcandinfo, mask_pi_a1  ), "IP", "DP", "pi",  "a1" ), PhiCP_IPDP)
-
     
-    return events, PhiCP_PVPV, PhiCP_DPDP, PhiCP_IPIP, PhiCP_IPPV, PhiCP_IPDP
+    return events, PhiCP_IPIP, PhiCP_DPDP, PhiCP_IPDP, PhiCP_PVPV #PhiCP_DPDP, PhiCP_IPIP, PhiCP_IPPV, PhiCP_IPDP
 
 
 
@@ -130,7 +130,11 @@ def ProducePhiCP(
         ProducePhiCP,
     },
     produces={
-        "PhiCP_PVPV", "PhiCP_DPDP", "PhiCP_IPIP", "PhiCP_IPPV", "PhiCP_IPDP",
+        "PhiCP_PVPV",
+        "PhiCP_DPDP",
+        "PhiCP_IPIP",
+        #"PhiCP_IPPV",
+        "PhiCP_IPDP",
     },
 )
 def ProduceDetPhiCP(
@@ -139,12 +143,15 @@ def ProduceDetPhiCP(
         p4hcandinfo: dict,
         **kwargs,
 ) -> ak.Array:
-    events, PhiCP_PVPV, PhiCP_DPDP, PhiCP_IPIP, PhiCP_IPPV, PhiCP_IPDP = self[ProducePhiCP](events, p4hcandinfo)
+    #events, PhiCP_PVPV, PhiCP_DPDP, PhiCP_IPIP, PhiCP_IPPV, PhiCP_IPDP = self[ProducePhiCP](events, p4hcandinfo)
+    events, PhiCP_IPIP, PhiCP_DPDP, PhiCP_IPDP, PhiCP_PVPV = self[ProducePhiCP](events, p4hcandinfo)
+
+    PhiCP_PVPV = ak.nan_to_num(PhiCP_PVPV, nan=0.0)
     
     events = set_ak_column(events, "PhiCP_PVPV", PhiCP_PVPV)
     events = set_ak_column(events, "PhiCP_DPDP", PhiCP_DPDP)
     events = set_ak_column(events, "PhiCP_IPIP", PhiCP_IPIP)
-    events = set_ak_column(events, "PhiCP_IPPV", PhiCP_IPPV)
+    #events = set_ak_column(events, "PhiCP_IPPV", PhiCP_IPPV)
     events = set_ak_column(events, "PhiCP_IPDP", PhiCP_IPDP)
 
     return events
@@ -157,7 +164,11 @@ def ProduceDetPhiCP(
         ProducePhiCP,
     },
     produces={
-        "PhiCPGen_PVPV", "PhiCPGen_DPDP", "PhiCPGen_IPIP", "PhiCPGen_IPPV", "PhiCPGen_IPDP",
+        "PhiCPGen_PVPV",
+        "PhiCPGen_DPDP",
+        "PhiCPGen_IPIP",
+        #"PhiCPGen_IPPV",
+        "PhiCPGen_IPDP",
     },
     mc_only=True,
 )
@@ -167,15 +178,19 @@ def ProduceGenPhiCP(
         p4hcandinfo: dict,
         **kwargs,
 ) -> ak.Array:
-    events, PhiCP_PVPV, PhiCP_DPDP, PhiCP_IPIP, PhiCP_IPPV, PhiCP_IPDP = self[ProducePhiCP](events, p4hcandinfo)
+    #events, PhiCP_PVPV, PhiCP_DPDP, PhiCP_IPIP, PhiCP_IPPV, PhiCP_IPDP = self[ProducePhiCP](events, p4hcandinfo)
+    events, PhiCP_IPIP, PhiCP_DPDP, PhiCP_IPDP, PhiCP_PVPV = self[ProducePhiCP](events, p4hcandinfo)
+
     PhiCP_IPIP = ak.nan_to_num(PhiCP_IPIP, nan=0.0) # WRONG: CHECK IP FOR GEN PARTICLES
-    PhiCP_IPPV = ak.nan_to_num(PhiCP_IPPV, nan=0.0) # WRONG: CHECK IP FOR GEN PARTICLES
+    #PhiCP_IPPV = ak.nan_to_num(PhiCP_IPPV, nan=0.0) # WRONG: CHECK IP FOR GEN PARTICLES
     PhiCP_IPDP = ak.nan_to_num(PhiCP_IPDP, nan=0.0) # WRONG: CHECK IP FOR GEN PARTICLES
 
+    PhiCP_PVPV = ak.nan_to_num(PhiCP_PVPV, nan=0.0)
+    
     events = set_ak_column(events, "PhiCPGen_PVPV", PhiCP_PVPV)
     events = set_ak_column(events, "PhiCPGen_DPDP", PhiCP_DPDP)
     events = set_ak_column(events, "PhiCPGen_IPIP", PhiCP_IPIP)
-    events = set_ak_column(events, "PhiCPGen_IPPV", PhiCP_IPPV)
+    #events = set_ak_column(events, "PhiCPGen_IPPV", PhiCP_IPPV)
     events = set_ak_column(events, "PhiCPGen_IPDP", PhiCP_IPDP)
 
     return events

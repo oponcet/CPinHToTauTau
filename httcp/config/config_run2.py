@@ -46,7 +46,7 @@ def add_config (ana: od.Analysis,
     postfix = campaign.x.postfix
     
     # some validations
-    assert year in [2022, 2023, 2024]
+    assert year in [2016, 2017, 2018]
 
     # get all root processes
     procs = get_root_processes_from_campaign(campaign)
@@ -93,9 +93,10 @@ def add_config (ana: od.Analysis,
     # add datasets we need to study
     dataset_names = [
         ##W+jets
-        "wj_incl",
+        "wj_nlo_incl",
         #Drell-Yan
-        "dy_lep_m50",
+        "dy_lep_lo_m50",
+        "dy_lep_lo_m10to50"
         ## ttbar
         "tt_sl",
         "tt_dl",
@@ -103,53 +104,45 @@ def add_config (ana: od.Analysis,
         ##single top
         "st_tchannel_t",
         "st_tchannel_tbar",
-        "st_tw_t_sl",
-        "st_tw_tb_sl",
-        "st_tw_t_dl",
-        "st_tw_tb_dl",
-        "st_tw_t_fh",
-        "st_tw_tb_fh",
+        "st_tw_t",
+        "st_tw_tb",
         ##Diboson
-        "ww",
-        "wz",
-        "zz",
+        "ww_incl",
+        "wz_incl",
+        "zz_incl",
         ## single top tW channel
         #"st_t_wminus_to_2l2nu",
         #"st_tbar_wplus_to_lnu2q",
         #"st_tbar_wplus_to_2l2nu",
         "h_ggf_tautau_prod_cp_even_sm",
-        "h_ggf_tautau_flat",
+        "h_ggf_tautau_prod_cp_odd_flat",
+        "h_ggf_tautau_prod_cp_even_flat",
     ]
     
     datasets_data = []
-    if year == 2022:
-        if postfix == "preEE":
-            datasets_data = ["data_e_C",   "data_e_D",
-                             "data_single_mu_C",
-                             "data_mu_C",  "data_mu_D", 
-                             "data_tau_C", "data_tau_D"]
+    if year == 2016:
+        if postfix == "preVFP":
+            datasets_data = ["data_e_B",   "data_e_C",   "data_e_D",   "data_e_E",   "data_e_F",
+                             "data_mu_B",  "data_mu_C",  "data_mu_D",  "data_mu_E",  "data_mu_F",
+                             "data_tau_B", "data_tau_C", "data_tau_D", "data_tau_E", "data_tau_F"]
 
-        elif postfix == "postEE":
-            datasets_data = ["data_e_E",   "data_e_G",
-                             "data_mu_E",  "data_mu_G",
-                             "data_tau_E", "data_tau_F", "data_tau_G"]
+        elif postfix == "postVFP":
+            datasets_data = ["data_e_F",   "data_e_G",   "data_e_H",
+                             "data_mu_F",  "data_mu_G",  "data_mu_H",
+                             "data_tau_F", "data_tau_G", "data_tau_H"]
         else:
             raise RuntimeError(f"Wrong postfix: {campaign.x.postfix}")
 
-    elif year == 2023:
-        if postfix == "preBPix":
-            datasets_data = ["data_e0_C",  "data_e1_C",
-                             "data_mu0_C", "data_mu1_C",
-                             "data_tau_C"]
-        elif postfix == "postBPix":
-            datasets_data = ["data_e0_D",  "data_e1_D",
-                             "data_mu0_D", "data_mu1_D",
-                             "data_tau_D"]
-        else:
-            raise RuntimeError(f"Wrong postfix: {campaign.x.postfix}")
+    elif year == 2017:
+        datasets_data = ["data_e_B",   "data_e_C",   "data_e_D",   "data_e_E",   "data_e_F",
+                         "data_mu_B",  "data_mu_C",  "data_mu_D",  "data_mu_E",  "data_mu_F",
+                         "data_tau_B", "data_tau_C", "data_tau_D", "data_tau_E", "data_tau_F"]
 
-    elif year == 2024:
-        raise RuntimeError("2024? Too Early ...")
+    elif year == 2018:
+        datasets_data = ["data_e_A",   "data_e_B",   "data_e_C",   "data_e_D",
+                         "data_mu_A",  "data_mu_B",  "data_mu_C",  "data_mu_D",
+                         "data_tau_A", "data_tau_B", "data_tau_C", "data_tau_D"]
+
 
     else:
         raise RuntimeError(f"Check Year in __init__.py in cmsdb campaign: {year}")
@@ -164,7 +157,7 @@ def add_config (ana: od.Analysis,
         
         # add the dataset
         dataset = cfg.add_dataset(campaign.get_dataset(dataset_name))
-        if re.match(r"^(ww|wz|zz)$", dataset.name):
+        if re.match(r"^(ww|wz|zz)_.*pythia$", dataset.name):
             dataset.add_tag("no_lhe_weights")
         
         # for testing purposes, limit the number of files to 1
@@ -233,33 +226,37 @@ def add_config (ana: od.Analysis,
     cfg.x.validate_dataset_lfns = False
     
     # lumi values in inverse pb
-    # TODO later: preliminary luminosity using norm tag. Must be corrected, when more data is available
+    # https://twiki.cern.ch/twiki/bin/view/CMS/LumiRecommendationsRun2?rev=2#Combination_and_correlations
     # https://twiki.cern.ch/twiki/bin/view/CMS/PdmVRun3Analysis
-    if year == 2022:
-        if postfix == "preEE":
-            cfg.x.luminosity = Number(7980.4, {
-                "total": 0.014j,
+    # difference pre-post VFP: https://cds.cern.ch/record/2854610/files/DP2023_006.pdf
+    if year == 2016:
+        if postfix == "preVFP":
+            cfg.x.luminosity = Number(19_500, {
+                "lumi_13TeV_2016": 0.01j,
+                "lumi_13TeV_correlated": 0.006j,
             })
-        elif postfix == "postEE":
-            cfg.x.luminosity = Number(26671.7, {
-                "total": 0.014j,
+        elif postfix == "postVFP":
+            cfg.x.luminosity = Number(16_800, {
+                "lumi_13TeV_2016": 0.01j,
+                "lumi_13TeV_correlated": 0.006j,
             })
         else:
             raise RuntimeError(f"Wrong postfix: {campaign.x.postfix}")
 
-    elif year == 2023:
-        if postfix == "preBPix":
-            cfg.x.luminosity = Number(17794 , {
-                "lumi_13TeV_correlated": 0.0j,
-            })
-        elif postfix == "postBPix":
-            cfg.x.luminosity = Number(9451, {
-                "lumi_13TeV_correlated": 0.0j,
-            })
-    elif year == 2024:
-        cfg.x.luminosity = Number(0, {
-            "lumi_13TeV_correlated": 0.0j,
+    elif year == 2017:
+        cfg.x.luminosity = Number(41_480, {
+            "lumi_13TeV_2017": 0.02j,
+            "lumi_13TeV_1718": 0.006j,
+            "lumi_13TeV_correlated": 0.009j,
         })
+        
+    elif year == 2018:
+        cfg.x.luminosity = Number(59_830, {
+            "lumi_13TeV_2017": 0.015j,
+            "lumi_13TeV_1718": 0.002j,
+            "lumi_13TeV_correlated": 0.02j,
+        })
+
     else:
         raise RuntimeError(f"Wrong year: {year}")
 
@@ -270,78 +267,57 @@ def add_config (ana: od.Analysis,
     cfg.x.minbias_xs = Number(69.2, 0.046j)
 
     year_postfix = ""
-    if year == 2022:
-        year_postfix = "EE" if postfix == "postEE" else ""
-    elif year == 2023:
-        year_postfix = "BPix" if postfix == "postBPix" else ""
+    if year == 2016:
+        year_postfix = "APV" if postfix == "preVFP" else ""
         
     # b-tag working points
     # https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer22/
     # https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer22EE/
     # TODO later: complete WP when data becomes available
     btag_key = f"{year}{year_postfix}"
+    # https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP?rev=6
+    # https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP?rev=8
+    # https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17?rev=15
+    # https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18?rev=18
     cfg.x.btag_working_points = DotDict.wrap({
         "deepjet": {
-            "loose"  : {"2022": 0.0583, "2022EE": 0.0614, "2023": 0.0583, "2023BPix": 0.0583, "2024": 0.0}[btag_key],
-            "medium" : {"2022": 0.3086, "2022EE": 0.3196, "2023": 0.3086, "2023BPix": 0.3086, "2024": 0.0}[btag_key],
-            "tight"  : {"2022": 0.7183, "2022EE": 0.73,   "2023": 0.7183, "2023BPix": 0.7183, "2024": 0.0}[btag_key],
-            "vtight" : {"2022": 0.8111, "2022EE": 0.8184, "2023": 0.8111, "2023BPix": 0.8111, "2024": 0.0}[btag_key],
-            "vvtight": {"2022": 0.9512, "2022EE": 0.9542, "2023": 0.9512, "2023BPix": 0.9512, "2024": 0.0}[btag_key],
+            "loose" : {"2016APV": 0.0508, "2016": 0.0480, "2017": 0.0532, "2018": 0.0490}[btag_key],
+            "medium": {"2016APV": 0.2598, "2016": 0.2489, "2017": 0.3040, "2018": 0.2783}[btag_key],
+            "tight" : {"2016APV": 0.6502, "2016": 0.6377, "2017": 0.7476, "2018": 0.7100}[btag_key],
         },
-        "robustParticleTransformer": {
-            "loose"  : {"2022": 0.0849, "2022EE": 0.0897, "2023": 0.0849, "2023BPix": 0.0849, "2024": 0.0}[btag_key],
-            "medium" : {"2022": 0.4319, "2022EE": 0.451,  "2023": 0.4319, "2023BPix": 0.4319, "2024": 0.0}[btag_key],
-            "tight"  : {"2022": 0.8482, "2022EE": 0.8604, "2023": 0.8482, "2023BPix": 0.8482, "2024": 0.0}[btag_key],
-            "vtight" : {"2022": 0.9151, "2022EE": 0.9234, "2023": 0.9151, "2023BPix": 0.9151, "2024": 0.0}[btag_key],
-            "vvtight": {"2022": 0.9874, "2022EE": 0.9893, "2023": 0.9874, "2023BPix": 0.9874, "2024": 0.0}[btag_key],
-        },
-        "particleNet": {
-            "loose"  : {"2022": 0.047,  "2022EE": 0.0499, "2023": 0.0499, "2023BPix": 0.0499, "2024": 0.0}[btag_key],
-            "medium" : {"2022": 0.245,  "2022EE": 0.2605, "2023": 0.2605, "2023BPix": 0.2605, "2024": 0.0}[btag_key],
-            "tight"  : {"2022": 0.6734, "2022EE": 0.6915, "2023": 0.6915, "2023BPix": 0.6915, "2024": 0.0}[btag_key],
-            "vtight" : {"2022": 0.7862, "2022EE": 0.8033, "2023": 0.8033, "2023BPix": 0.8033, "2024": 0.0}[btag_key],
-            "vvtight": {"2022": 0.961,  "2022EE": 0.9664, "2023": 0.9664, "2023BPix": 0.9664, "2024": 0.0}[btag_key],
+        "deepcsv": {
+            "loose" : {"2016APV": 0.2027, "2016": 0.1918, "2017": 0.1355, "2018": 0.1208}[btag_key],
+            "medium": {"2016APV": 0.6001, "2016": 0.5847, "2017": 0.4506, "2018": 0.4168}[btag_key],
+            "tight" : {"2016APV": 0.8819, "2016": 0.8767, "2017": 0.7738, "2018": 0.7665}[btag_key],
         },
     })
-    # 2023 is dummy ... CORRECT IT LATER ===>> TODO
 
-    cfg.x.deep_tau_tagger = "DeepTau2018v2p5"
+    cfg.x.deep_tau_tagger = "DeepTau2017v2p1"
     cfg.x.deep_tau_info = DotDict.wrap({
-        "DeepTau2018v2p5": {
+        "DeepTau2017v2p1": {
             "wp": {
                 "vs_e": {"VVVLoose": 1, "VVLoose": 2, "VLoose": 3, "Loose": 4, "Medium": 5, "Tight": 6, "VTight": 7, "VVTight": 8},
                 "vs_m": {"VVVLoose": 1, "VVLoose": 1, "VLoose": 1, "Loose": 2, "Medium": 3, "Tight": 4, "VTight": 4, "VVTight": 4},
                 "vs_j": {"VVVLoose": 1, "VVLoose": 2, "VLoose": 3, "Loose": 4, "Medium": 5, "Tight": 6, "VTight": 7, "VVTight": 8},
             },
-            "vs_e": {
-                "etau"   : "Tight",
-                "mutau"  : "VVLoose",
-                "tautau" : "VVLoose",
-            },
-            "vs_m": {
-                "etau"   : "Loose",
-                "mutau"  : "Tight",
-                "tautau" : "VLoose",
-            },
-            "vs_j": {
-                "etau"   : "Tight",
-                "mutau"  : "Medium",
-                "tautau" : "Medium",
-            },
+            "vs_e": "VVLoose",
+            "vs_m": "Tight",
+            "vs_j": "Medium"
         },
     })
 
 
   
     # Adding triggers
-    if year == 2022:
-        from httcp.config.triggers import add_triggers_run3_2022
-        add_triggers_run3_2022(cfg, postfix)
-    elif year == 2023:
-        from httcp.config.triggers import add_triggers_run3_2023
-        add_triggers_run3_2023(cfg, postfix)
-    elif year == 2024:
-        raise RuntimeError("Babushcha: too early")
+    if year == 2016:
+        from httcp.config.triggers import add_triggers_run2_2016
+        add_triggers_run2_2016(cfg, postfix)
+    elif year == 2017:
+        from httcp.config.triggers import add_triggers_run2_2017
+        add_triggers_run2_2017(cfg)
+    elif year == 2018:
+        from httcp.config.triggers import add_triggers_run2_2018
+        add_triggers_run2_2018(cfg)
     else:
         raise RuntimeError(f"Wrong year: {year}. Check __init__.py in cmsdb campaign")
 
@@ -472,9 +448,9 @@ def add_config (ana: od.Analysis,
         f"{year}_{postfix}"
     )
 
-
+    """
     # register shifts
-    #cfg.add_shift(name="nominal", id=0)
+    cfg.add_shift(name="nominal", id=0)
 
     cfg.add_shift(name="minbias_xs_up", id=7, type="shape")
     cfg.add_shift(name="minbias_xs_down", id=8, type="shape")
@@ -483,10 +459,10 @@ def add_config (ana: od.Analysis,
         "minbias_xs",
         {
             "pu_weight": "pu_weight_{name}",
-            #"normalized_pu_weight": "normalized_pu_weight_{name}",
+            "normalized_pu_weight": "normalized_pu_weight_{name}",
         },
     )
-    """
+
     # load jec sources
     with open(os.path.join(thisdir, "jec_sources.yaml"), "r") as f:
         all_jec_sources = yaml.load(f, yaml.Loader)["names"]
@@ -558,10 +534,6 @@ def add_config (ana: od.Analysis,
         cfg.add_shift(name=f"tau_{unc}_down", id=51 + 2 * i, type="shape")
         add_shift_aliases(cfg, f"tau_{unc}", {"tau_weight": f"tau_weight_{unc}_" + "{direction}"})
     """
-    cfg.add_shift(name=f"tau_up", id=50, type="shape")
-    cfg.add_shift(name=f"tau_down", id=51, type="shape")
-    add_shift_aliases(cfg, f"tau", {"tau_weight": "tau_weight_{direction}"})
-
     cfg.add_shift(name="e_up", id=90, type="shape")
     cfg.add_shift(name="e_down", id=91, type="shape")
     add_shift_aliases(cfg, "e", {"electron_weight": "electron_weight_{direction}"})
@@ -580,17 +552,8 @@ def add_config (ana: od.Analysis,
             #"normalized_pdf_weight": "normalized_pdf_weight_{direction}",
         },
     )
-    """
-    cfg.add_shift(name="tauspinner_up",   id=150, type="shape")
-    cfg.add_shift(name="tauspinner_down", id=151, type="shape")
-    add_shift_aliases(
-        cfg,
-        "tauspinner",
-        {
-            "tauspinner_weight": "tauspinner_weight_{direction}",
-        },
-    )
-    """
+
+
     # target file size after MergeReducedEvents in MB
     cfg.x.reduced_file_size = 512.0
     
@@ -605,21 +568,14 @@ def add_config (ana: od.Analysis,
     # (this info is used by weight producers)
     get_shifts = functools.partial(get_shifts_from_sources, cfg)
     cfg.x.event_weights = DotDict({
-        "normalization_weight"  : [],
-        "pu_weight"             : get_shifts("minbias_xs"),
-        #"pdf_weight"            : get_shifts("pdf"),
-        "electron_weight"       : get_shifts("e"),
-        "muon_weight"           : get_shifts("mu"),
-        "tau_weight"            : get_shifts("tau"),
-        #"tau_id_sf"            : [],
-        #"tauspinner_weight": get_shifts("tauspinner"),
+        "normalization_weight": [],
+        #"pdf_weight": get_shifts("pdf"),
+        #"normalized_pu_weight": get_shifts("minbias_xs"),
+        #"electron_weight": get_shifts("e"),
+        #"muon_weight": get_shifts("mu"),
+        #"tau_weight": get_shifts(*(f"tau_{unc}" for unc in cfg.x.tau_unc_names)),
     })
 
-    # define per-dataset event weights
-    for dataset in cfg.datasets:
-        if dataset.x("no_lhe_weights", False):
-            dataset.x.event_weights = {"pdf_weight": get_shifts("pdf")}
-            
     cfg.x.default_weight_producer = "all_weights"
 
     # versions per task family, either referring to strings or to callables receving the invoking

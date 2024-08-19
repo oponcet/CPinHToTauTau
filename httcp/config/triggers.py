@@ -672,79 +672,29 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
       /afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/yamls/HLTlog_2022PostEE.log
     """
     config.x.triggers = od.UniqueObjectIndex(Trigger,[
-        # ===>>> tauh-tauh
-        # https://cmshltinfo.app.cern.ch/summary?search=&year=2022&paths=true&prescaled=false&stream-types=Physics,Scouting,Parking
-        # https://cmshltinfo.app.cern.ch/summary?search=HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1&year=2022&paths=true&prescaled=false&stream-types=Physics,Scouting,Parking
-        #Trigger(
-        #    name="HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1",
-        #    id=15151,
-        #    run_range=[352494,362760],
-        #    legs=[
-        #        TriggerLeg(
-        #            pdg_id=15,
-        #            min_pt=42.0,
-        #            # filter names:
-        #            # hltDoublePFTau35TrackPt1MediumChargedIsolationAndTightOOSCPhotonsDz02Reg
-        #            trigger_bits=64,
-        #        ),
-        #        TriggerLeg(
-        #            pdg_id=15,
-        #            min_pt=42.0,
-        #            # filter names:
-        #            # hltDoublePFTau35TrackPt1MediumChargedIsolationAndTightOOSCPhotonsDz02Reg
-        #            trigger_bits=64,
-        #        ),
-        #    ],
-        #    #applies_to_dataset=(lambda dataset_inst: dataset_inst.is_mc or dataset_inst.x.era != "D"),
-        #    tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
-        #),
-        # https://cmshltinfo.app.cern.ch/summary?search=HLT_DoubleTightChargedIsoPFTauHPS35_Trk1_eta2p1&year=2022&paths=true&prescaled=false&stream-types=Physics,Scouting,Parking
-        #Trigger(
-        #    name="HLT_DoubleTightChargedIsoPFTauHPS35_Trk1_eta2p1",
-        #    id=15152,
-        #    run_range=[352494,362760],
-        #    legs=[
-        #       TriggerLeg(
-        #            pdg_id=15,
-        #           min_pt=37.0,
-        #           # filter names:
-        #            # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg
-        #            trigger_bits=64,
-        #        ),
-        #        TriggerLeg(
-        #            pdg_id=15,
-        #            min_pt=37.0,
-        #            # filter names:
-        #            # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg
-        #            trigger_bits=64,
-        #        ),
-        #    ],
-        #    #applies_to_dataset=(lambda dataset_inst: dataset_inst.is_mc or dataset_inst.x.era != "D"),
-        #    tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
-        #),
         # https://cmshltinfo.app.cern.ch/summary?search=HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1&year=2022&paths=true&prescaled=false&stream-types=Physics,Scouting,Parking
-        Trigger(
-            name="HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
-            id=15153,
-            #run_range=[355862,362760],
-            legs=[
-                TriggerLeg(
-                    pdg_id=15,
-                    min_pt=40.0,
-                    # filter names:
-                    # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg
-                    trigger_bits=64,
-                ),
-                TriggerLeg(
-                    pdg_id=15,
-                    min_pt=40.0,
-                    # filter names:
-                    # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg
-                    trigger_bits=64,
-                ),
-            ],
-            tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
-        ),
+        #Trigger(
+        #    name="HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
+        #    id=15153,
+        #    #run_range=[355862,362760],
+        #    legs=[
+        #        TriggerLeg(
+        #            pdg_id=15,
+        #            min_pt=40.0,
+        #            # filter names:
+        #            # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg
+        #            trigger_bits=64,
+        #        ),
+        #        TriggerLeg(
+        #            pdg_id=15,
+        #            min_pt=40.0,
+        #            # filter names:
+        #            # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg
+        #            trigger_bits=64,
+        #        ),
+        #    ],
+        #    tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
+        #),
         # ===>>> e-tauh
         Trigger(
             name="HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1",

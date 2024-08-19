@@ -325,12 +325,13 @@ def main(
 
     # gen particles info
     # hcand-gentau match = True/False
+    """
     if "is_signal" in list(self.dataset_inst.aux.keys()):
         if self.dataset_inst.aux["is_signal"]:
             #print("hcand-gentau matching")
             events, gentau_results = self[gentau_selection](events, True)
             results += gentau_results
-
+    """
     #from IPython import embed; embed()
     #1/0
 

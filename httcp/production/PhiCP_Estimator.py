@@ -42,6 +42,7 @@ def GetPhiCP(
       Prepares the input vectors for PhiCP
       Compute the PhiCP
     """
+    #from IPython import embed; embed()
     phicp_input_vec_dict = PrepareVecsForPhiCP(p4hcandinfodict,
                                                method_leg1,
                                                method_leg2, 
@@ -146,15 +147,18 @@ def ComputeAcopAngle(vecsdict):
         if Y2 is not None:
             Y = Y2
             
-    acop = np.arccos(R2.dot(R1))
+    acop = np.arccos(R1.dot(R2))
     sign = _getSign(P1,H1,P2,H2,C1,C2) #P1.dot(H2.cross(H1))
-    acop = ak.where(sign < 0.0, 2*np.pi - acop, acop)
+    acop = ak.where(sign < 0.0, 2.*np.pi - acop, acop)
     if Y is not None:
         acop  = ak.where(Y < 0.0, acop + np.pi, acop)
-        acop  = ak.where((Y < 0.0) & (acop > 2*np.pi), 
-                         acop - 2*np.pi, 
-                         acop)
-        
+        #acop  = ak.where((Y < 0.0) & (acop > 2.*np.pi), 
+        #                 acop - 2.*np.pi, 
+        #                 acop)
+
+    #Map  angles into [0,2pi] interval
+    acop = ak.where(acop > 2.*np.pi, acop - 2.* np.pi, acop) 
+    acop = ak.where(acop < 0,        acop + 2.* np.pi, acop)
     return acop
 
 
@@ -165,6 +169,7 @@ def _getSign(P1,H1,P2,H2,C1,C2):
     Hm = ak.where(C1 < 0, H1, H2) # Sort according to tau charge
     Hp = ak.where(C1 < 0, H2, H1) # Same
     sign = Pm.dot(Hp.cross(Hm))
+    #sign = P2.dot(H1.cross(H2))
     return sign
     
 
@@ -248,16 +253,16 @@ def _prepareVecs(
 
 
     elif leg_method == "PV":
-        P = hcand
-        R = hcand_pi
+        _P = hcand
+        _R = hcand_pi
 
     elif leg_method == "IP":
         if leg_mode == "e" or leg_mode == "mu":
-            P = hcand
-            R = hcand
+            _P = hcand
+            _R = hcand
         elif leg_mode == "pi":
-            P = hcand_pi
-            R = hcand
+            _P = hcand_pi
+            _R = hcand
         #pass
 
     else:
@@ -268,7 +273,7 @@ def _prepareVecs(
     #print(f"leg_method: {leg_method}, leg_mode: {leg_mode}")
     #print(f"P: {P}")
     #print(f"R: {R}")
-    return P, R, hcand_charge
+    return _P, _R, hcand_charge
 
 
 def _reStructureVecs(
@@ -341,25 +346,29 @@ def _reStructureVecs(
         P, R, H = _pv(boostv, V1, V2, V3, leg_mode)
 
     elif leg_method == "IP":
-        P_ZMF = V1.boost(boostv.negative())
+        """
+        V1   : p4 of e/mu/pi
+        V2   : p4 of e/mu/tau
+        V3   : p4 of Pi0 [not relevant]
+        """
+        P_ZMF = V1.boost(boostv.negative()).pvec
         # build the IP vector and then apply negative boost
-        _IP = ak.zip(
-            {
-                "x":V2.IPx,
-                "y":V2.IPy,
-                "z":V2.IPz,
-                "t":ak.ones_like(V2.IPz),
-            },
-            with_name="LorentzVector",
-            behavior=coffea.nanoevents.methods.vector.behavior
-        )
-        R_ZMF  = _IP.boost(boostv.negative())
-        P_ZMF_unit = P_ZMF.pvec.unit
-        R_ZMF_unit = R_ZMF.pvec.unit
-        R_ZMF_unit_T = (R_ZMF_unit - P_ZMF_unit*(P_ZMF_unit.dot(R_ZMF_unit))).unit
+        IP = ak.zip({"x":V2.IPx, "y":V2.IPy, "z":V2.IPz, "t":ak.zeros_like(V2.IPz)},
+                    with_name="LorentzVector",
+                    behavior=coffea.nanoevents.methods.vector.behavior)
+        R_ZMF      = IP.boost(boostv.negative()).pvec
+
+        P_ZMF_unit   = P_ZMF.unit
+        R_ZMF_unit   = R_ZMF.unit
+        #R_ZMF_T_unit = R_ZMF_unit.add((P_ZMF_unit.multiply(R_ZMF_unit.dot(P_ZMF_unit))).negative())
+        R_ZMF_T_unit = (R_ZMF_unit - P_ZMF_unit*(R_ZMF_unit.dot(P_ZMF_unit))).unit
+        
+        #P_ZMF_unit = P_ZMF.unit
+        #R_ZMF_T = (R_ZMF - (R_ZMF.dot(P_ZMF))*P_ZMF_unit)
+        #R_ZMF_T_unit = (R_ZMF - (R_ZMF.dot(P_ZMF))*P_ZMF_unit).unit
         
         P = P_ZMF_unit
-        R = R_ZMF_unit_T
+        R = R_ZMF_T_unit
         H = R
         #pass
 

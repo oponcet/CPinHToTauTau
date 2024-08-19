@@ -78,14 +78,6 @@ def select_tauprods(hcand_idx, tauprods):
     return hcandprods
 
 
-is_pion         = lambda prods : ((np.abs(prods.pdgId) == 211) | (np.abs(prods.pdgId) == 321))
-is_photon       = lambda prods : prods.pdgId == 22
-has_one_pion    = lambda prods : (ak.sum(is_pion(prods),   axis = 1) == 1)[:,None]
-has_three_pions = lambda prods : (ak.sum(is_pion(prods),   axis = 1) == 3)[:,None]
-has_photons     = lambda prods : (ak.sum(is_photon(prods), axis = 1) >  0)[:,None]
-has_no_photons  = lambda prods : (ak.sum(is_photon(prods), axis = 1) == 0)[:,None]
-
-
 @selector(
     uses={
         "TauProd.pdgId",
@@ -125,6 +117,38 @@ def assign_tauprod_mass_charge(
 
     return events
 
+"""
+is_pion         = lambda prods : ((np.abs(prods.pdgId) == 211) | (np.abs(prods.pdgId) == 321))
+is_photon       = lambda prods : prods.pdgId == 22
+has_one_pion    = lambda prods : (ak.sum(is_pion(prods),   axis = 1) == 1)[:,None]
+has_atleast_one_pion = lambda prods : (ak.sum(is_pion(prods),   axis = 1) >= 1)[:,None] # new
+has_three_pions = lambda prods : (ak.sum(is_pion(prods),   axis = 1) == 3)[:,None]
+has_photons     = lambda prods : (ak.sum(is_photon(prods), axis = 1) >  0)[:,None]
+has_no_photons  = lambda prods : (ak.sum(is_photon(prods), axis = 1) == 0)[:,None]
+"""
+
+def build_hcand_mask(hcand, hcandprods, dummy):
+    is_pion         = lambda prods : ((np.abs(prods.pdgId) == 211) | (np.abs(prods.pdgId) == 321))
+    is_photon       = lambda prods : prods.pdgId == 22
+    has_one_pion    = lambda prods : (ak.sum(is_pion(prods),   axis = 1) == 1)[:,None]
+    has_atleast_one_pion = lambda prods : (ak.sum(is_pion(prods),   axis = 1) >= 1)[:,None] # new
+    has_three_pions = lambda prods : (ak.sum(is_pion(prods),   axis = 1) == 3)[:,None]
+    has_photons     = lambda prods : (ak.sum(is_photon(prods), axis = 1) >  0)[:,None]
+    has_no_photons  = lambda prods : (ak.sum(is_photon(prods), axis = 1) == 0)[:,None]
+
+    hcand_mask = ak.where(hcand.decayMode == 0,
+                          has_atleast_one_pion(hcandprods),
+                          ak.where(((hcand.decayMode == 1) | (hcand.decayMode == 2)),
+                                   (has_atleast_one_pion(hcandprods) & has_photons(hcandprods)),
+                                   ak.where(hcand.decayMode == 10,
+                                            has_three_pions(hcandprods),
+                                            ak.where(hcand.decayMode == 11,
+                                                     (has_three_pions(hcandprods) & has_photons(hcandprods)),
+                                                     dummy)
+                                            )
+                                   )
+                          )
+    return hcand_mask
 
 
 @selector(
@@ -132,8 +156,8 @@ def assign_tauprod_mass_charge(
         "channel_id", "TauProd.*", assign_tauprod_mass_charge,
     },
     produces={
-        "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.charge", "hcand.rawIdx", 
-        "hcand.decayMode", "hcand.IPx", "hcand.IPy", "hcand.IPz",
+        "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.charge", "hcand.rawIdx", "hcand.decayMode",
+        "hcand.IPx", "hcand.IPy", "hcand.IPz",
         "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass", "hcandprod.charge", "hcandprod.pdgId", "hcandprod.tauIdx",
         assign_tauprod_mass_charge,
     },
@@ -169,6 +193,8 @@ def higgscandprod(
                            tauprods[:,:0])
 
     dummy = (events.event >= 0)[:,None]
+
+    """
     hcand1_mask = ak.where(hcand1.decayMode == 0,
                            (has_one_pion(hcand1prods) & has_no_photons(hcand1prods)),
                            ak.where(((hcand1.decayMode == 1) | (hcand1.decayMode == 2)),
@@ -193,7 +219,10 @@ def higgscandprod(
                                          )
                                 )
                        )
-    
+    """
+    hcand1_mask = build_hcand_mask(hcand1, hcand1prods, dummy)
+    hcand2_mask = build_hcand_mask(hcand2, hcand2prods, dummy)
+
     hcand_prod_mask = ak.concatenate([hcand1_mask, hcand2_mask], axis=1)
     
     hcand_prods = ak.concatenate([hcand1prods[:,None], hcand2prods[:,None]], axis=1)
@@ -213,7 +242,6 @@ def higgscandprod(
 
     #for i in range(500): 
     #    print(f"ch : {events.channel_id[i]}\t{hcand1.decayMode[i]}\t{hcand2.decayMode[i]}\t{hcand1_mask[i]}\t{hcand2_mask[i]}\t{hcand1prods.pdgId[i]}\t{hcand2prods.pdgId[i]}")
-
 
     return events, SelectionResult(
         steps={

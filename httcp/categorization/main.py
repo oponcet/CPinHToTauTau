@@ -35,7 +35,7 @@ def sel_etau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, a
     return events, events["channel_id"] == ch.id
 
 @categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_etau_pion(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+def sel_etau_pi(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     ch = self.config_inst.get_channel("etau")
     ch_mask = events["channel_id"] == ch.id
     dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 0), axis=1) == 1
@@ -49,10 +49,24 @@ def sel_etau_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Arra
     return events, ch_mask & dm_mask
 
 @categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_etau_a1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+def sel_etau_a1_1pr_2pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("etau")
+    ch_mask = events["channel_id"] == ch.id
+    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 2), axis=1) == 1
+    return events, ch_mask & dm_mask
+
+@categorizer(uses={"channel_id", "hcand.decayMode"})
+def sel_etau_a1_3pr_0pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     ch = self.config_inst.get_channel("etau")
     ch_mask = events["channel_id"] == ch.id
     dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 10), axis=1) == 1
+    return events, ch_mask & dm_mask
+
+@categorizer(uses={"channel_id", "hcand.decayMode"})
+def sel_etau_a1_3pr_1pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("etau")
+    ch_mask = events["channel_id"] == ch.id
+    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 11), axis=1) == 1
     return events, ch_mask & dm_mask
 
 # ---------------------------------------------------------- #
@@ -65,7 +79,7 @@ def sel_mutau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, 
     return events, events["channel_id"] == ch.id
 
 @categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_mutau_pion(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+def sel_mutau_pi(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     ch = self.config_inst.get_channel("mutau")
     ch_mask = events["channel_id"] == ch.id
     dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 0), axis=1) == 1
@@ -79,12 +93,25 @@ def sel_mutau_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Arr
     return events, ch_mask & dm_mask
 
 @categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_mutau_a1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+def sel_mutau_a1_1pr_2pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("mutau")
+    ch_mask = events["channel_id"] == ch.id
+    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 2), axis=1) == 1
+    return events, ch_mask & dm_mask
+
+@categorizer(uses={"channel_id", "hcand.decayMode"})
+def sel_mutau_a1_3pr_0pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     ch = self.config_inst.get_channel("mutau")
     ch_mask = events["channel_id"] == ch.id
     dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 10), axis=1) == 1
     return events, ch_mask & dm_mask
 
+@categorizer(uses={"channel_id", "hcand.decayMode"})
+def sel_mutau_a1_3pr_1pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("mutau")
+    ch_mask = events["channel_id"] == ch.id
+    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 11), axis=1) == 1
+    return events, ch_mask & dm_mask
 
 # ---------------------------------------------------------- #
 #                            tau-tau                         #

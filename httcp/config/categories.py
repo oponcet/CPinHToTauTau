@@ -36,28 +36,42 @@ def add_categories(config: od.Config) -> None:
         name="etau",
         id=101,
         selection="sel_etau",
-        label="etau_channel",
+        label="etau",
     )
     add_category(
         config,
-        name="etau_pion",
+        name="etau_pi",
         id=102,
-        selection="sel_etau_pion",
-        label="etau_channel_pi",
+        selection="sel_etau_pi",
+        label="etau_pion",
     )
     add_category(
         config,
         name="etau_rho",
         id=103,
         selection="sel_etau_rho",
-        label="etau_channel_rho",
+        label="etau_rho",
     )
     add_category(
         config,
-        name="etau_a1",
+        name="etau_a1_1pr_2pi0",
         id=104,
-        selection="sel_etau_a1",
-        label="etau_channel_a1",
+        selection="sel_etau_a1_1pr_2pi0",
+        label="etau_a1_1pr_2pi0",
+    )
+    add_category(
+        config,
+        name="etau_a1_3pr_0pi0",
+        id=105,
+        selection="sel_etau_a1_3pr_0pi0",
+        label="etau_a1_3pr_0pi0",
+    )
+    add_category(
+        config,
+        name="etau_a1_3pr_1pi0",
+        id=106,
+        selection="sel_etau_a1_3pr_1pi0",
+        label="etau_a1_3pr_1pi0",
     )
 
     # ------------------------------- #
@@ -68,28 +82,42 @@ def add_categories(config: od.Config) -> None:
         name="mutau",
         id=201,
         selection="sel_mutau",
-        label="mutau_channel",
+        label="mutau",
     )
     add_category(
         config,
-        name="mutau_pion",
+        name="mutau_pi",
         id=202,
-        selection="sel_mutau_pion",
-        label="mutau_channel_pi",
+        selection="sel_mutau_pi",
+        label="mutau_pion",
     )
     add_category(
         config,
         name="mutau_rho",
         id=203,
         selection="sel_mutau_rho",
-        label="mutau_channel_rho",
+        label="mutau_rho",
     )
     add_category(
         config,
-        name="mutau_a1",
+        name="mutau_a1_1pr_2pi0",
         id=204,
-        selection="sel_mutau_a1",
-        label="mutau_channel_a1",
+        selection="sel_mutau_a1_1pr_2pi0",
+        label="mutau_a1_1pr_2pi0",
+    )
+    add_category(
+        config,
+        name="mutau_a1_3pr_0pi0",
+        id=205,
+        selection="sel_mutau_a1_3pr_0pi0",
+        label="mutau_a1_3pr_0pi0",
+    )
+    add_category(
+        config,
+        name="mutau_a1_3pr_1pi0",
+        id=206,
+        selection="sel_mutau_a1_3pr_1pi0",
+        label="mutau_a1_3pr_1pi0",
     )
 
     # ------------------------------- #

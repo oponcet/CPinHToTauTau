@@ -116,9 +116,18 @@ def keep_columns(cfg: od.Config) -> None:
             f"Tau.{var}" for var in [
                 "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
                 "rawDeepTau2018v2p5VSjet","idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu",
-                "decayMode", "decayModePNet", "genPartFlav", "rawIdx",
+                "decayMode",
+                "decayModeHPS",
+                "decayModePNet",
+                "genPartFlav",
+                "rawIdx",
                 "pt_no_tes", "mass_no_tes"
             ]
+            #} | {
+            #f"TauSpinner.weight_cp_{var}" for var in [
+            #    "0", "0_alt", "0p25", "0p25_alt", "0p375",
+            #    "0p375_alt", "0p5", "0p5_alt", "minus0p25", "minus0p25_alt"
+            #]
         } | {
             f"Muon.{var}" for var in [
                 "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
@@ -368,28 +377,28 @@ def add_hcand_features(cfg: od.Config) -> None:
             null_value=EMPTY_FLOAT,
             binning=(40, 0., 200.),
             unit="GeV",
-            x_title="hcand" + r" $p_{T}$",
+            x_title=f"hcand[{i+1}]" + r" $p_{T}$",
         )
         cfg.add_variable(
             name=f"hcand_{i+1}_phi",
             expression=f"hcand.phi[:,{i}]",
             null_value=EMPTY_FLOAT,
             binning=(32, -3.2, 3.2),
-            x_title="hcand" + r" $\phi$",
+            x_title=f"hcand[{i+1}]" + r" $\phi$",
         )
         cfg.add_variable(
             name=f"hcand_{i+1}_eta",
             expression=f"hcand.eta[:,{i}]",
             null_value=EMPTY_FLOAT,
             binning=(25, -2.5, 2.5),
-            x_title="hcand" + r" $\eta$",
+            x_title=f"hcand[{i+1}]" + r" $\eta$",
         )
         cfg.add_variable(
             name=f"hcand_{i+1}_decayMode",
             expression=f"hcand.decayMode[:,{i}]",
             null_value=EMPTY_FLOAT,
             binning=(12, -1, 11),
-            x_title="hcand" + r" $DM$",
+            x_title=f"hcand[{i+1}]" + r" $DM$",
         )
 
     cfg.add_variable(
@@ -398,14 +407,14 @@ def add_hcand_features(cfg: od.Config) -> None:
         null_value=EMPTY_FLOAT,
         binning=(50, 0, 400),
         unit="GeV",
-        x_title=r"$m_{ll}$",
+        x_title=r"$m_{h1,h2}$",
     )
     cfg.add_variable(
         name="hcand_dr",
         expression="hcand_dr",
         null_value=EMPTY_FLOAT,
         binning=(40, 0, 5),
-        x_title=r"$\Delta R(l,l)$",
+        x_title=r"$\Delta R(h1,h2)$",
     )
     cfg.add_variable(
         name="PhiCP_IPIP",
@@ -419,7 +428,7 @@ def add_hcand_features(cfg: od.Config) -> None:
         expression="PhiCP_IPDP",
         null_value=EMPTY_FLOAT,
         binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{IP-ID}$ (rad)",
+        x_title=r"$\Phi_{CP}^{IP-DP}$ (rad)",
     )
     cfg.add_variable(
         name="PhiCP_IPPV",
@@ -440,21 +449,21 @@ def add_hcand_features(cfg: od.Config) -> None:
         expression="PhiCPGen_PVPV",
         null_value=EMPTY_FLOAT,
         binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{PV-PV}$ (rad)",
+        x_title=r"$\Phi_{CP}^{PV-PV}$ [Gen] (rad)",
     )
     cfg.add_variable(
         name="PhiCP_DPDP",
         expression="PhiCP_DPDP",
         null_value=EMPTY_FLOAT,
         binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{DP-DP}$ (rad)",
+        x_title=r"$\Phi_{CP}^{DP-DP}$ [Gen] (rad)",
     )
     cfg.add_variable(
         name="PhiCPGen_DPDP",
         expression="PhiCPGen_DPDP",
         null_value=EMPTY_FLOAT,
         binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{DP-DP}$ (rad)",
+        x_title=r"$\Phi_{CP}^{DP-DP}$ [Gen] (rad)",
     )
 
 def add_test_variables(cfg: od.Config) -> None:

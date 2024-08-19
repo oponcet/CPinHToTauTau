@@ -39,6 +39,16 @@ def IF_NANO_V9(self, func: ArrayFunction) -> Any | set[Any]:
 def IF_NANO_V11(self, func: ArrayFunction) -> Any | set[Any]:
     return self.get() if func.config_inst.campaign.x.version >= 10 else None
 
+@deferred_column
+def IF_DATASET_HAS_LHE_WEIGHTS(
+    self: ArrayFunction.DeferredColumn,
+    func: ArrayFunction,
+) -> Any | set[Any]:
+    if getattr(func, "dataset_inst", None) is None:
+        return self.get()
+
+    return None if func.dataset_inst.has_tag("no_lhe_weights") else self.get()
+
 
 def transverse_mass(lepton: ak.Array, met: ak.Array) -> ak.Array:
     dphi_lep_met = lepton.delta_phi(met)

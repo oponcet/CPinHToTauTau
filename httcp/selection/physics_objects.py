@@ -119,13 +119,13 @@ def muon_selection(
     double_veto_muon_indices = ak.values_astype(double_veto_muon_indices, np.int32)
 
     return events, SelectionResult(
-        #objects={
-        #    "Muon": {
-        #        "Muon": good_muon_indices,
-        #        "VetoMuon": veto_muon_indices,
-        #        "DoubleVetoMuon": double_veto_muon_indices,
-        #    },
-        #},
+        objects={
+            "Muon": {
+                "Muon": good_muon_indices,
+                "VetoMuon": veto_muon_indices,
+                "DoubleVetoMuon": double_veto_muon_indices,
+            },
+        },
         aux=selection_steps,
     ), good_muon_indices, veto_muon_indices, double_veto_muon_indices
 
@@ -231,13 +231,13 @@ def electron_selection(
 
 
     return events, SelectionResult(
-        #objects={
-        #    "Electron": {
-        #        "Electron": good_electron_indices,
-        #        "VetoElectron": veto_electron_indices,
-        #        "DoubleVetoElectron": double_veto_electron_indices,
-        #    },
-        #},
+        objects={
+            "Electron": {
+                "Electron": good_electron_indices,
+                "VetoElectron": veto_electron_indices,
+                "DoubleVetoElectron": double_veto_electron_indices,
+            },
+        },
         aux=selection_steps,
     ), good_electron_indices, veto_electron_indices, double_veto_electron_indices
 
@@ -255,12 +255,12 @@ def electron_selection(
         f"Tau.{var}" for var in [
             "pt", "eta", "phi", "dz", 
             "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", "idDeepTau2018v2p5VSjet",
-            "decayMode","IPx","IPy","IPz",
+            "decayMode", "decayModePNet", "IPx","IPy","IPz",
         ]
     },
     produces={
         f"Tau.{var}" for var in [
-            "rawIdx",
+            "rawIdx", "decayMode", "decayModeHPS",
         ]
     },
     exposed=False,
@@ -297,17 +297,29 @@ def tau_selection(
         "tau_pt_20"     : events.Tau.pt > 20,
         "tau_eta_2p3"   : abs(events.Tau.eta) < 2.3,
         "tau_dz_0p2"    : abs(events.Tau.dz) < 0.2,
-        # have to make them channel-specific
-        #"DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium,
-        #"DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose,
-        #"DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.Tight,
-        "DecayMode"     : ((events.Tau.decayMode == 0) 
-                           | (events.Tau.decayMode == 1)
-                           | (events.Tau.decayMode == 2)
-                           | (events.Tau.decayMode == 10)
-                           | (events.Tau.decayMode == 11))
-        #"CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
-        #"CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
+        # have to make them channel-specific later
+        #                  e-tau  mu-tau  tau-tau     SafeHere
+        #   DeepTauVSjet : Tight  Medium  Medium  --> Medium  
+        #   DeepTauVSe   : Tight  VVLoose VVLoose --> VVLoose 
+        #   DeepTauVSmu  : Loose  Tight   VLoose  --> VLoose  
+        "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium,
+        "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose,
+        "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose,
+        #"DecayMode"     : ((events.Tau.decayMode == 0) 
+        #                   | (events.Tau.decayMode == 1)
+        #                   | (events.Tau.decayMode == 2)
+        #                   | (events.Tau.decayMode == 10)
+        #                   | (events.Tau.decayMode == 11))
+        "DecayMode"     : (
+            (  (events.Tau.decayModePNet ==  0) & (events.Tau.decayMode ==  0)) # if PNet == 0, HPS must be equal to 0 as well
+            | (((events.Tau.decayModePNet ==  1)
+                | (events.Tau.decayModePNet ==  2)
+                | (events.Tau.decayModePNet == 10)
+                | (events.Tau.decayModePNet == 11))
+               & (events.Tau.decayMode != 0))
+        )
+        ##"CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
+        ##"CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
     }
 
     # pt sorted indices for converting masks to indices
@@ -334,12 +346,15 @@ def tau_selection(
     good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
     good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
 
+    events = set_ak_column(events, "Tau.decayModeHPS", events.Tau.decayMode)      # explicitly renaming decayMode to decayModeHPS
+    events = set_ak_column(events, "Tau.decayMode",    events.Tau.decayModePNet)  # set decayModePNet as decayMode
+    
     return events, SelectionResult(
-        #objects={
-        #    "Tau": {
-        #        "Tau": good_tau_indices,
-        #    },
-        #},
+        objects={
+            "Tau": {
+                "Tau": good_tau_indices,
+            },
+        },
         aux=selection_steps,
     ), good_tau_indices
 
@@ -372,7 +387,7 @@ def jet_selection(
    
     # nominal selection
     good_selections = {
-        "jet_pt_30"               : events.Jet.pt > 30.0,
+        "jet_pt_20"               : events.Jet.pt > 20.0,
         "jet_eta_2.4"             : abs(events.Jet.eta) < 2.4,
         #"jet_id"                  : events.Jet.jetId == 0b110,  # Jet ID flag: bit2 is tight, bit3 is tightLepVeto 
     }

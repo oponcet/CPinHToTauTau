@@ -58,13 +58,13 @@ class PolarimetricA1:
         q2 = self.p4_ss2_pi
         q3 = self.p4_os_pi
 
-        a1 = q1+q2+q3
+        a1 = q1.add(q2.add(q3))
 
         N = P.subtract(a1)
 
-        s1 = (q2+q3).mass2
-        s2 = (q1+q3).mass2
-        s3 = (q1+q2).mass2
+        s1 = (q2.add(q3)).mass2
+        s2 = (q1.add(q3)).mass2
+        s3 = (q1.add(q2)).mass2
 
         # Three Lorentzvector: Why??? : No idea!!!
         getvec = lambda a,b,c: b - c - a*(a.dot((b - c))*(1/a.mass2))
