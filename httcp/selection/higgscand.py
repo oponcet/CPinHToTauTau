@@ -37,15 +37,15 @@ def higgscand(
     hcand_pair_concat = ak.where(events.channel_id == 2, hcand_pair[:,1][:,None], hcand_pair_concat)
     hcand_pair_concat = ak.where(events.channel_id == 4, hcand_pair[:,2][:,None], hcand_pair_concat)
 
-    hcand_pair_concat = ak.where(events.channel_id == 3, 
-                                 ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,1][:,None]], axis=1),
-                                 hcand_pair_concat)
-    hcand_pair_concat = ak.where(events.channel_id == 5,
-                                 ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,2][:,None]], axis=1),
-                                 hcand_pair_concat)
-    hcand_pair_concat = ak.where(events.channel_id == 6, 
-                                 ak.concatenate([hcand_pair[:,1][:,None], hcand_pair[:,2][:,None]], axis=1),
-                                 hcand_pair_concat)
+    #hcand_pair_concat = ak.where(events.channel_id == 3, 
+    #                             ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,1][:,None]], axis=1),
+    #                             hcand_pair_concat)
+    #hcand_pair_concat = ak.where(events.channel_id == 5,
+    #                             ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,2][:,None]], axis=1),
+    #                             hcand_pair_concat)
+    #hcand_pair_concat = ak.where(events.channel_id == 6, 
+    #                             ak.concatenate([hcand_pair[:,1][:,None], hcand_pair[:,2][:,None]], axis=1),
+    #                             hcand_pair_concat)
     
     hcand_array = enforce_hcand_type(hcand_pair_concat, 
                                      {"pt"            : "float64",

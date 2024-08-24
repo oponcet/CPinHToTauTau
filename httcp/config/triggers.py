@@ -672,29 +672,65 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
       /afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/yamls/HLTlog_2022PostEE.log
     """
     config.x.triggers = od.UniqueObjectIndex(Trigger,[
-        # https://cmshltinfo.app.cern.ch/summary?search=HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1&year=2022&paths=true&prescaled=false&stream-types=Physics,Scouting,Parking
-        #Trigger(
-        #    name="HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
-        #    id=15153,
-        #    #run_range=[355862,362760],
-        #    legs=[
-        #        TriggerLeg(
-        #            pdg_id=15,
-        #            min_pt=40.0,
-        #            # filter names:
-        #            # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg
-        #            trigger_bits=64,
-        #        ),
-        #        TriggerLeg(
-        #            pdg_id=15,
-        #            min_pt=40.0,
-        #            # filter names:
-        #            # hltDoublePFTau35TrackPt1TightChargedIsolationAndTightOOSCPhotonsDz02Reg
-        #            trigger_bits=64,
-        #        ),
-        #    ],
-        #    tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
-        #),
+        # ===>>> single electron
+        Trigger(
+            name="HLT_Ele27_WPTight_Gsf",
+            id=111000,
+            legs=[
+                TriggerLeg(
+                    pdg_id=11,
+                    min_pt=28.0,
+                    # filter names:
+                    #
+                    trigger_bits=None, #TODO
+                ),
+            ],
+            tags={"single_trigger", "single_e", "channel_e_tau"},
+        ),
+        Trigger(
+            name="HLT_Ele32_WPTight_Gsf",
+            id=112000,
+            legs=[
+                TriggerLeg(
+                    pdg_id=11,
+                    min_pt=33.0,
+                    # filter names:
+                    #
+                    #
+                    trigger_bits=None, #TODO
+                ),
+            ],
+            tags=["single_trigger", "single_e", "channel_e_tau"],
+        ),
+        # ===>>> single muon
+        Trigger(
+            name="HLT_IsoMu27",
+            id=131000,
+            legs=[
+                TriggerLeg(
+                    pdg_id=13,
+                    min_pt=25.0, # check AN for Run2, v15, L 1224
+                    # filter names:
+                    #
+                    trigger_bits=None, #TODO
+                ),
+            ],
+            tags={"single_trigger", "single_mu", "channel_mu_tau"},
+        ),
+        Trigger(
+            name="HLT_IsoMu24",
+            id=132000,
+            legs=[
+                TriggerLeg(
+                    pdg_id=13,
+                    min_pt=25.0,
+                    # filter names:
+                    #
+                    trigger_bits=None, #TODO
+                ),
+            ],
+            tags={"single_trigger", "single_mu", "channel_mu_tau"},
+        ),
         # ===>>> e-tauh
         Trigger(
             name="HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1",
@@ -704,17 +740,17 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     pdg_id=11,
                     min_pt=25.0,
                     # filter names:
-                    # hltEle24erWPTightGsfTrackIsoFilterForTau
-                    # hltOverlapFilterIsoEle24WPTightGsfLooseIsoPFTau30
-                    trigger_bits=2 + 64,
+                    #
+                    #
+                    trigger_bits=None, #TODO
                 ),
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=35.0,
                     # filter names:
-                    # hltSelectedPFTau30LooseChargedIsolationL1HLTMatched
-                    # hltOverlapFilterIsoEle24WPTightGsfLooseIsoPFTau30
-                    trigger_bits=1024 + 256,
+                    #
+                    #
+                    trigger_bits=None, #TODO
                 ),
             ],
             tags={"cross_trigger", "cross_e_tau", "channel_e_tau"},
@@ -728,75 +764,43 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     pdg_id=13,
                     min_pt=21.0,
                     # filter names:
-                    # hltL3crIsoL1sMu18erTau24erIorMu20erTau24erL1f0L2f10QL3f20QL3trkIsoFiltered0p07
-                    # hltOverlapFilterIsoMu20LooseChargedIsoPFTau27L1Seeded
-                    trigger_bits=2 + 64,
+                    #
+                    #
+                    trigger_bits=None, #TODO
                 ),
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=32.0,
                     # filter names:
-                    # hltSelectedPFTau27LooseChargedIsolationAgainstMuonL1HLTMatched or
-                    # hltOverlapFilterIsoMu20LooseChargedIsoPFTau27L1Seeded
-                    trigger_bits=1024 + 512,
+                    #
+                    #
+                    trigger_bits=None, #TODO
                 ),
             ],
             tags={"cross_trigger", "cross_mu_tau", "channel_mu_tau"},
         ),
-        # ===>>> single electron
+        # https://cmshltinfo.app.cern.ch/summary?search=HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1&year=2022&paths=true&prescaled=false&stream-types=Physics,Scouting,Parking
         Trigger(
-            name="HLT_Ele27_WPTight_Gsf",
-            id=111000,
+            name="HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
+            id=15153,
+            #run_range=[355862,362760],
             legs=[
                 TriggerLeg(
-                    pdg_id=11,
-                    min_pt=28.0,
+                    pdg_id=15,
+                    min_pt=40.0,
                     # filter names:
-                    # hltEle32WPTightGsfTrackIsoFilter
-                    trigger_bits=2 + 1024,
+                    #
+                    trigger_bits=None, # TODO
                 ),
-            ],
-            tags={"single_trigger", "single_e", "channel_e_tau"},
-        ),
-        Trigger(
-            name="HLT_Ele32_WPTight_Gsf",
-            id=112000,
-            legs=[
                 TriggerLeg(
-                    pdg_id=11,
-                    min_pt=33.0,
+                    pdg_id=15,
+                    min_pt=40.0,
                     # filter names:
-                    # hltEle32L1DoubleEGWPTightGsfTrackIsoFilter
-                    # hltEGL1SingleEGOrFilter
-                    trigger_bits=2,
+                    #
+                    trigger_bits=None, #TODO
                 ),
             ],
-            tags={"single_trigger", "single_e", "channel_e_tau"},
-        ),
-        # ===>>> single muon
-        Trigger(
-            name="HLT_IsoMu27",
-            id=131000,
-            legs=[
-                TriggerLeg(
-                    pdg_id=13,
-                    min_pt=25.0, # check AN for Run2, v15, L 1224
-                    trigger_bits=2,
-                ),
-            ],
-            tags={"single_trigger", "single_mu", "channel_mu_tau"},
-        ),
-        Trigger(
-            name="HLT_IsoMu24",
-            id=132000,
-            legs=[
-                TriggerLeg(
-                    pdg_id=13,
-                    min_pt=25.0,
-                    trigger_bits=2,
-                ),
-            ],
-            tags={"single_trigger", "single_mu", "channel_mu_tau"},
+            tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
         ),
     ])
 

@@ -331,7 +331,13 @@ def add_config (ana: od.Analysis,
         },
     })
 
-
+    cfg.x.trigger_type = DotDict.wrap({
+        "single_e"      : 11,
+        "cross_e_tau"   : 1115,
+        "single_mu"     : 13,
+        "cross_mu_tau"  : 1315,
+        "cross_tautau"  : 1515
+    })
   
     # Adding triggers
     if year == 2022:

@@ -23,6 +23,25 @@ coffea = maybe_import("coffea")
 maybe_import("coffea.nanoevents.methods.nanoaod")
 
 
+def get_objs_p4(collobj):
+    return ak.zip(
+        {
+            "pt"  : collobj.pt,
+            "eta" : collobj.eta,
+            "phi" : collobj.phi,
+            "mass": collobj.mass if "mass" in collobj.fields else ak.zeros_like(collobj.pt),
+        },
+        with_name="PtEtaPhiMLorentzVector",
+        behavior=coffea.nanoevents.methods.vector.behavior, 
+    )
+
+
+def filter_by_triggers(lep_pair, mask):
+    dummy = lep_pair[:,:0]
+    any_mask = ak.any(mask, axis=1)
+    out_pair = ak.where(any_mask, lep_pair, dummy)
+    return out_pair
+
 @deferred_column
 def IF_RUN2(self, func: ArrayFunction)  -> Any | set[Any]:
     return self.get() if func.config_inst.campaign.x.year < 2022 else None
@@ -74,6 +93,46 @@ def trigger_object_matching(
     any_match = ak.any(dr < threshold, axis=axis)
 
     return any_match
+
+
+def trigger_object_matching_deep(
+        vectors1: ak.Array,
+        vectors2: ak.Array,
+        legminpt: ak.Array,
+        threshold: float = 0.5,
+        axis: int = 1,
+) -> ak.Array:
+    """
+    Helper to check per object in *vectors1* if there is at least one object in *vectors2* that
+    leads to a delta R metric below *threshold*. The final reduction is applied over *axis* of the
+    resulting metric table containing the full combinatorics. When *return_all_matches* is *True*,
+    the matrix with all matching decisions is returned as well.
+    """
+    # delta_r for all combinations
+    #dpt = vectors1.metric_table(vectors2, metric=(vectors1.pt - vectors2.pt))
+    dr  = vectors1.metric_table(vectors2)
+    #dr  = ak.firsts(ak.firsts(ak.firsts(dr, axis=-1), axis=-1), axis=1)
+
+    match_dr = dr < threshold
+    match_dr = ak.any(match_dr, axis=-1)
+    #dr  = ak.firsts(dr, axis=-1)
+    # check per element in vectors1 if there is at least one matching element in vectors2
+
+    #match_dr = dr < threshold
+    #match_pt = dpt > 0.0
+
+    obj_pt = vectors1.pt
+    obj_pt_brdcst, minpt_brdcst = ak.broadcast_arrays(obj_pt, legminpt[:,None], depth_limit=-1)
+
+    match_pt = (obj_pt_brdcst - minpt_brdcst) >= 0.0
+
+    inmatch = match_dr & match_pt
+
+    #from IPython import embed; embed()
+    inmatch = ak.fill_none(inmatch, False)
+    inmatch = ak.enforce_type(ak.values_astype(inmatch, "bool"), "var * var * bool")
+    
+    return inmatch #match_dr
 
 
 def get_dataset_lfns(
