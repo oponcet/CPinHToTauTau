@@ -98,21 +98,24 @@ def tautau_selection(
         **kwargs,
 ) -> tuple[ak.Array, SelectionResult, ak.Array]:
 
-    #from IPython import embed; embed()
-
     # Extra channel specific selections on tau
     # -------------------- #
-    taus            = events.Tau[lep_indices]
     tau_tagger      = self.config_inst.x.deep_tau_tagger
     tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
+    vs_e_wp         = self.config_inst.x.deep_tau_info[tau_tagger].vs_e["tautau"]
+    vs_mu_wp        = self.config_inst.x.deep_tau_info[tau_tagger].vs_m["tautau"]
+    vs_jet_wp       = self.config_inst.x.deep_tau_info[tau_tagger].vs_j["tautau"]
+
+    taus            = events.Tau[lep_indices]
     is_good_tau     = (
-        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j.Medium)
-        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
-        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose)
+        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j[vs_jet_wp])
+        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e[vs_e_wp])
+        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m[vs_mu_wp])
     )
     lep_indices    = lep_indices[is_good_tau]
     # -------------------- # 
 
+    #from IPython import embed; embed()
     
     # Sorting leps [Tau] by deeptau [descending]
     lep_sort_key       = events.Tau[lep_indices].rawDeepTau2018v2p5VSjet
@@ -143,9 +146,11 @@ def tautau_selection(
     leps_pair_sel = leps_pair[good_pair_mask]
     lep_indices_pair_sel = lep_indices_pair[good_pair_mask]
 
-    lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
-    lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
-
+    #lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
+    #lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
+    lep1idx = lep_indices_pair_sel["0"]
+    lep2idx = lep_indices_pair_sel["1"]
+    
     lep_indices_pair_sel_single = ak.concatenate([lep1idx, lep2idx], axis=1)
 
     where_many   = ak.num(lep_indices_pair_sel, axis=1) > 1

@@ -114,16 +114,20 @@ def mutau_selection(
     # lep1 and lep2 e.g.
     # lep1: [ [m1], [m1],    [m1,m2], [],   [m1,m2] ]
     # lep2: [ [t1], [t1,t2], [t1],    [t1], [t1,t2] ]
+    taus            = events.Tau[lep2_indices]
 
     # Extra channel specific selections on m or tau
     # -------------------- #
-    taus            = events.Tau[lep2_indices]
     tau_tagger      = self.config_inst.x.deep_tau_tagger
     tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
+    vs_e_wp         = self.config_inst.x.deep_tau_info[tau_tagger].vs_e["mutau"]
+    vs_mu_wp        = self.config_inst.x.deep_tau_info[tau_tagger].vs_m["mutau"]
+    vs_jet_wp       = self.config_inst.x.deep_tau_info[tau_tagger].vs_j["mutau"]
+    
     is_good_tau     = (
-        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j.Medium)
-        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
-        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.Tight)
+        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j[vs_jet_wp])
+        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e[vs_e_wp])
+        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m[vs_mu_wp])
     )
     lep2_indices    = lep2_indices[is_good_tau]
     # -------------------- # 
@@ -164,9 +168,11 @@ def mutau_selection(
     leps_pair_sel = leps_pair[good_pair_mask]
     lep_indices_pair_sel = lep_indices_pair[good_pair_mask]
 
-    lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
-    lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
-
+    #lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
+    #lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
+    lep1idx = lep_indices_pair_sel["0"]
+    lep2idx = lep_indices_pair_sel["1"]
+    
     lep_indices_pair_sel_single = ak.concatenate([lep1idx, lep2idx], axis=1)
 
 

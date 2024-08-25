@@ -96,8 +96,6 @@ def get_sorted_pair(
         "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
         "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet", "Tau.rawIdx",
         "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", "Tau.idDeepTau2018v2p5VSmu",
-        # triggerID
-        #"matched_triggerID_e", "matched_triggerID_tau",
         # MET
         IF_RUN2("MET.pt", "MET.phi"),
         IF_RUN3("PuppiMET.pt", "PuppiMET.phi"),
@@ -115,23 +113,23 @@ def etau_selection(
     # lep1 and lep2 e.g.
     # lep1: [ [e1], [e1],    [e1,e2], [],   [e1,e2] ]
     # lep2: [ [t1], [t1,t2], [t1],    [t1], [t1,t2] ]
-
-    #matched_trigID_lep1 = events.matched_triggedID_e
-    #matched_trigID_lep2 = events.matched_triggedID_tau
+    taus            = events.Tau[lep2_indices]
 
     # Extra channel specific selections on e or tau
     # -------------------- #
-    taus            = events.Tau[lep2_indices]
     tau_tagger      = self.config_inst.x.deep_tau_tagger
     tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
+    vs_e_wp         = self.config_inst.x.deep_tau_info[tau_tagger].vs_e["etau"]
+    vs_mu_wp        = self.config_inst.x.deep_tau_info[tau_tagger].vs_m["etau"]
+    vs_jet_wp       = self.config_inst.x.deep_tau_info[tau_tagger].vs_j["etau"]
+
     is_good_tau     = (
-        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j.Tight)
-        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.Tight)
-        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.Loose)
+        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j[vs_jet_wp])
+        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e[vs_e_wp])
+        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m[vs_mu_wp])
     )
     lep2_indices    = lep2_indices[is_good_tau]
     # -------------------- #
-    #matched_trigID_lep2 = matched_trigID_lep2[is_good_tau]
 
     # puppi for Run3
     met = events.MET if self.config_inst.campaign.x.year < 2022 else events.PuppiMET
@@ -145,28 +143,41 @@ def etau_selection(
     lep2_sorted_indices = ak.argsort(lep2_sort_key, axis=-1, ascending=False)
     lep2_indices        = lep2_indices[lep2_sorted_indices]
     # pair of leptons: probable higgs candidate -> leps_pair
-    # e.g. [ [(e1,t1)], [(e1,t1),(e1,t2)], [(e1,t1),(e2,t1)], [], [(e1,t1),(e1,t2),(e2,t1),(e2,t2)] ]
-    # and their indices                         -> lep_indices_pair 
+    # e.g. [ [(e1,t1)],
+    #        [(e1,t1),(e1,t2)],
+    #        [(e1,t1),(e2,t1)],
+    #        [],
+    #        [(e1,t1),(e1,t2),(e2,t1),(e2,t2)]
+    #      ]
+    # and their indices too -> lep_indices_pair 
     leps_pair        = ak.cartesian([events.Electron[lep1_indices], 
                                      events.Tau[lep2_indices]], axis=1)
     lep_indices_pair = ak.cartesian([lep1_indices, lep2_indices], axis=1)
 
-    # new
-    #matched_trigID_pair = ak.cartesian([matched_trigID_lep1, matched_trigID_lep2], axis=1)
-    
     # unzip to get individuals
     # e.g.
-    # lep1 -> lep_pair["0"] -> [ [e1], [e1,e1], [e1,e2], [], [e1,e1,e2,e2] ]
-    # lep2 -> lep_pair["1"] -> [ [t1], [t1,t2], [t1,t1], [], [t1,t2,t1,t2] ]
-    lep1, lep2 = ak.unzip(leps_pair)
+    # lep1 -> lep_pair["0"] -> [ [e1],
+    #                            [e1,e1],
+    #                            [e1,e2],
+    #                            [],
+    #                            [e1,e1,e2,e2]
+    #                          ]
+    # lep2 -> lep_pair["1"] -> [ [t1],
+    #                            [t1,t2],
+    #                            [t1,t1],
+    #                            [],
+    #                            [t1,t2,t1,t2]
+    #                          ]
+    # same for indices
+    lep1, lep2         = ak.unzip(leps_pair)
     lep1_idx, lep2_idx = ak.unzip(lep_indices_pair)
 
     preselection = {
         "etau_is_os"         : (lep1.charge * lep2.charge) < 0,
-        "etau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  # deltaR(lep1, lep2) > 0.5,
-        #"etau_mT_50"         : transverse_mass(lep1, events.MET) < 50
+        "etau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,
         "etau_mT_50"         : transverse_mass(lep1, met) < 50
     }
+
     # get preselected pairs
     good_pair_mask = lep1_idx >= 0
     pair_selection_steps = {}
@@ -175,16 +186,33 @@ def etau_selection(
         pair_selection_steps[cut] = good_pair_mask
         
     # preselected etau pairs and their indices
-    leps_pair_sel = leps_pair[good_pair_mask]
+    leps_pair_sel        = leps_pair[good_pair_mask]
     lep_indices_pair_sel = lep_indices_pair[good_pair_mask]
 
-    lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
-    lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
-
+    # e.g.
+    # lep1 -> lep_pair["0"] -> [ [e1],
+    #                            [e1],
+    #                            [e1,e2],
+    #                            [],
+    #                            [e1]
+    #                          ]
+    # lep2 -> lep_pair["1"] -> [ [t1],
+    #                            [t1,t2],
+    #                            [t1],
+    #                            [],
+    #                            [t1,t2]
+    #                          ]
+    #lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
+    #lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
+    lep1idx = lep_indices_pair_sel["0"]
+    lep2idx = lep_indices_pair_sel["1"]
+    
     lep_indices_pair_sel_single = ak.concatenate([lep1idx, lep2idx], axis=1)
+    #lep_indices_pair_sel_single = ak.concatenate([lep1idx[:,None], lep2idx[:,None]], axis=1)
 
+    
     # if multipairs
-    # sort them with Section 7.6
+    # sort them with the algo mentioned in Section 7.6 of the AN_v15
     where_many   = ak.num(lep_indices_pair_sel, axis=1) > 1
     pair_indices = ak.where(where_many, 
                             get_sorted_pair(leps_pair_sel,

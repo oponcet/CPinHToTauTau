@@ -37,15 +37,15 @@ def higgscand(
     hcand_pair_concat = ak.where(events.channel_id == 2, hcand_pair[:,1][:,None], hcand_pair_concat)
     hcand_pair_concat = ak.where(events.channel_id == 4, hcand_pair[:,2][:,None], hcand_pair_concat)
 
-    #hcand_pair_concat = ak.where(events.channel_id == 3, 
-    #                             ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,1][:,None]], axis=1),
-    #                             hcand_pair_concat)
-    #hcand_pair_concat = ak.where(events.channel_id == 5,
-    #                             ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,2][:,None]], axis=1),
-    #                             hcand_pair_concat)
-    #hcand_pair_concat = ak.where(events.channel_id == 6, 
-    #                             ak.concatenate([hcand_pair[:,1][:,None], hcand_pair[:,2][:,None]], axis=1),
-    #                             hcand_pair_concat)
+    hcand_pair_concat = ak.where(events.channel_id == 3, 
+                                 ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,1][:,None]], axis=1),
+                                 hcand_pair_concat)
+    hcand_pair_concat = ak.where(events.channel_id == 5,
+                                 ak.concatenate([hcand_pair[:,0][:,None], hcand_pair[:,2][:,None]], axis=1),
+                                 hcand_pair_concat)
+    hcand_pair_concat = ak.where(events.channel_id == 6, 
+                                 ak.concatenate([hcand_pair[:,1][:,None], hcand_pair[:,2][:,None]], axis=1),
+                                 hcand_pair_concat)
     
     hcand_array = enforce_hcand_type(hcand_pair_concat, 
                                      {"pt"            : "float64",
@@ -176,12 +176,14 @@ def higgscandprod(
     events   = self[assign_tauprod_mass_charge](events)
 
     tauprods = events.TauProd
-    hcand    = hcand_array #events.hcand
-    hcand1 = ak.firsts(hcand[:,:,0:1], axis=1)
-    hcand2 = ak.firsts(hcand[:,:,1:2], axis=1)
-    hcand_concat = ak.concatenate([hcand1, hcand2], axis=1)
-    
-    
+    #hcand    = hcand_array
+    hcand    = hcand_array[:,0]
+    #hcand1 = ak.firsts(hcand[:,:,0:1], axis=1)
+    #hcand2 = ak.firsts(hcand[:,:,1:2], axis=1)
+    hcand1 = hcand[:,0:1]
+    hcand2 = hcand[:,1:2]
+    #hcand_concat = ak.concatenate([hcand1, hcand2], axis=1)
+        
     hcand1_idx = hcand1.rawIdx
     hcand2_idx = hcand2.rawIdx
 
@@ -194,34 +196,8 @@ def higgscandprod(
 
     dummy = (events.event >= 0)[:,None]
 
-    """
-    hcand1_mask = ak.where(hcand1.decayMode == 0,
-                           (has_one_pion(hcand1prods) & has_no_photons(hcand1prods)),
-                           ak.where(((hcand1.decayMode == 1) | (hcand1.decayMode == 2)),
-                                    (has_one_pion(hcand1prods) & has_photons(hcand1prods)),
-                                    ak.where(hcand1.decayMode == 10,
-                                             has_three_pions(hcand1prods),
-                                             ak.where(hcand1.decayMode == 11,
-                                                      (has_three_pions(hcand1prods) & has_photons(hcand1prods)),
-                                                      dummy)
-                                         )
-                                )
-                       )
-    hcand2_mask = ak.where(hcand2.decayMode == 0,
-                           (has_one_pion(hcand2prods) & has_no_photons(hcand2prods)),
-                           ak.where(((hcand2.decayMode == 1) | (hcand2.decayMode == 2)),
-                                    (has_one_pion(hcand2prods) & has_photons(hcand2prods)),
-                                    ak.where(hcand2.decayMode == 10,
-                                             has_three_pions(hcand2prods),
-                                             ak.where(hcand2.decayMode == 11,
-                                                      (has_three_pions(hcand2prods) & has_photons(hcand2prods)),
-                                                      dummy)
-                                         )
-                                )
-                       )
-    """
-    hcand1_mask = build_hcand_mask(hcand1, hcand1prods, dummy)
-    hcand2_mask = build_hcand_mask(hcand2, hcand2prods, dummy)
+    hcand1_mask = ak.fill_none(build_hcand_mask(hcand1, hcand1prods, dummy), False)
+    hcand2_mask = ak.fill_none(build_hcand_mask(hcand2, hcand2prods, dummy), False)
 
     hcand_prod_mask = ak.concatenate([hcand1_mask, hcand2_mask], axis=1)
     
@@ -237,14 +213,52 @@ def higgscandprod(
                                             "tauIdx"        : "int64"}
                                        )
 
-    events = set_ak_column(events, "hcand",     hcand_concat)
-    events = set_ak_column(events, "hcandprod", hcand_prods_array)
+    #FOR DEBUGGING
+    #from IPython import embed; embed()
+    #for i in range(1000):
+    #   if not events.channel_id[i] > 0: continue
+    #   print(f"channel_id: {events.channel_id[i]}")
+    #   print(f"h1 == DM : {hcand1.decayMode[i]}, PROD: {hcand1prods.pdgId[i]}, MASK: {hcand1_mask[i]}")
+    #   print(f"h2 == DM : {hcand2.decayMode[i]}, PROD: {hcand2prods.pdgId[i]}, MASK: {hcand2_mask[i]}")
+    #   print(f"Comb Mask: {hcand_prod_mask[i]}")
+    #   print("\n")
 
-    #for i in range(500): 
-    #    print(f"ch : {events.channel_id[i]}\t{hcand1.decayMode[i]}\t{hcand2.decayMode[i]}\t{hcand1_mask[i]}\t{hcand2_mask[i]}\t{hcand1prods.pdgId[i]}\t{hcand2prods.pdgId[i]}")
+    
+    events = set_ak_column(events, "hcand",     hcand)
+    events = set_ak_column(events, "hcandprod", hcand_prods_array)
 
     return events, SelectionResult(
         steps={
             "has_proper_tau_decay_products": ak.sum(hcand_prod_mask, axis=1) == 2,
         },
     )
+
+
+
+
+"""
+hcand1_mask = ak.where(hcand1.decayMode == 0,
+(has_one_pion(hcand1prods) & has_no_photons(hcand1prods)),
+ak.where(((hcand1.decayMode == 1) | (hcand1.decayMode == 2)),
+(has_one_pion(hcand1prods) & has_photons(hcand1prods)),
+ak.where(hcand1.decayMode == 10,
+has_three_pions(hcand1prods),
+ak.where(hcand1.decayMode == 11,
+(has_three_pions(hcand1prods) & has_photons(hcand1prods)),
+dummy)
+)
+)
+)
+hcand2_mask = ak.where(hcand2.decayMode == 0,
+(has_one_pion(hcand2prods) & has_no_photons(hcand2prods)),
+ak.where(((hcand2.decayMode == 1) | (hcand2.decayMode == 2)),
+(has_one_pion(hcand2prods) & has_photons(hcand2prods)),
+ak.where(hcand2.decayMode == 10,
+has_three_pions(hcand2prods),
+ak.where(hcand2.decayMode == 11,
+(has_three_pions(hcand2prods) & has_photons(hcand2prods)),
+dummy)
+)
+)
+)
+"""
