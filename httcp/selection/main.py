@@ -29,7 +29,8 @@ from httcp.selection.lepton_pair_etau import etau_selection
 from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
 from httcp.selection.event_category import get_categories
-from httcp.selection.match_trigobj import match_trigobj
+#from httcp.selection.match_trigobj import match_trigobj
+from httcp.selection.trigobject_matching import match_trigobj
 from httcp.selection.lepton_veto import *
 from httcp.selection.higgscand import higgscand, higgscandprod
 
@@ -93,6 +94,19 @@ def custom_increment_stats(
             ))
 
     return events, results
+
+
+def get_2n_pairs(etau_indices_pair,
+                 mutau_indices_pair,
+                 tautau_indices_pair):
+
+    has_one_etau_pair   = ak.num(etau_indices_pair, axis=1) == 2
+    has_one_mutau_pair  = ak.num(mutau_indices_pair, axis=1) == 2
+    has_one_tautau_pair = ak.num(tautau_indices_pair, axis=1) == 2
+
+    has_at_least_one_pair = (has_one_etau_pair | has_one_mutau_pair | has_one_tautau_pair)
+
+    return has_at_least_one_pair    
 
 
 # exposed selectors
@@ -162,74 +176,62 @@ def main(
     # prepare the selection results that are updated at every step
     results = SelectionResult()
 
+    # --------- Sel : Good Lumi JSON for DATA only -------- #
     # filter bad data events according to golden lumi mask
     if self.dataset_inst.is_data:
         events, json_filter_results = self[json_filter](events, **kwargs)
         results += json_filter_results
 
+    # --------- Sel : Trigger Selection -------- #
     # trigger selection
     events, trigger_results = self[trigger_selection](events, **kwargs)
     results += trigger_results
 
+    # -------- Sel : Met Filters -------- #
     # met filter selection
     events, met_filter_results = self[met_filters](events, **kwargs)
     results += met_filter_results
     
+    # -------- Sel : b-veto -------- #
     # jet selection
     events, bjet_veto_result = self[jet_selection](events, 
                                                    call_force=True, 
                                                    **kwargs)
     results += bjet_veto_result
 
-    # muon selection
-    # e.g. mu_idx: [ [0,1], [], [1], [0], [] ] 
-    events, muon_results, good_muon_indices, veto_muon_indices, dlveto_muon_indices = self[muon_selection](events,
-                                                                                                           call_force=True, 
-                                                                                                           **kwargs)
-    results += muon_results
 
     # electron selection
     # e.g. ele_idx: [ [], [0,1], [], [], [1,2] ] 
     events, ele_results, good_ele_indices, veto_ele_indices, dlveto_ele_indices = self[electron_selection](events,
-                                                                                                           call_force=True, 
+                                                                                                           call_force=True,
                                                                                                            **kwargs)
     results += ele_results
 
+    
+    # muon selection
+    # e.g. mu_idx: [ [0,1], [], [1], [0], [] ] 
+    events, muon_results, good_muon_indices, veto_muon_indices, dlveto_muon_indices = self[muon_selection](events,
+                                                                                                           call_force=True,
+                                                                                                           **kwargs)
+    results += muon_results
+
+
     # tau selection
     # e.g. tau_idx: [ [1], [0,1], [1,2], [], [0,1] ] 
-    events, tau_results, good_tau_indices = self[tau_selection](events,
-                                                                call_force=True,
-                                                                **kwargs)
+    events, tau_results, good_tau_indices = self[tau_selection](events, call_force=True, **kwargs)
     results += tau_results
 
-    #from IPython import embed; embed()
     
-    # check if there are at least two leptons with at least one tau [before trigger obj matching]
+    # check if there are at least two leptons with at least one tau
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    prematch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
+    nlep_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
 
-    # trigger obj matching
-    # INFO: The end bool is the switch to make it on or off
-    events, \
-        good_ele_indices, good_muon_indices, good_tau_indices, \
-        matched_triggerID_e, matched_triggerID_mu, matched_triggerID_tau = self[match_trigobj](events,
-                                                                                               trigger_results,
-                                                                                               good_ele_indices,
-                                                                                               good_muon_indices,
-                                                                                               good_tau_indices,
-                                                                                               False)
-
-    # check if there are at least two leptons with at least one tau [after trigger obj matching]
-    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    postmatch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
-
-    match_res = SelectionResult(
+    match_nlep = SelectionResult(
         steps = {
-            "PreTrigObjMatch"  : prematch_mask,
-            "PostTrigObjMatch" : postmatch_mask
+            "has_2_or_more_leps_with_at_least_1_tau"  : nlep_mask,
         },
     )
-    results += match_res
+    results += match_nlep
     
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
@@ -237,11 +239,6 @@ def main(
                                                                         dlveto_muon_indices)
     results += extra_double_lepton_veto_results
 
-
-    # extract the trigger names and types from trigger_results.x (aux)
-    trigger_names = trigger_results.x.trigger_names
-    trigger_types = trigger_results.x.trigger_types
-    
     # e-tau pair i.e. hcand selection
     # e.g. [ [], [e1, tau1], [], [], [e1, tau2] ]
     etau_results, etau_indices_pair = self[etau_selection](events,
@@ -250,14 +247,7 @@ def main(
                                                            call_force=True,
                                                            **kwargs)
     results += etau_results
-    # check etau triggers
-    has_e_triggers     = ((trigger_types == "single_e") | (trigger_types == "cross_e_tau"))
-    etau_indices_pair  = filter_by_triggers(etau_indices_pair, has_e_triggers)
-    etau_pair          = ak.concatenate([events.Electron[etau_indices_pair[:,0:1]],
-                                         events.Tau[etau_indices_pair[:,1:2]]],
-                                        axis=1)
-        
-    
+
     # mu-tau pair i.e. hcand selection
     # e.g. [ [mu1, tau1], [], [mu1, tau2], [], [] ]
     mutau_results, mutau_indices_pair = self[mutau_selection](events,
@@ -266,13 +256,6 @@ def main(
                                                               call_force=True,
                                                               **kwargs)
     results += mutau_results
-    # check mutau triggers
-    has_mu_triggers     = ((trigger_types == "single_mu") | (trigger_types == "cross_mu_tau"))
-    mutau_indices_pair  = filter_by_triggers(mutau_indices_pair, has_mu_triggers)
-    mutau_pair          = ak.concatenate([events.Muon[mutau_indices_pair[:,0:1]], 
-                                          events.Tau[mutau_indices_pair[:,1:2]]],
-                                         axis=1)
-
 
     # tau-tau pair i.e. hcand selection
     # e.g. [ [], [tau1, tau2], [], [], [] ]
@@ -281,177 +264,59 @@ def main(
                                                                  call_force=True,
                                                                  **kwargs)
     results += tautau_results
-    # check tautau triggers
-    has_tau_triggers     = (trigger_types == "cross_tau_tau")
-    tautau_indices_pair  = filter_by_triggers(tautau_indices_pair, has_tau_triggers)
-    tautau_pair          = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
-                                           events.Tau[tautau_indices_pair[:,1:2]]], 
-                                          axis=1)
 
-
-    has_ele = ak.num(etau_pair, axis=1)   == 2 # because, it is etau_pair and that is why each list having an etau candidate contain two elements
-    has_muo = ak.num(mutau_pair, axis=1)  == 2 # because, it is etau_pair and that is why each list having an etau candidate contain two elements
-    has_tau = ak.num(tautau_pair, axis=1) == 2 # because, it is etau_pair and that is why each list having an etau candidate contain two elements
-
-
-    # get the triggers for etau, mutau, tautau channels
-    # An event can be fired by both electron and cross-tau triggers
-    # So, here separating the triggers as
-    # etau, mutau and tautau triggers
-    # e.g.
-    #        trigger_ids      = [ [111000,11151,15151], [111000,11151], [11151,15151] ]
-    # then,  has_e_triggers   = [ [T,T,F], [T,T], [T,F] ]
-    #        has_tau_triggers = [ [F,F,T], [F,F], [F,T] ]
-    # etau_trigger_ids   = [ [111000,11151], [111000,11151], [11151] ]
-    # tautau_trigger_ids = [ [15151],        [],             [15151] ]
-    # also make sure, that the presence of e,mu or tau is included in the decisions
-
-    # has_ele                       : [          True           ,       True     ,     False      ]
-    # has_e_triggers                : [ [True, True, True, False], [False, False], [True, True]   ]
-    # mask_has_e_triggers_and_has_e : [ [True, True, True, False], [False, False], [False, False] ]
-    mask_has_e_triggers_and_has_e     = has_e_triggers & has_ele
-    mask_has_mu_triggers_and_has_mu   = has_mu_triggers & has_muo
-    mask_has_tau_triggers_and_has_tau = has_tau_triggers & has_tau
+    #from IPython import embed; embed()
     
-    etau_trigger_names        = trigger_names[mask_has_e_triggers_and_has_e]
-    etau_trigger_types        = trigger_types[mask_has_e_triggers_and_has_e]
-    etau_trigger_ids          = events.trigger_ids[mask_has_e_triggers_and_has_e]
-    etau_leg_1_minpt          = events.leg1_minpt[mask_has_e_triggers_and_has_e] 
-    etau_leg_1_matched_trigobjs_comb = events.leg_matched_trigobjs[mask_has_e_triggers_and_has_e]#[:,:,:1]
-    etau_leg_1_matched_trigobjs = events.leg1_matched_trigobjs[mask_has_e_triggers_and_has_e]
+    pre_match_at_least_one_pair = get_2n_pairs(etau_indices_pair,
+                                               mutau_indices_pair,
+                                               tautau_indices_pair)
 
-    mutau_trigger_names        = trigger_names[mask_has_mu_triggers_and_has_mu]
-    mutau_trigger_types        = trigger_types[mask_has_mu_triggers_and_has_mu]
-    mutau_trigger_ids          = events.trigger_ids[mask_has_mu_triggers_and_has_mu]
-    mutau_leg_1_minpt          = events.leg1_minpt[mask_has_mu_triggers_and_has_mu] 
-    mutau_leg_1_matched_trigobjs_comb = events.leg_matched_trigobjs[mask_has_mu_triggers_and_has_mu]#[:,:,:1]
-    mutau_leg_1_matched_trigobjs = events.leg1_matched_trigobjs[mask_has_mu_triggers_and_has_mu]
 
-    tautau_trigger_names        = trigger_names[mask_has_tau_triggers_and_has_tau]
-    tautau_trigger_types        = trigger_types[mask_has_tau_triggers_and_has_tau]
-    tautau_trigger_ids          = events.trigger_ids[mask_has_tau_triggers_and_has_tau]    
-    tautau_leg_1_minpt          = events.leg1_minpt[mask_has_tau_triggers_and_has_tau]
-    tautau_leg_2_minpt          = events.leg2_minpt[mask_has_tau_triggers_and_has_tau] 
-    #tautau_leg_1_matched_trigobj_idxs = events.leg_matched_trigobj_idxs[mask_has_tau_triggers_and_has_tau][:,:,0:1]
-    #tautau_leg_2_matched_trigobj_idxs = events.leg_matched_trigobj_idxs[mask_has_tau_triggers_and_has_tau][:,:,1:2]
-    tautau_matched_trigobjs_comb = events.leg_matched_trigobjs[mask_has_tau_triggers_and_has_tau]
-    #tautau_leg_1_matched_trigobjs = events.leg_matched_trigobjs[mask_has_tau_triggers_and_has_tau][:,:,0:1]
-    #tautau_leg_2_matched_trigobjs = events.leg_matched_trigobjs[mask_has_tau_triggers_and_has_tau][:,:,1:2]
-    tautau_leg_1_matched_trigobj_idxs = events.leg1_matched_trigobj_idxs[mask_has_tau_triggers_and_has_tau]
-    tautau_leg_2_matched_trigobj_idxs = events.leg2_matched_trigobj_idxs[mask_has_tau_triggers_and_has_tau]
-    tautau_leg_1_matched_trigobjs = events.leg1_matched_trigobjs[mask_has_tau_triggers_and_has_tau]
-    tautau_leg_2_matched_trigobjs = events.leg2_matched_trigobjs[mask_has_tau_triggers_and_has_tau]
-    
-    # electrons, muons and taus are extracted from the pairs
-    # to match with the respective trigger-objects
-    #    ele  - triggerObjects_leg1
-    #    muo  - triggerObjects_leg1
-    #    [tau1 - triggerObjects_leg1 | tau1 - triggerObjects_leg2] & [tau2 - triggerObjects_leg1 | tau2 - triggerObjects_leg2]
-    ele  = etau_pair[:,0:1]
-    muo  = mutau_pair[:,0:1]
-    tau1 = tautau_pair[:,0:1]
-    tau2 = tautau_pair[:,1:2]
+    pre_match_pair_result = SelectionResult(
+        steps = {
+            "has_at_least_1_pair_before_trigobj_matching"  : pre_match_at_least_one_pair,
+        },
+    )
+    results += pre_match_pair_result
 
     
-    p4_ele  = get_objs_p4(ele)
-    p4_muo  = get_objs_p4(muo)
-    p4_tau1 = get_objs_p4(tau1)
-    p4_tau2 = get_objs_p4(tau2)
+    # Trigger objects matching
+    events, matchedResults = self[match_trigobj](events,
+                                                 trigger_results,
+                                                 etau_indices_pair,
+                                                 mutau_indices_pair,
+                                                 tautau_indices_pair,
+                                                 True)
+    results += matchedResults
 
-
-    trigobj_matched_mask_dummy = ak.from_regular((events.trigger_ids > 0)[:,:0][:,None])
-
-    # to convert the mask to event level
-    mask_has_e_triggers_and_has_e_evt_level     = ak.any(mask_has_e_triggers_and_has_e, axis=1)
-    mask_has_mu_triggers_and_has_mu_evt_level   = ak.any(mask_has_mu_triggers_and_has_mu, axis=1)
-    mask_has_tau_triggers_and_has_tau_evt_level = ak.any(mask_has_tau_triggers_and_has_tau, axis=1)
-    
-    el_trigobj_matched_mask = ak.where(mask_has_e_triggers_and_has_e_evt_level,
-                                       trigger_object_matching_deep(p4_ele, etau_leg_1_matched_trigobjs, etau_leg_1_minpt),
-                                       trigobj_matched_mask_dummy)
-    #el_trigobj_matched_mask = ak.firsts(el_trigobj_matched_mask, axis=1)
-    el_trigobj_matched_mask = el_trigobj_matched_mask[:,0]
-
-    mu_trigobj_matched_mask = ak.where(mask_has_mu_triggers_and_has_mu_evt_level,
-                                       trigger_object_matching_deep(p4_muo, mutau_leg_1_matched_trigobjs, mutau_leg_1_minpt),
-                                       trigobj_matched_mask_dummy)
-    #mu_trigobj_matched_mask = ak.firsts(mu_trigobj_matched_mask, axis=1)
-    mu_trigobj_matched_mask = mu_trigobj_matched_mask[:,0]
-
-    # tau1-leg1
-    tau1_trigobj_matched_mask_leg1 = ak.where(mask_has_tau_triggers_and_has_tau_evt_level,
-                                              trigger_object_matching_deep(p4_tau1, tautau_leg_1_matched_trigobjs, tautau_leg_1_minpt),
-                                              trigobj_matched_mask_dummy)
-    #tau1_trigobj_matched_mask_leg1 = ak.firsts(tau1_trigobj_matched_mask_leg1, axis=1)
-    tau1_trigobj_matched_mask_leg1 = tau1_trigobj_matched_mask_leg1[:,0]
-
-    # tau1-leg2
-    tau1_trigobj_matched_mask_leg2 = ak.where(mask_has_tau_triggers_and_has_tau_evt_level,
-                                              trigger_object_matching_deep(p4_tau1, tautau_leg_2_matched_trigobjs, tautau_leg_2_minpt),
-                                              trigobj_matched_mask_dummy)
-    #tau1_trigobj_matched_mask_leg2 = ak.firsts(tau1_trigobj_matched_mask_leg2, axis=1)
-    tau1_trigobj_matched_mask_leg2 = tau1_trigobj_matched_mask_leg2[:,0]
-    
-    # tau2-leg1
-    tau2_trigobj_matched_mask_leg1 = ak.where(mask_has_tau_triggers_and_has_tau_evt_level,
-                                              trigger_object_matching_deep(p4_tau2, tautau_leg_1_matched_trigobjs, tautau_leg_1_minpt),
-                                              trigobj_matched_mask_dummy)
-    #tau2_trigobj_matched_mask_leg1 = ak.firsts(tau2_trigobj_matched_mask_leg1, axis=1)
-    tau2_trigobj_matched_mask_leg1 = tau2_trigobj_matched_mask_leg1[:,0]
-
-    # tau2-leg2
-    tau2_trigobj_matched_mask_leg2 = ak.where(mask_has_tau_triggers_and_has_tau_evt_level,
-                                              trigger_object_matching_deep(p4_tau2, tautau_leg_2_matched_trigobjs, tautau_leg_2_minpt),
-                                              trigobj_matched_mask_dummy)
-    #tau2_trigobj_matched_mask_leg2 = ak.firsts(tau2_trigobj_matched_mask_leg2, axis=1)
-    tau2_trigobj_matched_mask_leg2 = tau2_trigobj_matched_mask_leg2[:,0]
-    
-    tau_trigobj_matched_mask = ( (tau1_trigobj_matched_mask_leg1 & tau2_trigobj_matched_mask_leg2) | (tau1_trigobj_matched_mask_leg2 & tau2_trigobj_matched_mask_leg1) )
-
-
-    el_trigobj_matched_mask_evt_level  = ak.any(el_trigobj_matched_mask, axis=1)
-    mu_trigobj_matched_mask_evt_level  = ak.any(mu_trigobj_matched_mask, axis=1)
-    tau_trigobj_matched_mask_evt_level = ak.any(tau_trigobj_matched_mask, axis=1)
+    etau_indices_pair    = matchedResults.x.etau["pair_indices"]
+    mutau_indices_pair   = matchedResults.x.mutau["pair_indices"]
+    tautau_indices_pair  = matchedResults.x.tautau["pair_indices"]
 
     
-    etau_trigger_ids   = etau_trigger_ids[el_trigobj_matched_mask]
-    etau_trigger_names = etau_trigger_names[el_trigobj_matched_mask]
+    post_match_at_least_one_pair = get_2n_pairs(etau_indices_pair,
+                                                mutau_indices_pair,
+                                                tautau_indices_pair)
+    post_match_pair_result = SelectionResult(
+        steps = {
+            "has_at_least_1_pair_after_trigobj_matching"  : post_match_at_least_one_pair,
+        },
+    )
+    results += post_match_pair_result
 
-    mutau_trigger_ids   = mutau_trigger_ids[mu_trigobj_matched_mask]
-    mutau_trigger_names = mutau_trigger_names[mu_trigobj_matched_mask]
-        
-    tautau_trigger_ids   = tautau_trigger_ids[tau_trigobj_matched_mask]
-    tautau_trigger_names = tautau_trigger_names[tau_trigobj_matched_mask]
 
+    
+    etau_pair    = ak.concatenate([events.Electron[etau_indices_pair[:,0:1]],
+                                   events.Tau[etau_indices_pair[:,1:2]]],
+                                  axis=1)
+    
+    mutau_pair   = ak.concatenate([events.Muon[mutau_indices_pair[:,0:1]], 
+                                   events.Tau[mutau_indices_pair[:,1:2]]],
+                                  axis=1)
 
-    etau_indices_pair_dummy = etau_indices_pair[:,:0]
-    #etau_pair_dummy = etau_pair[:,:0]
-    etau_indices_pair = ak.where(el_trigobj_matched_mask_evt_level, etau_indices_pair, etau_indices_pair_dummy)
-    etau_pair         = ak.concatenate([events.Electron[etau_indices_pair[:,0:1]],
-                                        events.Tau[etau_indices_pair[:,1:2]]],
-                                       axis=1)
-    #etau_pair = ak.where(el_trigobj_matched_mask_evt_level, etau_pair, etau_pair_dummy)
-
-    mutau_indices_pair_dummy = mutau_indices_pair[:,:0]
-    #mutau_pair_dummy = mutau_pair[:,:0]
-    mutau_indices_pair = ak.where(mu_trigobj_matched_mask_evt_level, mutau_indices_pair, mutau_indices_pair_dummy)
-    mutau_pair         = ak.concatenate([events.Muon[mutau_indices_pair[:,0:1]], 
-                                         events.Tau[mutau_indices_pair[:,1:2]]],
-                                        axis=1)
-    #mutau_pair = ak.where(mu_trigobj_matched_mask_evt_level, mutau_pair, mutau_pair_dummy)
-
-    tautau_indices_pair_dummy = tautau_indices_pair[:,:0]
-    #tautau_pair_dummy = tautau_pair[:,:0]
-    tautau_indices_pair = ak.where(tau_trigobj_matched_mask_evt_level, tautau_indices_pair, tautau_indices_pair_dummy)
-    tautau_pair         = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
-                                          events.Tau[tautau_indices_pair[:,1:2]]], 
-                                         axis=1)
-    #tautau_pair = ak.where(tau_trigobj_matched_mask_evt_level, tautau_pair, tautau_pair_dummy)
-
-    # DO WE NEED TO SORT THE TAU-TAU PAIR CANDIDATES PT SORTED?
-    # ANYWAY ... I AM DOING THAT - BABUSHCHA
-    tautau_pair  = tautau_pair[ak.argsort(tautau_pair.pt, axis=-1, ascending=False)] 
-
+    tautau_pair  = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
+                                   events.Tau[tautau_indices_pair[:,1:2]]], 
+                                  axis=1)
 
     # channel selection
     # channel_id is now in columns
@@ -462,27 +327,19 @@ def main(
                                                    tautau_indices_pair)
     results += channel_results
 
-    
-    #trigger_ids = ak.concatenate([etau_trigger_ids[:,None], mutau_trigger_ids[:,None], tautau_trigger_ids[:,None]], axis=1) # the 1st one only
-    #trigger_names = ak.concatenate([etau_trigger_names[:,None], mutau_trigger_names[:,None], tautau_trigger_names[:,None]], axis=1) # same here
-    trigger_ids = ak.where(events.channel_id == 1,
-                           etau_trigger_ids,
-                           ak.where(events.channel_id == 2,
-                                    mutau_trigger_ids,
-                                    tautau_trigger_ids))
-    trigger_names = ak.where(events.channel_id == 1,
-                             etau_trigger_names,
-                             ak.where(events.channel_id == 2,
-                                      mutau_trigger_names,
-                                      tautau_trigger_ids))
+    etau_trigger_names = matchedResults.x.etau["trigger_names"]
+    etau_trigger_ids   = matchedResults.x.etau["trigger_ids"]
 
-    # make sure events have at least one lepton pair
+    mutau_trigger_names = matchedResults.x.mutau["trigger_names"]
+    mutau_trigger_ids   = matchedResults.x.mutau["trigger_ids"]
+    
+    tautau_trigger_names = matchedResults.x.tautau["trigger_names"]
+    tautau_trigger_ids   = matchedResults.x.tautau["trigger_ids"]
+    
+    trigger_names = ak.concatenate([etau_trigger_names[:,None], mutau_trigger_names[:,None], tautau_trigger_names[:,None]], axis=1)
+    trigger_ids   = ak.concatenate([etau_trigger_ids[:,None], mutau_trigger_ids[:,None], tautau_trigger_ids[:,None]], axis=1)
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
-
-
-    #from IPython import embed; embed()
-
 
     
     # extra lepton veto
