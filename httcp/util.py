@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import law
 import order as od
-from typing import Any
+from typing import Any, Optional
 from collections import defaultdict, OrderedDict
 
 from columnflow.util import maybe_import
@@ -99,40 +99,44 @@ def trigger_object_matching_deep(
         vectors1: ak.Array,
         vectors2: ak.Array,
         legminpt: ak.Array,
+        checkpt: bool = True,
         threshold: float = 0.5,
         axis: int = 1,
 ) -> ak.Array:
     """
-    Helper to check per object in *vectors1* if there is at least one object in *vectors2* that
-    leads to a delta R metric below *threshold*. The final reduction is applied over *axis* of the
-    resulting metric table containing the full combinatorics. When *return_all_matches* is *True*,
-    the matrix with all matching decisions is returned as well.
+    trigger object matching with the reconstructed objects
+    This function is named as deep because it makes sure of both dr and pt matching
+    vectors1 would always be the p4s of e/mu/tau
+    vectors2 would always be the p4s of trigger objects
+    dr is calculated using metric_table which brings all combinatorics.
+    Finally, if any of the trigger objects matches the e/mu/tau, it will be True
+    Next, the trigger leg minpt is provided as another argument.
+    the reco object pt should be greater than the above
+    Finally, both of these conditions must be satisfied for the selection of the reco object
     """
     # delta_r for all combinations
-    #dpt = vectors1.metric_table(vectors2, metric=(vectors1.pt - vectors2.pt))
-    dr  = vectors1.metric_table(vectors2)
-    #dr  = ak.firsts(ak.firsts(ak.firsts(dr, axis=-1), axis=-1), axis=1)
+    dr  = vectors1.metric_table(vectors2)  # 100000 * var * var * option[var * float32]
+    match_dr = dr < threshold              # 100000 * var * var * option[var * bool]
+    match_dr = ak.any(match_dr, axis=-1)   # 100000 * var * var * ?bool
 
-    match_dr = dr < threshold
-    match_dr = ak.any(match_dr, axis=-1)
-    #dr  = ak.firsts(dr, axis=-1)
-    # check per element in vectors1 if there is at least one matching element in vectors2
-
-    #match_dr = dr < threshold
-    #match_pt = dpt > 0.0
-
-    obj_pt = vectors1.pt
-    obj_pt_brdcst, minpt_brdcst = ak.broadcast_arrays(obj_pt, legminpt[:,None], depth_limit=-1)
-
-    match_pt = (obj_pt_brdcst - minpt_brdcst) >= 0.0
-
-    inmatch = match_dr & match_pt
-
-    #from IPython import embed; embed()
-    inmatch = ak.fill_none(inmatch, False)
-    inmatch = ak.enforce_type(ak.values_astype(inmatch, "bool"), "var * var * bool")
+    # pt match
+    if checkpt:
+        obj_pt = vectors1.pt
+        obj_pt_brdcst, minpt_brdcst = ak.broadcast_arrays(obj_pt, legminpt[:,None], depth_limit=-1)
+        match_pt = (obj_pt_brdcst - minpt_brdcst) >= 0.0 # 100000 * var * var * ?bool
+        match_dr = match_dr & match_pt
+        
+    match_dr = ak.fill_none(match_dr, False) # 100000 * var * var * bool
+    match_dr = ak.enforce_type(ak.values_astype(match_dr, "bool"), "var * var * bool") # 100000 * var * var * bool
     
-    return inmatch #match_dr
+    #inmatch = match_dr & match_pt           # 100000 * var * var * ?bool
+    #inmatch = ak.fill_none(inmatch, False)  # 100000 * var * var * bool
+    #inmatch = ak.enforce_type(ak.values_astype(inmatch, "bool"), "var * var * bool") # 100000 * var * var * bool
+    
+    #return inmatch #match_dr
+
+    return match_dr
+
 
 
 def get_dataset_lfns(
