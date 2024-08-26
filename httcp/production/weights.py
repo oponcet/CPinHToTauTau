@@ -301,7 +301,7 @@ def tau_weight(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak.
     
     #Make masks for each channel
     mask = {}
-    for the_ch in ["etau","mutau", "tautau"]: mask[the_ch] = events.channel_id == self.config_inst.get_channel(the_ch).id
+    for the_ch in ["etau","mutau", "tautau","FFDRIso_tautau","FFDRantiIso_tautau"]: mask[the_ch] = events.channel_id == self.config_inst.get_channel(the_ch).id
     
     
     #Prepare flat arrays of the inputs to send into the 

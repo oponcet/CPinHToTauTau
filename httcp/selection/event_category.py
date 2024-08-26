@@ -26,13 +26,18 @@ def get_categories(
         etau_pair_indices: ak.Array,
         mutau_pair_indices: ak.Array,
         tautau_pair_indices: ak.Array,
+        FFDRIso_tautau_pair_indices: ak.Array,
+        FFDRantiIso_tautau_pair_indices: ak.Array,
         **kwargs
 ) -> tuple[ak.Array, SelectionResult]:
     # get channels from the config
     ch_etau   = self.config_inst.get_channel("etau")
     ch_mutau  = self.config_inst.get_channel("mutau")
     ch_tautau = self.config_inst.get_channel("tautau")
+    ch_FFDRIso_tautau = self.config_inst.get_channel("FFDRIso_tautau")
+    ch_FFDRantiIso_tautau = self.config_inst.get_channel("FFDRantiIso_tautau")
 
+    print("get_categories")
     false_mask       = (abs(events.event) < 0)
     single_triggered = false_mask
     cross_triggered  = false_mask
@@ -62,7 +67,17 @@ def get_categories(
         "cat_is_mutau_tautau"   : [ch_mutau.id + ch_tautau.id, 
                                    ((ak.num(etau_pair_indices, axis=1) == 0) 
                                     & (ak.num(mutau_pair_indices, axis=1) == 2) 
-                                    & (ak.num(tautau_pair_indices, axis=1) == 2))], 
+                                    & (ak.num(tautau_pair_indices, axis=1) == 2))],
+        "cat_is_FFDRIso_tautau": [ch_FFDRIso_tautau.id, 
+                                   ((ak.num(etau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(mutau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(tautau_pair_indices, axis=1) == 0)
+                                    & (ak.num(FFDRIso_tautau_pair_indices, axis=1) == 2))],
+        "cat_is_FFDRantiIso_tautau": [ch_FFDRantiIso_tautau.id, 
+                                   ((ak.num(etau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(mutau_pair_indices, axis=1) == 0) 
+                                    & (ak.num(tautau_pair_indices, axis=1) == 0)
+                                    & (ak.num(FFDRantiIso_tautau_pair_indices, axis=1) == 2))],
     }
 
     selection_steps  = {}
@@ -74,5 +89,7 @@ def get_categories(
     # some final type conversions
     channel_id = ak.values_astype(channel_id, np.uint8)
     events = set_ak_column(events, "channel_id", channel_id)
+
+    print("get categories done. event.channel_id: ", events.channel_id) 
 
     return events, SelectionResult(aux=selection_steps)

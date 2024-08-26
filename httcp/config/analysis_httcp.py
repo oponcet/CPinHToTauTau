@@ -110,38 +110,38 @@ add_config_run3_2022_postEE(
     limit_dataset_files=1
 )
 
-# ===>>> 2023 PreBPix
-from httcp.config.config_run3 import add_config as add_config_run3_2023_preBPix
-from cmsdb.campaigns.run3_2023_preBPix_nano_cp_tau_v12 import campaign_run3_2023_preBPix_nano_cp_tau_v12
-add_config_run3_2023_preBPix(
-    analysis_httcp,
-    campaign_run3_2023_preBPix_nano_cp_tau_v12.copy(),
-    config_name=campaign_run3_2023_preBPix_nano_cp_tau_v12.name,
-    config_id=int(f"{campaign_run3_2023_preBPix_nano_cp_tau_v12.id}{1}")
-)
-add_config_run3_2023_preBPix(
-    analysis_httcp,
-    campaign_run3_2023_preBPix_nano_cp_tau_v12.copy(),
-    config_name=f"{campaign_run3_2023_preBPix_nano_cp_tau_v12.name}_limited",
-    config_id=int(f"{campaign_run3_2023_preBPix_nano_cp_tau_v12.id}{2}"),
-    limit_dataset_files=1
-)
+# # ===>>> 2023 PreBPix
+# from httcp.config.config_run3 import add_config as add_config_run3_2023_preBPix
+# from cmsdb.campaigns.run3_2023_preBPix_nano_cp_tau_v12 import campaign_run3_2023_preBPix_nano_cp_tau_v12
+# add_config_run3_2023_preBPix(
+#     analysis_httcp,
+#     campaign_run3_2023_preBPix_nano_cp_tau_v12.copy(),
+#     config_name=campaign_run3_2023_preBPix_nano_cp_tau_v12.name,
+#     config_id=int(f"{campaign_run3_2023_preBPix_nano_cp_tau_v12.id}{1}")
+# )
+# add_config_run3_2023_preBPix(
+#     analysis_httcp,
+#     campaign_run3_2023_preBPix_nano_cp_tau_v12.copy(),
+#     config_name=f"{campaign_run3_2023_preBPix_nano_cp_tau_v12.name}_limited",
+#     config_id=int(f"{campaign_run3_2023_preBPix_nano_cp_tau_v12.id}{2}"),
+#     limit_dataset_files=1
+# )
 
-# ===>>> 2023 PostBPix
-from httcp.config.config_run3 import add_config as add_config_run3_2023_postBPix
-from cmsdb.campaigns.run3_2023_postBPix_nano_cp_tau_v12 import campaign_run3_2023_postBPix_nano_cp_tau_v12
-add_config_run3_2023_postBPix(
-    analysis_httcp,
-    campaign_run3_2023_postBPix_nano_cp_tau_v12.copy(),
-    config_name="campaign_run3_2023_postBPix_nano_cp_tau_v12.name",
-    config_id=int(f"{campaign_run3_2023_postBPix_nano_cp_tau_v12.id}{1}")
-)
-add_config_run3_2023_postBPix(
-    analysis_httcp,
-    campaign_run3_2023_postBPix_nano_cp_tau_v12.copy(),
-    config_name=f"{campaign_run3_2023_postBPix_nano_cp_tau_v12.name}_limited",
-    config_id=int(f"{campaign_run3_2023_postBPix_nano_cp_tau_v12.id}{2}"),
-    limit_dataset_files=1
-)
+# # ===>>> 2023 PostBPix
+# from httcp.config.config_run3 import add_config as add_config_run3_2023_postBPix
+# from cmsdb.campaigns.run3_2023_postBPix_nano_cp_tau_v12 import campaign_run3_2023_postBPix_nano_cp_tau_v12
+# add_config_run3_2023_postBPix(
+#     analysis_httcp,
+#     campaign_run3_2023_postBPix_nano_cp_tau_v12.copy(),
+#     config_name="campaign_run3_2023_postBPix_nano_cp_tau_v12.name",
+#     config_id=int(f"{campaign_run3_2023_postBPix_nano_cp_tau_v12.id}{1}")
+# )
+# add_config_run3_2023_postBPix(
+#     analysis_httcp,
+#     campaign_run3_2023_postBPix_nano_cp_tau_v12.copy(),
+#     config_name=f"{campaign_run3_2023_postBPix_nano_cp_tau_v12.name}_limited",
+#     config_id=int(f"{campaign_run3_2023_postBPix_nano_cp_tau_v12.id}{2}"),
+#     limit_dataset_files=1
+# )
 
-# ------------------------------------------------------------- #
+# # ------------------------------------------------------------- #

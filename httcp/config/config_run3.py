@@ -27,7 +27,7 @@ from columnflow.config_util import (
 ak = maybe_import("awkward")
 
 #thisdir = os.path.dirname(os.path.abspath(__file__))
-thisdir = "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/httcp/config"
+thisdir = "/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/config"
 print(f"thisdir: {thisdir}")
 corrdir = os.path.join(os.path.dirname(thisdir), "data")
 print(f"corrdir: {corrdir}")
@@ -177,8 +177,8 @@ def add_config (ana: od.Analysis,
 
     # default objects, such as calibrator, selector, producer, ml model, inference model, etc
     cfg.x.default_calibrator      = "main"
-    cfg.x.default_selector        = "main"
-    cfg.x.default_producer        = "main"
+    cfg.x.default_selector        = "main_FF"
+    cfg.x.default_producer        = "main_FF"
     cfg.x.default_ml_model        = None
     cfg.x.default_inference_model = "example"
     cfg.x.default_categories      = ("incl",)
@@ -643,6 +643,9 @@ def add_config (ana: od.Analysis,
     cfg.add_channel(name="etau",   id=1)
     cfg.add_channel(name="mutau",  id=2)
     cfg.add_channel(name="tautau", id=4)
+    cfg.add_channel(name="FFDRIso_tautau", id=9)
+    cfg.add_channel(name="FFDRantiIso_tautau", id=10)
+
     
     campaign_tag = cfg.campaign.x("custom").get("creator")
     if campaign_tag == "desy" or campaign_tag == "IPHC":
@@ -678,4 +681,4 @@ def add_config (ana: od.Analysis,
     from httcp.config.variables import add_variables
     add_variables(cfg)
     
-    
+    print(f"config {config_name} added")
