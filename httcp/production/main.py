@@ -95,30 +95,30 @@ def hcand_features(
 
 @producer(
     uses={
-        #deterministic_seeds,
+        ##deterministic_seeds,
         normalization_weights,
-        #split_dy,
-        pu_weight,
-        IF_DATASET_HAS_LHE_WEIGHTS(pdf_weights),
-        #muon_weight,
-        muon_weights,
-        electron_weights,
-        tau_weight,
-        #tauspinner_weight,
+        ##split_dy,
+        #pu_weight,
+        #IF_DATASET_HAS_LHE_WEIGHTS(pdf_weights),
+        ##muon_weight,
+        #muon_weights,
+        #electron_weights,
+        #tau_weight,
+        ##tauspinner_weight,
         hcand_features,
         hcand_mass,
     },
     produces={
-        #deterministic_seeds,
+        ##deterministic_seeds,
         normalization_weights,
-        #split_dy,
-        pu_weight,
-        IF_DATASET_HAS_LHE_WEIGHTS(pdf_weights),
-        #muon_weight,
-        muon_weights,
-        electron_weights,
-        tau_weight,
-        #tauspinner_weight,
+        ##split_dy,
+        #pu_weight,
+        #IF_DATASET_HAS_LHE_WEIGHTS(pdf_weights),
+        ##muon_weight,
+        #muon_weights,
+        #electron_weights,
+        #tau_weight,
+        ##tauspinner_weight,
         hcand_features,
         hcand_mass,
     },
@@ -132,22 +132,14 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         events = self[normalization_weights](events, **kwargs)
         #embed()
         processes = self.dataset_inst.processes.names()
-        #if ak.any(['dy' in proc for proc in processes]):
         #print("Splitting Drell-Yan dataset...")
         #events = self[split_dy](events, **kwargs)
-        events = self[pu_weight](events, **kwargs)
-        #embed()
-        #from IPython import embed; embed()
-        if not self.dataset_inst.has_tag("no_lhe_weights"):
-            events = self[pdf_weights](events, **kwargs)
-        #embed()
-        events = self[muon_weights](events, **kwargs)
-        #embed()
-        events = self[electron_weights](events, **kwargs)
-        #embed()
-        #from IPython import embed; embed()
-        events = self[tau_weight](events, do_syst=True, **kwargs)
-        #embed()
+        #events = self[pu_weight](events, **kwargs)
+        #if not self.dataset_inst.has_tag("no_lhe_weights"):
+        #    events = self[pdf_weights](events, **kwargs)
+        #events = self[muon_weights](events, **kwargs)
+        #events = self[electron_weights](events, **kwargs)
+        #events = self[tau_weight](events, do_syst=True, **kwargs)
         #events = self[tauspinner_weight](events, **kwargs)
     events = self[hcand_features](events, **kwargs)       
     #embed()
