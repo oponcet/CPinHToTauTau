@@ -97,6 +97,7 @@ def keep_columns(cfg: od.Config) -> None:
             # general event info                                                                                                  
             "run", "luminosityBlock", "event", "LHEPdfWeight",
             "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
+            "trigger_ids",
         } | {
             f"PuppiMET.{var}" for var in [
                 "pt", "phi", "significance",
@@ -138,16 +139,6 @@ def keep_columns(cfg: od.Config) -> None:
                 "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
                 "decayMode", "pfRelIso03_all", "mT", "rawIdx",
                 "deltaEtaSC",
-            ]
-        } | {
-            f"{var}_triggerd" for var in [ #Trigger variables to have a track of a particular trigger fired                       
-                "single_electron", "cross_electron",
-                "single_muon", "cross_muon",
-                "cross_tau",
-            ]
-        } | {
-            f"matched_triggerID_{var}" for var in [
-                "e", "mu", "tau",
             ]
         } | {
             f"TrigObj.{var}" for var in [

@@ -13,8 +13,7 @@ from columnflow.util import maybe_import, DotDict
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 from columnflow.columnar_util import optional_column as optional
 
-from httcp.util import IF_NANO_V9, IF_NANO_V11
-from httcp.util import getGenTauDecayMode
+from httcp.util import IF_NANO_V9, IF_NANO_V11, IF_RUN2, IF_RUN3, getGenTauDecayMode
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -32,8 +31,8 @@ ak = maybe_import("awkward")
         f"Muon.{var}" for var in [
             "pt", "eta", "phi", "dxy", "dz", "mediumId", 
             "pfRelIso04_all", "isGlobal", "isPFcand", 
-            "IPx", "IPy", "IPz",
-            #"isTracker",
+            #IF_RUN3("IPx", "IPy", "IPz"),
+            "isTracker",
         ]
     },
     produces={
@@ -80,7 +79,7 @@ def muon_selection(
         "muon_eta_2p4"        : abs(events.Muon.eta) < 2.4,
         "muon_isGlobal"       : events.Muon.isGlobal == True,
         "muon_isPF"           : events.Muon.isPFcand == True,
-        #"muon_isTracker"      : events.Muon.isTracker ==True,
+        "muon_isTracker"      : events.Muon.isTracker ==True,
         "muon_dxy_0p045"      : abs(events.Muon.dxy) < 0.045,
         "muon_dz_0p2"         : abs(events.Muon.dz) < 0.2,
         "muon_iso_0p3"        : events.Muon.pfRelIso04_all < 0.3
@@ -143,7 +142,8 @@ def muon_selection(
         "Electron.pfRelIso03_all", "Electron.convVeto", #"lostHits",
         IF_NANO_V9("Electron.mvaFall17V2Iso_WP80", "Electron.mvaFall17V2Iso_WP90", "Electron.mvaFall17V2noIso_WP90"),
         IF_NANO_V11("Electron.mvaIso_WP80", "Electron.mvaIso_WP90", "Electron.mvaNoIso_WP90"),
-        "Electron.cutBased", "Electron.IPx", "Electron.IPy", "Electron.IPz",
+        "Electron.cutBased",
+        #IF_RUN3("Electron.IPx", "Electron.IPy", "Electron.IPz"),
     },
     produces={
         f"Electron.{var}" for var in [
@@ -255,7 +255,8 @@ def electron_selection(
         f"Tau.{var}" for var in [
             "pt", "eta", "phi", "dz", 
             "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", "idDeepTau2018v2p5VSjet",
-            "decayMode", "decayModePNet", "IPx","IPy","IPz",
+            "decayMode", "decayModePNet",
+            #IF_RUN3("IPx","IPy","IPz"),
         ]
     },
     produces={

@@ -93,22 +93,33 @@ def add_config (ana: od.Analysis,
     # add datasets we need to study
     dataset_names = [
         ##W+jets
-        "wj_incl",
+        "wj_incl_madgraph",
+        "wj_incl_ext1_madgraph",
         #Drell-Yan
-        "dy_lep_m50",
+        "dy_lep_m50_madgraph",
+        "dy_lep_m50_ext1_madgraph",
         ## ttbar
         "tt_sl",
+        "tt_sl_ext1",
         "tt_dl",
+        "tt_dl_ext1",
         "tt_fh",
+        "tt_fh_ext1",
         ##single top
         "st_tchannel_t",
         "st_tchannel_tbar",
         "st_tw_t_sl",
+        "st_tw_t_sl_ext1",
         "st_tw_tb_sl",
+        "st_tw_tb_sl_ext1",
         "st_tw_t_dl",
+        "st_tw_t_dl_ext1",
         "st_tw_tb_dl",
+        "st_tw_tb_dl_ext1",
         "st_tw_t_fh",
+        "st_tw_t_fh_ext1",
         "st_tw_tb_fh",
+        "st_tw_tb_fh_ext1",
         ##Diboson
         "ww",
         "wz",
@@ -612,11 +623,11 @@ def add_config (ana: od.Analysis,
     get_shifts = functools.partial(get_shifts_from_sources, cfg)
     cfg.x.event_weights = DotDict({
         "normalization_weight"  : [],
-        "pu_weight"             : get_shifts("minbias_xs"),
+        "pu_weight"             : [], #get_shifts("minbias_xs"),
         #"pdf_weight"            : get_shifts("pdf"),
-        "electron_weight"       : get_shifts("e"),
-        "muon_weight"           : get_shifts("mu"),
-        "tau_weight"            : get_shifts("tau"),
+        "electron_weight"       : [], #get_shifts("e"),
+        "muon_weight"           : [], #get_shifts("mu"),
+        "tau_weight"            : [], #get_shifts("tau"),
         #"tau_id_sf"            : [],
         #"tauspinner_weight": get_shifts("tauspinner"),
     })
@@ -624,8 +635,9 @@ def add_config (ana: od.Analysis,
     # define per-dataset event weights
     for dataset in cfg.datasets:
         if dataset.x("no_lhe_weights", False):
-            dataset.x.event_weights = {"pdf_weight": get_shifts("pdf")}
-            
+            dataset.x.event_weights = {
+                "pdf_weight": [], #get_shifts("pdf"),
+            }
     cfg.x.default_weight_producer = "all_weights"
 
     # versions per task family, either referring to strings or to callables receving the invoking

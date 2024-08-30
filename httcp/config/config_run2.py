@@ -16,6 +16,7 @@ import order as od
 from scinum import Number
 
 from columnflow.util import DotDict, maybe_import, dev_sandbox
+from columnflow.columnar_util import ColumnCollection, EMPTY_FLOAT
 from columnflow.config_util import (
     get_root_processes_from_campaign, 
     add_category,
@@ -60,10 +61,11 @@ def add_config (ana: od.Analysis,
     process_names = [
         ## Data
         "data",
+        ## Drell-Yan
+        "dy_lep_m10to50",
+        "dy_lep_m50",
         ## W + jets
         "w_lnu",
-        ## Drell-Yan
-        "dy_lep_m50",
         ## TTJets
         "tt",
         ## Single top
@@ -92,11 +94,12 @@ def add_config (ana: od.Analysis,
 
     # add datasets we need to study
     dataset_names = [
+        ##Drell-Yan
+        "dy_lep_m10to50_madgraph",
+        "dy_lep_m50_madgraph",
+        "dy_lep_m50_madgraph_ext1",
         ##W+jets
-        "wj_nlo_incl",
-        #Drell-Yan
-        "dy_lep_lo_m50",
-        "dy_lep_lo_m10to50"
+        "w_lnu_madgraph",
         ## ttbar
         "tt_sl",
         "tt_dl",
@@ -117,6 +120,7 @@ def add_config (ana: od.Analysis,
         "h_ggf_tautau_prod_cp_even_sm",
         "h_ggf_tautau_prod_cp_odd_flat",
         "h_ggf_tautau_prod_cp_even_flat",
+        "h_ggf_tautau_prod_max_mix_flat",
     ]
     
     datasets_data = []
@@ -157,7 +161,7 @@ def add_config (ana: od.Analysis,
         
         # add the dataset
         dataset = cfg.add_dataset(campaign.get_dataset(dataset_name))
-        if re.match(r"^(ww|wz|zz)_.*pythia$", dataset.name):
+        if re.match(r"^(ww|wz|zz)_.*", dataset.name):
             dataset.add_tag("no_lhe_weights")
         
         # for testing purposes, limit the number of files to 1
@@ -180,6 +184,8 @@ def add_config (ana: od.Analysis,
 
     # process groups for conveniently looping over certain processs
     # (used in wrapper_factory and during plotting)
+    cfg.x.process_groups = {}
+    """
     cfg.x.process_groups = {
         "backgrounds": (backgrounds := [
             "w_lnu",
@@ -198,7 +204,7 @@ def add_config (ana: od.Analysis,
     cfg.x.general_settings_groups = {
         "compare_shapes": {"skip_ratio": False, "shape_norm": False, "yscale": "log"} #"cms_label": "simpw"},
     }
-
+    """
     # dataset groups for conveniently looping over certain datasets
     # (used in wrapper_factory and during plotting)
     cfg.x.dataset_groups = {}
@@ -218,7 +224,17 @@ def add_config (ana: od.Analysis,
     # selector step groups for conveniently looping over certain steps
     # (used in cutflow tasks)
     cfg.x.selector_step_groups = {
-        "default": ["json", "met_filter", "dl_res_veto", "trigger", "lepton", "jet"],
+        "default": ["json",
+                    "trigger",
+                    "met_filter",
+                    "b_veto",
+                    "has_2_or_more_leps_with_at_least_1_tau",
+                    "dilepton_veto",
+                    "has_at_least_1_pair_before_trigobj_matching",
+                    "has_at_least_1_pair_after_trigobj_matching",
+                    "extra_lepton_veto",
+                    "One_higgs_cand_per_event",
+                    "has_proper_tau_decay_products"],
     }
 
     # whether to validate the number of obtained LFNs in GetDatasetLFNs
@@ -292,17 +308,29 @@ def add_config (ana: od.Analysis,
         },
     })
 
-    cfg.x.deep_tau_tagger = "DeepTau2017v2p1"
+    cfg.x.deep_tau_tagger = "DeepTau2018v2p5"
     cfg.x.deep_tau_info = DotDict.wrap({
-        "DeepTau2017v2p1": {
+        "DeepTau2018v2p5": {
             "wp": {
                 "vs_e": {"VVVLoose": 1, "VVLoose": 2, "VLoose": 3, "Loose": 4, "Medium": 5, "Tight": 6, "VTight": 7, "VVTight": 8},
                 "vs_m": {"VVVLoose": 1, "VVLoose": 1, "VLoose": 1, "Loose": 2, "Medium": 3, "Tight": 4, "VTight": 4, "VVTight": 4},
                 "vs_j": {"VVVLoose": 1, "VVLoose": 2, "VLoose": 3, "Loose": 4, "Medium": 5, "Tight": 6, "VTight": 7, "VVTight": 8},
             },
-            "vs_e": "VVLoose",
-            "vs_m": "Tight",
-            "vs_j": "Medium"
+            "vs_e": {
+                "etau"   : "Tight",
+                "mutau"  : "VVLoose",
+                "tautau" : "VVLoose",
+            },
+            "vs_m": {
+                "etau"   : "Loose",
+                "mutau"  : "Tight",
+                "tautau" : "VLoose",
+            },
+            "vs_j": {
+                "etau"   : "Tight",
+                "mutau"  : "Medium",
+                "tautau" : "Medium",
+            },
         },
     })
 
@@ -310,14 +338,14 @@ def add_config (ana: od.Analysis,
   
     # Adding triggers
     if year == 2016:
-        from httcp.config.triggers import add_triggers_run2_2016
-        add_triggers_run2_2016(cfg, postfix)
+        from httcp.config.triggers import add_triggers_UL2017
+        add_triggers_UL2016(cfg, postfix)
     elif year == 2017:
-        from httcp.config.triggers import add_triggers_run2_2017
-        add_triggers_run2_2017(cfg)
+        from httcp.config.triggers import add_triggers_UL2017
+        add_triggers_UL2017(cfg)
     elif year == 2018:
-        from httcp.config.triggers import add_triggers_run2_2018
-        add_triggers_run2_2018(cfg)
+        from httcp.config.triggers import add_triggers_UL2018
+        add_triggers_UL2018(cfg)
     else:
         raise RuntimeError(f"Wrong year: {year}. Check __init__.py in cmsdb campaign")
 
@@ -330,7 +358,6 @@ def add_config (ana: od.Analysis,
     external_path_parent = os.path.join(corrdir, "corrections")
     external_path_tail   = f"{year}{postfix}" if postfix else f"{year}"
     external_path        = os.path.join(external_path_parent, f"{external_path_tail}")
-    normtag_path = "/cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags"
 
     print(f"external_path_parent : {external_path_parent}")
     print(f"external_path        : {external_path}")
@@ -340,16 +367,18 @@ def add_config (ana: od.Analysis,
     print(f"json_mirror          : {json_mirror}")
 
     normtagjson = None
-    if year == 2022:
-        normtagjson = "/cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_BRIL.json"
-    elif year == 2023:
+    goldenjson  = None
+    if year == 2016:
         normtagjson = "/afs/cern.ch/user/l/lumipro/public/Normtags/normtag_PHYSICS.json"
-    elif year == 2024:
-        raise RuntimeWarning("too early")
+        goldenjson  = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt"
+    elif year == 2017:
+        normtagjson = "/afs/cern.ch/user/l/lumipro/public/Normtags/normtag_PHYSICS.json"
+        goldenjson  = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt"
+    elif year == 2018:
+        normtagjson = "/afs/cern.ch/user/l/lumipro/public/Normtags/normtag_PHYSICS.json"
+        goldenjson  = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt"        
     else:
         raise RuntimeError(f"Check year : {year}")
-
-    goldenjson  = glob(f"{external_path}/Lumi/*.json")[0]
 
     print(f"GoldenJSON           : {goldenjson}")
     print(f"NormtagJSON          : {normtagjson}")
@@ -362,24 +391,20 @@ def add_config (ana: od.Analysis,
         },
 
         # pileup weight corrections
-        "pu_sf": (f"{json_mirror}/POG/LUM/{year}_Summer{year2}{year_postfix}/puWeights.json.gz", "v1"),
+        "pu_sf": (f"{json_mirror}/POG/LUM/{year}{postfix}_UL/puWeights.json.gz", "v1"),
 
         # jet energy correction
-        "jet_jerc": (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jet_jerc.json.gz", "v1"),
+        "jet_jerc": (f"{json_mirror}/POG/JME/{year}{postfix}_UL/jet_jerc.json.gz", "v1"),
 
         # Add Muon POG scale factors
-        "muon_sf": (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/muon_Z.json.gz", "v1"),
-        #"muon_sf": (f"{external_path_parent}/muon_SFs_2022_preEE.root", "v1"),
+        "muon_sf": (f"{json_mirror}/POG/MUO/{year}{postfix}_UL/muon_Z.json.gz", "v1"),
         
         # electron scale factors
-        "electron_sf": (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electron.json.gz", "v1"),
+        "electron_sf": (f"{json_mirror}/POG/EGM/{year}{postfix}_UL/electron.json.gz", "v1"),
         
         # tau energy correction and scale factors
         #"tau_sf": (f"{external_path_parent}/tau_DeepTau2018v2p5_2022_preEE.json.gz", "v1"),  # noqa
-        "tau_correction": (f"{external_path_parent}/tau_DeepTau2018v2p5_2022_preEE.json.gz", "v1"),  # noqa
-
-        # btag scale factor
-        #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz", "v1"),
+        "tau_correction": (f"{json_mirror}/POG/TAU/{year}{postfix}_UL/tau.json.gz", "v1"),  # noqa
 
         # met phi corrector 
         # unavailable for Run3
@@ -433,8 +458,8 @@ def add_config (ana: od.Analysis,
         electron_sf_tag = "2023PromptC" if year_postfix else "2023PromptD"
     
     cfg.x.electron_sf_names = (
-        "Electron-ID-SF",
-        electron_sf_tag,
+        "UL-Electron-ID-SF",
+        f"{year}{postfix}",
         "wp80iso",
     )
 
@@ -444,8 +469,8 @@ def add_config (ana: od.Analysis,
     # names of muon correction sets and working points
     # (used in the muon producer)
     cfg.x.muon_sf_names = (
-        "NUM_TightPFIso_DEN_MediumID", 
-        f"{year}_{postfix}"
+        "NUM_TightRelIso_DEN_MediumPromptID", 
+        f"{year}{postfix}_UL",
     )
 
     """
@@ -557,8 +582,8 @@ def add_config (ana: od.Analysis,
     # target file size after MergeReducedEvents in MB
     cfg.x.reduced_file_size = 512.0
     
-    from httcp.config.variables import keep_columns
-    keep_columns(cfg)
+    #from httcp.config.variables import keep_columns
+    #keep_columns(cfg)
 
 
     # event weight columns as keys in an OrderedDict, mapped to shift instances they depend on
@@ -569,13 +594,17 @@ def add_config (ana: od.Analysis,
     get_shifts = functools.partial(get_shifts_from_sources, cfg)
     cfg.x.event_weights = DotDict({
         "normalization_weight": [],
-        #"pdf_weight": get_shifts("pdf"),
-        #"normalized_pu_weight": get_shifts("minbias_xs"),
-        #"electron_weight": get_shifts("e"),
-        #"muon_weight": get_shifts("mu"),
-        #"tau_weight": get_shifts(*(f"tau_{unc}" for unc in cfg.x.tau_unc_names)),
+        #"pu_weight"           : [], #get_shifts("minbias_xs"),
+        #"electron_weight"     : [], #get_shifts("e"),
+        #"muon_weight"         : [], #get_shifts("mu"),
+        #"tau_weight"          : [], #get_shifts(*(f"tau_{unc}" for unc in cfg.x.tau_unc_names)),
     })
-
+    # define per-dataset event weights
+    for dataset in cfg.datasets:
+        if dataset.x("no_lhe_weights", False):
+            dataset.x.event_weights = {
+                #"pdf_weight": [], #get_shifts("pdf"),
+            }
     cfg.x.default_weight_producer = "all_weights"
 
     # versions per task family, either referring to strings or to callables receving the invoking
@@ -634,4 +663,79 @@ def add_config (ana: od.Analysis,
     from httcp.config.variables import add_variables
     add_variables(cfg)
     
-    
+    # columns to keep after certain steps
+    cfg.x.keep_columns = DotDict.wrap({
+        "cf.ReduceEvents": {
+            # TauProds                                                                                                            
+            "TauProd.*",
+            # general event info                                                                                                  
+            "run", "luminosityBlock", "event", "LHEPdfWeight",
+            "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
+            "trigger_ids",
+        } | {
+            f"PuppiMET.{var}" for var in [
+                "pt", "phi", "significance",
+                "covXX", "covXY", "covYY",
+            ]
+        } | {
+            f"MET.{var}" for var in [
+                "pt", "phi", "significance",
+                "covXX", "covXY", "covYY",
+            ]
+        } | {
+            f"Jet.{var}" for var in [
+                "pt", "eta", "phi", "mass",
+                "btagDeepFlavB", "hadronFlavour"
+            ]
+        } | {
+            f"Tau.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", #"IPx", "IPy", "IPz",
+                "rawDeepTau2018v2p5VSjet","idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu",
+                "decayMode",
+                "decayModeHPS",
+                "decayModePNet",
+                "genPartFlav",
+                "rawIdx",
+                "pt_no_tes", "mass_no_tes"
+            ]
+            #} | {
+            #f"TauSpinner.weight_cp_{var}" for var in [
+            #    "0", "0_alt", "0p25", "0p25_alt", "0p375",
+            #    "0p375_alt", "0p5", "0p5_alt", "minus0p25", "minus0p25_alt"
+            #]
+        } | {
+            f"Muon.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", #"IPx", "IPy", "IPz",
+                "decayMode", "pfRelIso04_all","mT", "rawIdx"
+            ]
+        } | {
+            f"Electron.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", #"IPx", "IPy", "IPz",
+                "decayMode", "pfRelIso03_all", "mT", "rawIdx",
+                "deltaEtaSC",
+            ]
+        } | {
+            f"TrigObj.{var}" for var in [
+                "id", "pt", "eta", "phi", "filterBits",
+            ]
+        } | {
+            f"hcand.{var}" for var in [
+                "pt","eta","phi","mass", "charge",
+                "decayMode", "rawIdx"
+            ]
+        } | {
+            "GenTau.*", "GenTauProd.*",
+        } | {
+            f"hcandprod.{var}" for var in [
+                "pt", "eta", "phi", "mass", "charge",
+                "pdgId", "tauIdx",
+            ]
+        } | {ColumnCollection.ALL_FROM_SELECTOR},
+        "cf.MergeSelectionMasks": {
+            "normalization_weight",
+            "cutflow.*", "process_id", "category_ids",
+        },
+        "cf.UniteColumns": {
+            "*",
+        },
+    })

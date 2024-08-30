@@ -39,39 +39,28 @@ ana.x.config_groups = {}
 # setup configs #
 # ------------- #
 
-# ------------------------ Run2 UL 2017 ----------------------- #
-#from httcp.config.configs_run2ul_SR import add_config as add_config_run2ul_SR
-#from cmsdb.campaigns.run2_2017_nano_local_v10 import campaign_run2_2017_nano_local_v10
-#add_config_run2ul_SR(
-#    analysis_httcp,
-#    campaign_run2_2017_nano_local_v10.copy(),
-#    config_name=f"{campaign_run2_2017_nano_local_v10.name}",
-#    config_id=1,
-#)
-#add_config_run2ul_SR(
-#    analysis_httcp,
-#    campaign_run2_2017_nano_local_v10.copy(),
-#    config_name=f"{campaign_run2_2017_nano_local_v10.name}_limited",
-#    config_id=2,
-#    limit_dataset_files=1,
-#)
-#
-#
-#from httcp.config.run2_UL2017 import add_run2_UL2017
-#from cmsdb.campaigns.run2_UL2017_nano_tau_v10 import campaign_run2_UL2017_nano_tau_v10
-#add_run2_UL2017(
-#    analysis_httcp,
-#    campaign_run2_UL2017_nano_tau_v10.copy(),
-#    config_name=f"{campaign_run2_UL2017_nano_tau_v10.name}_limited",
-#    config_id=3,
-#    limit_dataset_files=1)
-
-
 # ------------------------------------------------------------- #
 #                               Run2                            #
 # ------------------------------------------------------------- #
 
+# ===>>> 2018
+from httcp.config.config_run2 import add_config as add_config_run2_2018
+from cmsdb.campaigns.run2_UL2018_nano_cp_tau_v09 import campaign_run2_UL2018_nano_cp_tau_v09
+add_config_run2_2018(
+    analysis_httcp,
+    campaign_run2_UL2018_nano_cp_tau_v09.copy(),
+    config_name=campaign_run2_UL2018_nano_cp_tau_v09.name,
+    config_id=int(f"{campaign_run2_UL2018_nano_cp_tau_v09.id}{1}")
+)
+add_config_run2_2018(
+    analysis_httcp,
+    campaign_run2_UL2018_nano_cp_tau_v09.copy(),
+    config_name=f"{campaign_run2_UL2018_nano_cp_tau_v09.name}_limited",
+    config_id=int(f"{campaign_run2_UL2018_nano_cp_tau_v09.id}{2}"),
+    limit_dataset_files=1
+)
 
+"""
 # ------------------------------------------------------------- #
 #                               Run3                            #
 # ------------------------------------------------------------- #
@@ -145,3 +134,4 @@ add_config_run3_2023_postBPix(
 )
 
 # ------------------------------------------------------------- #
+"""
