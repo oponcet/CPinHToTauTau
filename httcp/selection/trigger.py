@@ -46,9 +46,9 @@ def trigger_selection(
     index = ak.local_index(events.TrigObj)
     
     for trigger in self.config_inst.x.triggers:
-        trigger_name_temp = ak.Array([trigger.name])
-        trigger_name_array, _ = ak.broadcast_arrays(trigger_name_temp, events.event)
-        trigger_names.append(trigger_name_array[:,None])
+        # skip the trigger if it does not apply to the dataset
+        if not trigger.applies_to_dataset(self.dataset_inst):
+            continue
 
         is_single_e  = trigger.has_tag("single_e")
         is_cross_e   = trigger.has_tag("cross_e_tau")
@@ -68,22 +68,32 @@ def trigger_selection(
         elif is_cross_tau:
             trigger_type_temp = ak.Array(["cross_tau_tau"])
             
+        trigger_name_temp = ak.Array([trigger.name])
+        trigger_name_array, _ = ak.broadcast_arrays(trigger_name_temp, events.event)
+        trigger_names.append(trigger_name_array[:,None])
+
         trigger_type_array, _ = ak.broadcast_arrays(trigger_type_temp, events.event)
         trigger_types.append(trigger_type_array[:,None])
         
-        # skip the trigger if it does not apply to the dataset
-        if not trigger.applies_to_dataset(self.dataset_inst):
-            continue
-        
         # get bare decisions
         fired = events.HLT[trigger.hlt_field] == 1
+        #if trigger.run_range:
+        #    fired = fired & (
+        #        ((trigger.run_range[0] is None) | (trigger.run_range[0] <= events.run)) &
+        #        ((trigger.run_range[1] is None) | (trigger.run_range[1] >= events.run))
+        #    )
+
         if trigger.run_range:
-            fired = fired & (
-                ((trigger.run_range[0] is None) | (trigger.run_range[0] <= events.run)) &
-                ((trigger.run_range[1] is None) | (trigger.run_range[1] >= events.run))
-            )
+            if trigger.run_range[0] is None: 
+                fired = fired & (events.run < trigger.run_range[1])
+            elif trigger.run_range[1] is None: 
+                fired = fired & (events.run > trigger.run_range[0])
+            else: 
+                fired = fired & (events.run >= trigger.run_range[0]) & (events.run <= trigger.run_range[1])
+
         any_fired = any_fired | fired
 
+        
         # get trigger objects for fired events per leg
         leg_matched_trigobj_idxs_shallow = []
         leg_matched_trigobj_idxs         = []
@@ -142,6 +152,8 @@ def trigger_selection(
         # store the trigger legs pt threshold mentioned in the triggers description [probably redundant]
         leg_min_pt_concat_legs = ak.concatenate([*leg_min_pt], axis=1)
         leg_min_pt_concat.append(leg_min_pt_concat_legs[:,None])
+
+        #from IPython import embed; embed()
         
     fired_and_all_legs_match_concat = ak.concatenate([*fired_and_all_legs_match_concat], axis=1)
     trigger_ids              = ak.concatenate(trigger_ids, axis=1)    
@@ -152,6 +164,10 @@ def trigger_selection(
     leg_matched_trigobj_idxs = ak.concatenate([*leg_matched_trigobj_idxs_concat], axis=1)
     leg_matched_trigobjs     = ak.concatenate([*leg_matched_trigobjs_concat], axis=1)
     
+
+    #from IPython import embed; embed()
+        
+
 
     # applying the main mask: fired_and_all_legs_match_concat
     # comments: considering 3 events
