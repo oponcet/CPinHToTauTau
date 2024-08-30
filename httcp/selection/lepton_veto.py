@@ -45,9 +45,9 @@ def extra_lepton_veto(
     # has pair or not
     # e.g.
     # hcand_pair = [
-    #                [[p4,p4],[],[]],
-    #                [[],[],[p4,p4]],
-    #                [[p4,p4],[],[p4,p4]]
+    #                [[p4,p4], [      ], [     ] ],
+    #                [[     ], [      ], [p4,p4] ],
+    #                [[p4,p4], [      ], [p4,p4] ]
     #              ]
     # is_pair = [
     #             [ True, False, False ],

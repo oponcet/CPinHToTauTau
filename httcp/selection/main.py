@@ -160,6 +160,7 @@ def get_2n_pairs(etau_indices_pair,
         gentau_selection,
         rel_charge,
         category_ids,
+        "trigger_ids",
     },
     exposed=True,
 )
@@ -181,7 +182,8 @@ def main(
     if self.dataset_inst.is_data:
         events, json_filter_results = self[json_filter](events, **kwargs)
         results += json_filter_results
-
+    else:
+        results += SelectionResult(steps={"json": np.ones(len(events), dtype=bool)})
     # --------- Sel : Trigger Selection -------- #
     # trigger selection
     events, trigger_results = self[trigger_selection](events, **kwargs)
@@ -336,8 +338,11 @@ def main(
     tautau_trigger_names = matchedResults.x.tautau["trigger_names"]
     tautau_trigger_ids   = matchedResults.x.tautau["trigger_ids"]
     
-    trigger_names = ak.concatenate([etau_trigger_names[:,None], mutau_trigger_names[:,None], tautau_trigger_names[:,None]], axis=1)
-    trigger_ids   = ak.concatenate([etau_trigger_ids[:,None], mutau_trigger_ids[:,None], tautau_trigger_ids[:,None]], axis=1)
+    #trigger_names = ak.concatenate([etau_trigger_names[:,None], mutau_trigger_names[:,None], tautau_trigger_names[:,None]], axis=1)
+    #trigger_ids   = ak.concatenate([etau_trigger_ids[:,None], mutau_trigger_ids[:,None], tautau_trigger_ids[:,None]], axis=1)
+    trigger_ids = ak.concatenate([etau_trigger_ids, mutau_trigger_ids, tautau_trigger_ids], axis=1)
+    # save the trigger_ids column
+    events = set_ak_column(events, "trigger_ids", trigger_ids)
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
 
