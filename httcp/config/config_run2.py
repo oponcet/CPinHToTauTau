@@ -266,8 +266,8 @@ def add_config (ana: od.Analysis,
             "lumi_13TeV_correlated": 0.009j,
         })
         
-    elif year == 2018:
-        cfg.x.luminosity = Number(59_830, {
+    elif year == 2018: # 59_830
+        cfg.x.luminosity = Number(59_70, {
             "lumi_13TeV_2017": 0.015j,
             "lumi_13TeV_1718": 0.002j,
             "lumi_13TeV_correlated": 0.02j,
@@ -737,5 +737,15 @@ def add_config (ana: od.Analysis,
         },
         "cf.UniteColumns": {
             "*",
+        },
+    })
+
+    # For debugging
+    cfg.x.verbose = DotDict.wrap({
+        "selection": {
+            "main"                    : False,
+            "trigobject_matching"     : False,
+            "extra_lep_veto"          : False,
+            "dilep_veto"              : False,
         },
     })
