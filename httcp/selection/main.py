@@ -223,6 +223,14 @@ def main(
     events, tau_results, good_tau_indices = self[tau_selection](events, call_force=True, **kwargs)
     results += tau_results
 
+    # double lepton veto
+    events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
+                                                                        dlveto_ele_indices,
+                                                                        dlveto_muon_indices)
+    results += extra_double_lepton_veto_results
+    
+    #from IPython import embed; embed()
+
     
     # check if there are at least two leptons with at least one tau
     _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
@@ -235,11 +243,6 @@ def main(
     )
     results += match_nlep
     
-    # double lepton veto
-    events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
-                                                                        dlveto_ele_indices,
-                                                                        dlveto_muon_indices)
-    results += extra_double_lepton_veto_results
 
     # e-tau pair i.e. hcand selection
     # e.g. [ [], [e1, tau1], [], [], [e1, tau2] ]
@@ -267,7 +270,6 @@ def main(
                                                                  **kwargs)
     results += tautau_results
 
-    #from IPython import embed; embed()
     
     pre_match_at_least_one_pair = get_2n_pairs(etau_indices_pair,
                                                mutau_indices_pair,
@@ -281,6 +283,9 @@ def main(
     )
     results += pre_match_pair_result
 
+    #from IPython import embed; embed()
+    #for i in range(1000):
+    #  print(etau_indices_pair[i], mutau_indices_pair[i], tautau_indices_pair[i], pre_match_at_least_one_pair[i])
     
     # Trigger objects matching
     events, matchedResults = self[match_trigobj](events,
@@ -307,6 +312,7 @@ def main(
     results += post_match_pair_result
 
 
+    #from IPython import embed; embed()
     
     etau_pair    = ak.concatenate([events.Electron[etau_indices_pair[:,0:1]],
                                    events.Tau[etau_indices_pair[:,1:2]]],
@@ -329,13 +335,13 @@ def main(
                                                    tautau_indices_pair)
     results += channel_results
 
-    etau_trigger_names = matchedResults.x.etau["trigger_names"]
+    #etau_trigger_names = matchedResults.x.etau["trigger_names"]
     etau_trigger_ids   = matchedResults.x.etau["trigger_ids"]
 
-    mutau_trigger_names = matchedResults.x.mutau["trigger_names"]
+    #mutau_trigger_names = matchedResults.x.mutau["trigger_names"]
     mutau_trigger_ids   = matchedResults.x.mutau["trigger_ids"]
     
-    tautau_trigger_names = matchedResults.x.tautau["trigger_names"]
+    #tautau_trigger_names = matchedResults.x.tautau["trigger_names"]
     tautau_trigger_ids   = matchedResults.x.tautau["trigger_ids"]
     
     #trigger_names = ak.concatenate([etau_trigger_names[:,None], mutau_trigger_names[:,None], tautau_trigger_names[:,None]], axis=1)
@@ -394,7 +400,7 @@ def main(
 
     events = self[process_ids](events, **kwargs)
     events = self[category_ids](events, **kwargs)     
-    
+
     events, results = self[custom_increment_stats]( 
         events,
         results,
