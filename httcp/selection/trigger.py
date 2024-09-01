@@ -83,13 +83,14 @@ def trigger_selection(
         #        ((trigger.run_range[1] is None) | (trigger.run_range[1] >= events.run))
         #    )
 
-        if trigger.run_range:
-            if trigger.run_range[0] is None: 
-                fired = fired & (events.run < trigger.run_range[1])
-            elif trigger.run_range[1] is None: 
-                fired = fired & (events.run > trigger.run_range[0])
-            else: 
-                fired = fired & (events.run >= trigger.run_range[0]) & (events.run <= trigger.run_range[1])
+        if self.dataset_inst.is_data:
+            if trigger.run_range:
+                if trigger.run_range[0] is None: 
+                    fired = fired & (events.run < trigger.run_range[1])
+                elif trigger.run_range[1] is None: 
+                    fired = fired & (events.run > trigger.run_range[0])
+                else: 
+                    fired = fired & (events.run >= trigger.run_range[0]) & (events.run <= trigger.run_range[1])
 
         any_fired = any_fired | fired
 
