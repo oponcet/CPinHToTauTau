@@ -86,18 +86,19 @@ def extra_lepton_veto(
     has_no_extra_lepton = ak.sum(has_extra_lepton, axis=1) == 0
 
     # For the purpose of debugging
-    #from IPython import embed; embed()    
-    #for i in range(1000):
-    #    if events.channel_id[i] < 1: continue
-    #    print(f"hcand_pairs_pt: {hcand_pair.pt[i]}")
-    #    print(f"extra leps pt: {extra_lep.pt[i]}")
-    #    print(f"h1 pt: {hcand_lep1.pt[i]}, h2 pt: {hcand_lep2.pt[i]}")
-    #    print(f"dr_hlep1_extraleps : {dr_hlep1_extraleps[i]}")
-    #    print(f"dr_hlep2_extraleps : {dr_hlep2_extraleps[i]}")
-    #    print(f"dr_mask : {dr_mask[i]}")
-    #    print(f"has_extra_lepton : {has_extra_lepton[i]}")
-    #    print(f"has_no_extra_lepton : {has_no_extra_lepton[i]}")
-    #    print("\n")
+    if self.config_inst.x.verbose.selection.extra_lep_veto:
+        for i in range(100):
+            if events.channel_id[i] < 1: continue
+            print(f"event : {events.event[i]}")
+            print(f"hcand_pairs_pt: {hcand_pair.pt[i]}")
+            print(f"extra leps pt: {extra_lep.pt[i]}")
+            print(f"h1 pt: {hcand_lep1.pt[i]}, h2 pt: {hcand_lep2.pt[i]}")
+            print(f"dr_hlep1_extraleps : {dr_hlep1_extraleps[i]}")
+            print(f"dr_hlep2_extraleps : {dr_hlep2_extraleps[i]}")
+            print(f"dr_mask : {dr_mask[i]}")
+            print(f"has_extra_lepton : {has_extra_lepton[i]}")
+            print(f"has_no_extra_lepton : {has_no_extra_lepton[i]}")
+            print("\n")
 
     return events, SelectionResult(
         steps={"extra_lepton_veto": has_no_extra_lepton}
@@ -204,14 +205,27 @@ def double_lepton_veto(
     # dl_veto : [ False, True, False, True ]
     dl_veto = ak.sum(dlveto_mask, axis=1) == 0
     
+    if self.config_inst.x.verbose.selection.dilep_veto:
+        for i in range(100):
+            if events.channel_id[i] < 1: continue
+            print(f"Event : {events.event[i]}")
+            print(f"dl_veto_mu_pair_pt : {mu1.pt[i]}, {mu2.pt[i]}")
+            print(f"is Z like pair?      {dlveto_mu_mask[i]}")
+            print(f"dl_veto_el_pair_pt : {el1.pt[i]}, {el2.pt[i]}")
+            print(f"is Z like pair?      {dlveto_el_mask[i]}")
+            print(f"concat masks       : {dlveto_mask[i]}")
+            print(f"Any True means Z like pair exists")
+            print(f"has no Z like pair : {dl_veto[i]}\n")
 
+
+    """
     # convert to event level masks
     ## dl_mu_veto : [ True, False, False ]
     ## dl_mu_veto = ak.any(dlveto_mu_mask, axis=1)
     ## dl_el_veto : [ False, False, True ]
     ## dl_el_veto = ak.any(dlveto_el_mask, axis=1)
 
-    """
+
     # dl_mu_veto : [ False, True, True, True ]
     # That means 1st event has Z like muon pair
     dl_mu_veto = ak.sum(dlveto_mu_mask, axis=1) == 0

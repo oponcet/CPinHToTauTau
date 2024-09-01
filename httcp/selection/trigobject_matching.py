@@ -318,63 +318,70 @@ def match_trigobj(
         
         
 
-
         # ---------- For DEBUGGING
-        #from IPython import embed; embed()
-        """
-        ## etau
-        etau_e_dr      = p4_ele.metric_table(single_etau_leg_1_matched_trigobjs)
-        etau_e_dr_leg1 = p4_ele.metric_table(cross_etau_leg_1_matched_trigobjs)
-        etau_t_dr_leg2 = p4_tauele.metric_table(cross_etau_leg_2_matched_trigobjs)
-        ## mutau
-        mutau_m_dr      = p4_muo.metric_table(single_mutau_leg_1_matched_trigobjs)
-        mutau_m_dr_leg1 = p4_muo.metric_table(cross_mutau_leg_1_matched_trigobjs)
-        mutau_t_dr_leg2 = p4_taumuo.metric_table(cross_mutau_leg_2_matched_trigobjs)
-        ## tautau
-        tau1leg1_dr = p4_tau1.metric_table(tautau_leg_1_matched_trigobjs)
-        tau1leg2_dr = p4_tau1.metric_table(tautau_leg_2_matched_trigobjs)
-        tau2leg1_dr = p4_tau2.metric_table(tautau_leg_1_matched_trigobjs)
-        tau2leg2_dr = p4_tau2.metric_table(tautau_leg_2_matched_trigobjs)
-        #
-        for i in range(10100):
-            if not (has_ele[i] | has_tau[i] | has_muo[i]): continue
-            print(f"Trigger IDs: {trigger_ids[i]}") 
-            print(f"Ele?  : {has_ele[i]}")
-            print(f" ele_pt : {ele.pt[i]}, tau_pt: {tauele.pt[i]}")
-            print(f" etau_trigId : {etau_trigger_ids[i]}, single? {has_single_e_triggers[i]}, cross? {has_cross_e_triggers[i]}")
-            print(f"   single    : trigger_ids {single_etau_trigger_ids[i]}")
-            print(f"    leg1pt   : {single_etau_leg_1_minpt[i]}, l1_match_trigobjs_pt: {single_etau_leg_1_matched_trigobjs.pt[i]}")
-            print(f"    eleg1dr  : {etau_e_dr[i]}, mask: {single_el_trigobj_matched_mask[i]}")
-            print(f"   cross     : trigger_ids {cross_etau_trigger_ids[i]}")
-            print(f"    leg1pt   : {cross_etau_leg_1_minpt[i]}, l1_match_trigobjs_pt: {cross_etau_leg_1_matched_trigobjs.pt[i]}")
-            print(f"    leg2pt   : {cross_etau_leg_2_minpt[i]}, l2_match_trigobjs_pt: {cross_etau_leg_2_matched_trigobjs.pt[i]}")
-            print(f"    eleg1dr  : {etau_e_dr_leg1[i]}, tleg2dr: {etau_t_dr_leg2[i]}, eleg1dr & tleg2dr : {cross_el_trigobj_matched_mask[i]}")
-            print(f"   comb      : trig_matched_mask: {el_trigobj_matched_mask[i]}")
-            print(f"Muo?  : {has_muo[i]}")
-            print(f" muo_pt : {ele.pt[i]}, tau_pt: {tauele.pt[i]}")
-            print(f" mutau_trigId : {mutau_trigger_ids[i]}, single? {has_single_mu_triggers[i]}, cross? {has_cross_mu_triggers[i]}")
-            print(f"   single     : trigger_ids {single_mutau_trigger_ids[i]}")
-            print(f"    leg1pt    : {single_mutau_leg_1_minpt[i]}, l1_match_trigobjs_pt: {single_mutau_leg_1_matched_trigobjs.pt[i]}")
-            print(f"    mleg1dr   : {mutau_m_dr[i]}, mask: {single_mu_trigobj_matched_mask[i]}")
-            print(f"   cross      : trigger_ids {cross_mutau_trigger_ids[i]}")
-            print(f"    leg1pt    : {cross_mutau_leg_1_minpt[i]}, l1_match_trigobjs_pt: {cross_mutau_leg_1_matched_trigobjs.pt[i]}")
-            print(f"    leg2pt    : {cross_mutau_leg_2_minpt[i]}, l2_match_trigobjs_pt: {cross_mutau_leg_2_matched_trigobjs.pt[i]}")
-            print(f"    mleg1dr   : {mutau_mu_dr_leg1[i]}, tleg2dr: {mutau_t_dr_leg2[i]}, muleg1dr & tleg2dr : {cross_mu_trigobj_matched_mask[i]}")
-            print(f"   comb       : trig_matched_mask: {mu_trigobj_matched_mask[i]}")
-            print(f"Tau?  : {has_tau[i]}, t1pt: {tau1.pt[i]}, t2pt: {tau2.pt[i]}, trig? {has_tau_triggers[i]}, Ids: {tautau_trigger_ids[i]}")
-            print(f" \t l1pt: {tautau_leg_1_minpt[i]}, l2pt: {tautau_leg_2_minpt[i]}, l1_match_tobjspt: {tautau_leg_1_matched_trigobjs.pt[i]}, l2_match_tobjspt: : {tautau_leg_2_matched_trigobjs.pt[i]}")
-            print(f" \t t1l1dr     : {tau1leg1_dr[i]}")
-            print(f" \t t1l1drmask : {tau1_trigobj_matched_mask_leg1[i]}")
-            print(f" \t t1l2dr     : {tau1leg2_dr[i]}")
-            print(f" \t t1l2drmask : {tau1_trigobj_matched_mask_leg2[i]}")
-            print(f" \t t2l1dr     : {tau2leg1_dr[i]}")
-            print(f" \t t2l1drmask : {tau2_trigobj_matched_mask_leg1[i]}")
-            print(f" \t t2l2dr     : {tau2leg2_dr[i]}")
-            print(f" \t t2l2drmask : {tau2_trigobj_matched_mask_leg2[i]}")
-            print(f" \t trig_matched_mask  : {tau_trigobj_matched_mask[i]}")
-            print('\n')
-        """
+        if self.config_inst.x.verbose.selection.trigobject_matching:
+            ## etau
+            etau_e_dr      = p4_ele.metric_table(single_etau_leg_1_matched_trigobjs)
+            etau_e_dr_leg1 = p4_ele.metric_table(cross_etau_leg_1_matched_trigobjs)
+            etau_t_dr_leg2 = p4_tauele.metric_table(cross_etau_leg_2_matched_trigobjs)
+            ## mutau
+            mutau_m_dr      = p4_muo.metric_table(single_mutau_leg_1_matched_trigobjs)
+            mutau_m_dr_leg1 = p4_muo.metric_table(cross_mutau_leg_1_matched_trigobjs)
+            mutau_t_dr_leg2 = p4_taumuo.metric_table(cross_mutau_leg_2_matched_trigobjs)
+            ## tautau
+            tau1leg1_dr = p4_tau1.metric_table(tautau_leg_1_matched_trigobjs)
+            tau1leg2_dr = p4_tau1.metric_table(tautau_leg_2_matched_trigobjs)
+            tau2leg1_dr = p4_tau2.metric_table(tautau_leg_1_matched_trigobjs)
+            tau2leg2_dr = p4_tau2.metric_table(tautau_leg_2_matched_trigobjs)
+            #
+            for i in range(1000):
+                if not (has_ele[i] | has_tau[i] | has_muo[i]): continue
+                print(f"Event       : {events.event[i]}")
+                print(f"Trigger IDs : {trigger_ids[i]}")
+                print(f"-----------------------------------------------------------")
+                print(f"has etau pair?  : {has_ele[i]}")
+                print(f" ele_pt : {ele.pt[i]}, tau_pt: {tauele.pt[i]}")
+                print(f" etau_trigId : {etau_trigger_ids[i]}, single? {has_single_e_triggers[i]}, cross? {has_cross_e_triggers[i]}")
+                print(f"   single    : trigger_ids {single_etau_trigger_ids[i]}")
+                print(f"    leg1pt   : {single_etau_leg_1_minpt[i]}, l1_match_trigobjs_pt: {single_etau_leg_1_matched_trigobjs.pt[i]}")
+                print(f"    eleg1dr  : {etau_e_dr[i]}, mask: {single_el_trigobj_matched_mask[i]}")
+                print(f"   cross     : trigger_ids {cross_etau_trigger_ids[i]}")
+                print(f"    leg1pt   : {cross_etau_leg_1_minpt[i]}, l1_match_trigobjs_pt: {cross_etau_leg_1_matched_trigobjs.pt[i]}")
+                print(f"    leg2pt   : {cross_etau_leg_2_minpt[i]}, l2_match_trigobjs_pt: {cross_etau_leg_2_matched_trigobjs.pt[i]}")
+                print(f"    eleg1dr  : {etau_e_dr_leg1[i]}, tleg2dr: {etau_t_dr_leg2[i]}, eleg1dr & tleg2dr : {cross_el_trigobj_matched_mask[i]}")
+                print(f"   comb      : trig_matched_mask: {el_trigobj_matched_mask[i]}")
+                print(f"-----------------------------------------------------------")
+                print(f"has mutau pair?  : {has_muo[i]}")
+                print(f" muo_pt : {muo.pt[i]}, tau_pt: {taumuo.pt[i]}")
+                print(f" mutau_trigId : {mutau_trigger_ids[i]}, single? {has_single_mu_triggers[i]}, cross? {has_cross_mu_triggers[i]}")
+                print(f"   single     : trigger_ids {single_mutau_trigger_ids[i]}")
+                print(f"    leg1pt    : {single_mutau_leg_1_minpt[i]}, l1_match_trigobjs_pt: {single_mutau_leg_1_matched_trigobjs.pt[i]}")
+                print(f"    mleg1dr   : {mutau_m_dr[i]}, mask: {single_mu_trigobj_matched_mask[i]}")
+                print(f"   cross      : trigger_ids {cross_mutau_trigger_ids[i]}")
+                print(f"    leg1pt    : {cross_mutau_leg_1_minpt[i]}, l1_match_trigobjs_pt: {cross_mutau_leg_1_matched_trigobjs.pt[i]}")
+                print(f"    leg2pt    : {cross_mutau_leg_2_minpt[i]}, l2_match_trigobjs_pt: {cross_mutau_leg_2_matched_trigobjs.pt[i]}")
+                print(f"    mleg1dr   : {mutau_m_dr_leg1[i]}, tleg2dr: {mutau_t_dr_leg2[i]}, muleg1dr & tleg2dr : {cross_mu_trigobj_matched_mask[i]}")
+                print(f"   comb       : trig_matched_mask: {mu_trigobj_matched_mask[i]}")
+                print(f"-----------------------------------------------------------")
+                print(f"has tautau pair?  : {has_tau[i]}, t1pt: {tau1.pt[i]}, t2pt: {tau2.pt[i]}")
+                print(f" tau1_pt : {tau1.pt[i]}, tau2_pt: {tau2.pt[i]}")
+                print(f" trig? {has_tau_triggers[i]}")
+                print(f" tautau_trigId : {tautau_trigger_ids[i]}")
+                print(f"   l1pt: {tautau_leg_1_minpt[i]}, l1_match_tobjspt : {tautau_leg_1_matched_trigobjs.pt[i]}")
+                print(f"   l2pt: {tautau_leg_2_minpt[i]}, l2_match_tobjspt : {tautau_leg_2_matched_trigobjs.pt[i]}")
+                print(f"    t1l1dr     : {tau1leg1_dr[i]}")
+                print(f"    t1l1drmask : {tau1_trigobj_matched_mask_leg1[i]}")
+                print(f"    t1l2dr     : {tau1leg2_dr[i]}")
+                print(f"    t1l2drmask : {tau1_trigobj_matched_mask_leg2[i]}")
+                print(f"    t2l1dr     : {tau2leg1_dr[i]}")
+                print(f"    t2l1drmask : {tau2_trigobj_matched_mask_leg1[i]}")
+                print(f"    t2l2dr     : {tau2leg2_dr[i]}")
+                print(f"    t2l2drmask : {tau2_trigobj_matched_mask_leg2[i]}")
+                print(f"   comb        : trig_matched_mask  : {tau_trigobj_matched_mask[i]}")
+                print(f"-----------------------------------------------------------")            
+                print('\n')
         
+            
         # filter out the triggers 
         etau_trigger_ids   = etau_trigger_ids[el_trigobj_matched_mask]
         etau_trigger_names = etau_trigger_names[el_trigobj_matched_mask]
