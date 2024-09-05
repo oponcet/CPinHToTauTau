@@ -153,6 +153,28 @@ def getgenpizeros(decay_gentau: ak.Array) -> ak.Array :
     return pizeros_tau
 
 
+def presel_decay_pis(hcand, hcand_pi):
+    #from IPython import embed; embed()
+    dummy = hcand_pi[:,:0]
+    mask02 = ak.fill_none(ak.firsts((hcand.decayMode >= 0) & (hcand.decayMode <= 2), axis=1), False)
+    mask10 = ak.fill_none(ak.firsts(hcand.decayMode >= 10, axis=1), False)
+    hcand_pi = ak.where(mask02,
+                        hcand_pi[:,0:1],
+                        ak.where(mask10,
+                                 hcand_pi[:,0:3],
+                                 dummy))
+    #from IPython import embed; embed()
+    return hcand_pi
+
+def presel_decay_pi0s(hcand, hcand_pi0):
+    dummy = hcand_pi0[:,:0]
+    mask12 = ak.fill_none(ak.firsts(((hcand.decayMode == 1) | (hcand.decayMode == 2)), axis=1), False)
+    hcand_pi0 = ak.where(mask12,
+                         hcand_pi0[:,0:1],
+                         dummy)
+    return hcand_pi0
+
+
 @producer(
     uses={
         "channel_id", 
@@ -171,25 +193,33 @@ def reArrangeDecayProducts(
 
     hcand1     = hcand[:, 0:1]
     hcand2     = hcand[:, 1:2]
-    hcand1prod = ak.firsts(hcandprod[:,0:1], axis=1)
-    hcand2prod = ak.firsts(hcandprod[:,1:2], axis=1)
+    #hcand1prod = ak.firsts(hcandprod[:,0:1], axis=1)
+    #hcand2prod = ak.firsts(hcandprod[:,1:2], axis=1)
+    hcand1prod = hcandprod[:,0]
+    hcand2prod = hcandprod[:,1]
 
     hcand1prod_photons = getphotons(hcand1prod)
     hcand2prod_photons = getphotons(hcand2prod)
     
     hcand1prod_pions = getpions(hcand1prod)
     hcand2prod_pions = getpions(hcand2prod)
+
+    #from IPython import embed; embed()
     
     # hcand1 and its decay products
     p4_hcand1     = ak.with_name(hcand1, "PtEtaPhiMLorentzVector")
     p4_hcand1_pi  = ak.with_name(hcand1prod_pions, "PtEtaPhiMLorentzVector")
+    p4_hcand1_pi  = presel_decay_pis(hcand1, p4_hcand1_pi) # safe
     p4_hcand1_pi0 = reconstructPi0(p4_hcand1, hcand1prod_photons)
+    p4_hcand1_pi0 = presel_decay_pi0s(p4_hcand1, p4_hcand1_pi0) # safe
 
     # hcand2 and its decay products
     p4_hcand2     = ak.with_name(hcand2, "PtEtaPhiMLorentzVector")
     p4_hcand2_pi  = ak.with_name(hcand2prod_pions, "PtEtaPhiMLorentzVector")
+    p4_hcand2_pi  = presel_decay_pis(hcand2, p4_hcand2_pi)	# safe 
     p4_hcand2_pi0 = reconstructPi0(p4_hcand2, hcand2prod_photons)
-
+    p4_hcand2_pi0 = presel_decay_pi0s(p4_hcand2, p4_hcand2_pi0)	# safe  
+    
     hcand1AndProds = ak.concatenate([p4_hcand1, p4_hcand1_pi, p4_hcand1_pi0], axis=1)
     hcand2AndProds = ak.concatenate([p4_hcand2, p4_hcand2_pi, p4_hcand2_pi0], axis=1)
 
