@@ -49,6 +49,7 @@ def higgscand(
 
     hcand_array = None
     if self.config_inst.campaign.x.year >= 2022 :
+        #from IPython import embed; embed()
         hcand_array = enforce_hcand_type(hcand_pair_concat, 
                                          {"pt"            : "float64",
                                           "eta"           : "float64",
@@ -228,14 +229,14 @@ def higgscandprod(
                                        )
 
     #FOR DEBUGGING
-    #from IPython import embed; embed()
-    #for i in range(1000):
-    #   if not events.channel_id[i] > 0: continue
-    #   print(f"channel_id: {events.channel_id[i]}")
-    #   print(f"h1 == DM : {hcand1.decayMode[i]}, PROD: {hcand1prods.pdgId[i]}, MASK: {hcand1_mask[i]}")
-    #   print(f"h2 == DM : {hcand2.decayMode[i]}, PROD: {hcand2prods.pdgId[i]}, MASK: {hcand2_mask[i]}")
-    #   print(f"Comb Mask: {hcand_prod_mask[i]}")
-    #   print("\n")
+    if self.config_inst.x.verbose.selection.higgscand:
+        for i in range(1000):
+            if not events.channel_id[i] > 0: continue
+            print(f"channel_id: {events.channel_id[i]}")
+            print(f"h1 == DM : {hcand1.decayMode[i]}, PROD: {hcand1prods.pdgId[i]}, MASK: {hcand1_mask[i]}")
+            print(f"h2 == DM : {hcand2.decayMode[i]}, PROD: {hcand2prods.pdgId[i]}, MASK: {hcand2_mask[i]}")
+            print(f"Comb Mask: {hcand_prod_mask[i]}")
+            print("\n")
 
     
     events = set_ak_column(events, "hcand",     hcand)

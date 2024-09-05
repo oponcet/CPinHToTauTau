@@ -5,7 +5,7 @@ era     : 2022
 postfix : PreEE
 wrapper : true
 limited : false
-workers : 5
+workers : 6
 
 args:
   config    : run3_2022_preEE_nano_cp_tau_v12
@@ -23,9 +23,10 @@ args:
     - data_e_C
     - data_e_D
     # == wj ==
-    - wj_incl
+    - wj_incl_madgraph
     # == dy ==
-    - dy_lep_m50
+    - dy_lep_m10to50_madgraph
+    - dy_lep_m50_madgraph
     # == tt ==
     - tt_dl
     - tt_sl
@@ -35,7 +36,7 @@ args:
     - st_tchannel_tbar
     - st_tw_t_sl
     - st_tw_t_dl
-    #- st_tw_t_fh
+    - st_tw_t_fh
     - st_tw_tb_sl
     - st_tw_tb_dl
     - st_tw_tb_fh
@@ -49,24 +50,30 @@ args:
   processes :
     - data
     - w_lnu
+    - dy_lep_m10to50
     - dy_lep_m50
     - tt
-    - st_tchannel
-    - st_twchannel
+    #- st_tchannel
+    #- st_twchannel
+    - st
     - vv
     - h_ggf_tautau
 
   categories:
     - incl
     - etau
-    #- etau_pion
-    #- etau_rho
-    #- etau_a1
+    - etau_pi
+    - etau_rho
+    - etau_a1_1pr_2pi0
+    - etau_a1_3pr_0pi0
+    - etau_a1_3pr_1pi0
     - mutau
-    #- mutau_pion
-    #- mutau_rho
-    #- mutau_a1
-    - tautau
+    - mutau_pi
+    - mutau_rho
+    - mutau_a1_1pr_2pi0
+    - mutau_a1_3pr_0pi0
+    - mutau_a1_3pr_1pi0
+    #- tautau
     #- tautau_pionpion
     #- tautau_rhorho
     #- tautau_a1a1
@@ -98,11 +105,11 @@ args:
     - jet_2_pt
     - puppi_met_pt
     - puppi_met_phi
-    #- PhiCP_IPIP
+    - PhiCP_IPIP
     #- PhiCP_DPDP
     #- PhiCP_PVPV
-    #- PhiCP_IPPV
-    #- PhiCP_IPDP
+    - PhiCP_IPPV
+    - PhiCP_IPDP
 
   extras:
     - process-settings "h_ggf_tautau,unstack"

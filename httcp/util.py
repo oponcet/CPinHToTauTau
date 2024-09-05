@@ -187,7 +187,15 @@ def getGenTauDecayMode(prod: ak.Array):
 def enforce_hcand_type(hcand_pair_concat, field_type_dict):
     temp = {}
     for field, typename in field_type_dict.items():
-        temp[field] = ak.enforce_type(ak.values_astype(hcand_pair_concat[field], typename), f"var * var * {typename}")
+        # 2022PreEE tt_dl --branch=8 has one single nan value for the tau in hcand. So, applying ak.nan_to_num for safety !!!
+        # But, why nan?? Babushcha knows
+        # event : 6784092 hcand_IPx: [[-0.000813, nan]]
+        temp[field] = ak.enforce_type(
+            ak.values_astype(
+                ak.nan_to_num(hcand_pair_concat[field], 0.0),
+                typename),
+            f"var * var * {typename}")
+        
     hcand_array = ak.zip(temp)
     return hcand_array
     

@@ -140,6 +140,7 @@ def tautau_selection(
 
     good_pair_mask = lep1_idx >= 0
     pair_selection_steps = {}
+    pair_selection_steps["tautau_starts_with"] = good_pair_mask
     for cut in preselection.keys():
         good_pair_mask = good_pair_mask & preselection[cut]
         pair_selection_steps[cut] = good_pair_mask

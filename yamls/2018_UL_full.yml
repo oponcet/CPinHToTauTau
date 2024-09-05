@@ -2,10 +2,10 @@
 
 run     : 2
 era     : 2018
-postfix : 
+postfix : ""
 wrapper : true
 limited : false
-workers : 5
+workers : 4
 
 args:
   config    : run2_UL2018_nano_cp_tau_v09
@@ -30,7 +30,7 @@ args:
     # == wj ==
     - w_lnu_madgraph
     # == dy ==
-    - dy_lep_m10to50_madgraph
+    #- dy_lep_m10to50_madgraph
     - dy_lep_m50_madgraph
     - dy_lep_m50_madgraph_ext1
     # == tt ==
@@ -38,14 +38,14 @@ args:
     - tt_sl
     - tt_fh
     # == st ==
-    - st_tchannel_t
-    - st_tchannel_tbar
-    - st_tw_t
-    - st_tw_tb
+    #- st_tchannel_t
+    #- st_tchannel_tbar
+    #- st_tw_t
+    #- st_tw_tb
     # == vv ==
-    - ww_incl
-    - wz_incl
-    - zz_incl
+    #- ww_incl
+    #- wz_incl
+    #- zz_incl
     # == signal ==
     - h_ggf_tautau_prod_cp_even_sm
     #- h_ggf_tautau_prod_cp_odd_flat
@@ -55,12 +55,12 @@ args:
   processes :
     - data
     - w_lnu
-    - dy_lep_m10to50
+    #- dy_lep_m10to50
     - dy_lep_m50
     - tt
-    - st_tchannel
-    - st_twchannel
-    - vv
+    #- st_tchannel
+    #- st_twchannel
+    #- vv
     - h_ggf_tautau
 
   categories:
