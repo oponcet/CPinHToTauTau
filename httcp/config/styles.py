@@ -50,6 +50,10 @@ def stylize_processes(config: od.Config) -> None:
         p.color1 = cfg.x.colors.dark_orange
     if (p := config.get_process("dy_lep_m50", default=None)):
         p.color1 = cfg.x.colors.dark_orange
+        p.label = r"$Z\to \ell \ell$"
+    if (p := config.get_process("dy_lep_m10to50", default=None)):
+        p.color1 = cfg.x.colors.grey
+        p.label = r"$Z\to \ell \ell (LM)$"
 
     if (p := config.get_process("vv", default=None)):
         p.color1 = cfg.x.colors.yellow

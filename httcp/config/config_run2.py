@@ -29,9 +29,9 @@ ak = maybe_import("awkward")
 
 #thisdir = os.path.dirname(os.path.abspath(__file__))
 thisdir = "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/httcp/config"
-print(f"thisdir: {thisdir}")
+#print(f"thisdir: {thisdir}")
 corrdir = os.path.join(os.path.dirname(thisdir), "data")
-print(f"corrdir: {corrdir}")
+#print(f"corrdir: {corrdir}")
 
 def add_config (ana: od.Analysis,
                 campaign: od.Campaign,
@@ -267,7 +267,7 @@ def add_config (ana: od.Analysis,
         })
         
     elif year == 2018: # 59_830
-        cfg.x.luminosity = Number(59_70, {
+        cfg.x.luminosity = Number(59_830, {
             "lumi_13TeV_2017": 0.015j,
             "lumi_13TeV_1718": 0.002j,
             "lumi_13TeV_correlated": 0.02j,
@@ -359,12 +359,12 @@ def add_config (ana: od.Analysis,
     external_path_tail   = f"{year}{postfix}" if postfix else f"{year}"
     external_path        = os.path.join(external_path_parent, f"{external_path_tail}")
 
-    print(f"external_path_parent : {external_path_parent}")
-    print(f"external_path        : {external_path}")
+    #print(f"external_path_parent : {external_path_parent}")
+    #print(f"external_path        : {external_path}")
 
     #json_mirror = os.path.join(os.environ.get('HTTCP_BASE'), f"httcp/data/jsonpog-integration")
     json_mirror = os.path.join(corrdir, "jsonpog-integration")
-    print(f"json_mirror          : {json_mirror}")
+    #print(f"json_mirror          : {json_mirror}")
 
     normtagjson = None
     goldenjson  = None
@@ -380,8 +380,8 @@ def add_config (ana: od.Analysis,
     else:
         raise RuntimeError(f"Check year : {year}")
 
-    print(f"GoldenJSON           : {goldenjson}")
-    print(f"NormtagJSON          : {normtagjson}")
+    #print(f"GoldenJSON           : {goldenjson}")
+    #print(f"NormtagJSON          : {normtagjson}")
 
     cfg.x.external_files = DotDict.wrap({
         # lumi files
@@ -743,7 +743,7 @@ def add_config (ana: od.Analysis,
     # For debugging
     cfg.x.verbose = DotDict.wrap({
         "selection": {
-            "main"                    : False,
+            "main"                    : True,
             "trigobject_matching"     : False,
             "extra_lep_veto"          : False,
             "dilep_veto"              : False,

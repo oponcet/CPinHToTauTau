@@ -31,7 +31,7 @@ ak = maybe_import("awkward")
         f"Muon.{var}" for var in [
             "pt", "eta", "phi", "dxy", "dz", "mediumId", 
             "pfRelIso04_all", "isGlobal", "isPFcand", 
-            #IF_RUN3("IPx", "IPy", "IPz"),
+            "IPx", "IPy", "IPz",
             "isTracker",
         ]
     },
@@ -61,7 +61,7 @@ def muon_selection(
     good_selections = {
         "muon_pt_20"          : events.Muon.pt > 20,
         "muon_eta_2p4"        : abs(events.Muon.eta) < 2.4,
-        "mediumID"            : events.Muon.mediumId == 1,
+        "muon_mediumID"       : events.Muon.mediumId == 1,
         "muon_dxy_0p045"      : abs(events.Muon.dxy) < 0.045,
         "muon_dz_0p2"         : abs(events.Muon.dz) < 0.2,
         "muon_iso_0p15"       : events.Muon.pfRelIso04_all < 0.15
@@ -69,7 +69,7 @@ def muon_selection(
     single_veto_selections = {
         "muon_pt_10"          : events.Muon.pt > 10,
         "muon_eta_2p4"        : abs(events.Muon.eta) < 2.4,
-        "mediumID"            : events.Muon.mediumId == 1,
+        "muon_mediumID"       : events.Muon.mediumId == 1,
         "muon_dxy_0p045"      : abs(events.Muon.dxy) < 0.045,
         "muon_dz_0p2"         : abs(events.Muon.dz) < 0.2,
         "muon_iso_0p3"        : events.Muon.pfRelIso04_all < 0.3
@@ -94,7 +94,7 @@ def muon_selection(
     double_veto_muon_mask = muon_mask
     selection_steps = {}
 
-    selection_steps = {"Starts with": good_muon_mask}
+    selection_steps = {"muon_starts_with": good_muon_mask}
     for cut in good_selections.keys():
         good_muon_mask = good_muon_mask & ak.fill_none(good_selections[cut], False)
         selection_steps[cut] = good_muon_mask
@@ -143,7 +143,7 @@ def muon_selection(
         IF_NANO_V9("Electron.mvaFall17V2Iso_WP80", "Electron.mvaFall17V2Iso_WP90", "Electron.mvaFall17V2noIso_WP90"),
         IF_NANO_V11("Electron.mvaIso_WP80", "Electron.mvaIso_WP90", "Electron.mvaNoIso_WP90"),
         "Electron.cutBased",
-        #IF_RUN3("Electron.IPx", "Electron.IPy", "Electron.IPz"),
+        "Electron.IPx", "Electron.IPy", "Electron.IPz",
     },
     produces={
         f"Electron.{var}" for var in [
@@ -206,7 +206,7 @@ def electron_selection(
     double_veto_electron_mask = electron_mask
     selection_steps = {}
 
-    selection_steps = {"Starts with": good_electron_mask}
+    selection_steps = {"electron_starts_with": good_electron_mask}
     for cut in good_selections.keys():
         good_electron_mask = good_electron_mask & ak.fill_none(good_selections[cut], False)
         selection_steps[cut] = good_electron_mask
@@ -256,7 +256,7 @@ def electron_selection(
             "pt", "eta", "phi", "dz", 
             "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", "idDeepTau2018v2p5VSjet",
             "decayMode", "decayModePNet",
-            #IF_RUN3("IPx","IPy","IPz"),
+            "IPx","IPy","IPz",
         ]
     },
     produces={
@@ -303,15 +303,15 @@ def tau_selection(
         #   DeepTauVSjet : Tight  Medium  Medium  --> Medium  
         #   DeepTauVSe   : Tight  VVLoose VVLoose --> VVLoose 
         #   DeepTauVSmu  : Loose  Tight   VLoose  --> VLoose  
-        "DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium,
-        "DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose,
-        "DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose,
+        "tau_DeepTauVSjet"  : events.Tau.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium,
+        "tau_DeepTauVSe"    : events.Tau.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose,
+        "tau_DeepTauVSmu"   : events.Tau.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose,
         #"DecayMode"     : ((events.Tau.decayMode == 0) 
         #                   | (events.Tau.decayMode == 1)
         #                   | (events.Tau.decayMode == 2)
         #                   | (events.Tau.decayMode == 10)
         #                   | (events.Tau.decayMode == 11))
-        "DecayMode"     : (
+        "tau_DecayMode"     : (
             (  (events.Tau.decayModePNet ==  0) & (events.Tau.decayMode ==  0)) # if PNet == 0, HPS must be equal to 0 as well
             | (((events.Tau.decayModePNet ==  1)
                 | (events.Tau.decayModePNet ==  2)
@@ -319,8 +319,6 @@ def tau_selection(
                 | (events.Tau.decayModePNet == 11))
                & (events.Tau.decayMode != 0))
         )
-        ##"CleanFromEle"  : ak.all(events.Tau.metric_table(events.Electron[electron_indices]) > 0.5, axis=2),
-        ##"CleanFromMu"   : ak.all(events.Tau.metric_table(events.Muon[muon_indices]) > 0.5, axis=2),
     }
 
     # pt sorted indices for converting masks to indices
@@ -330,7 +328,7 @@ def tau_selection(
     good_tau_mask = tau_mask
     selection_steps = {}
 
-    selection_steps = {"Starts with": good_tau_mask}
+    selection_steps = {"tau_starts_with": good_tau_mask}
     for cut in good_selections.keys():
         good_tau_mask = good_tau_mask & ak.fill_none(good_selections[cut], False)
         selection_steps[cut] = good_tau_mask
@@ -401,7 +399,7 @@ def jet_selection(
     jet_mask  = ak.local_index(events.Jet.pt) >= 0 #Create a mask filled with ones
     selection_steps = {}
 
-    selection_steps = {"Starts with": jet_mask}
+    selection_steps = {"jet_starts_with": jet_mask}
     for cut in good_selections.keys():
         jet_mask = jet_mask & ak.fill_none(good_selections[cut], False)
         selection_steps[cut] = jet_mask
@@ -414,7 +412,8 @@ def jet_selection(
     # btag_wp = self.config_inst.x.btag_working_points[year].deepjet.medium
     btag_wp = self.config_inst.x.btag_working_points.deepjet.medium
     b_jet_mask = jet_mask & (events.Jet.btagDeepFlavB >= btag_wp)
-    selection_steps["btag"] = ak.fill_none(b_jet_mask, False)
+    b_jet_indices = sorted_indices[b_jet_mask]
+    selection_steps["jet_btag"] = ak.fill_none(b_jet_mask, False)
 
     # bjet veto
     bjet_veto = ak.sum(b_jet_mask, axis=1) == 0
@@ -427,6 +426,7 @@ def jet_selection(
         objects = {
             "Jet": {
                 "Jet": good_jet_indices,
+                "bJet": b_jet_indices,
             },
         },
         aux = selection_steps,
@@ -486,7 +486,7 @@ def gentau_selection(
     gen_mask  = genpart_indices >= 0
     good_gen_mask = gen_mask
 
-    selection_steps = {"Starts with": good_gen_mask}
+    selection_steps = {"genpart_starts_with": good_gen_mask}
     for cut in good_selections.keys():
         good_gen_mask = good_gen_mask & ak.fill_none(good_selections[cut], False)
         selection_steps[cut] = good_gen_mask

@@ -108,7 +108,67 @@ def get_2n_pairs(etau_indices_pair,
 
     return has_at_least_one_pair    
 
+"""
+def get_event_level_eff(events, results):
+    from tabulate import tabulate
+    steps_ = results.steps.keys()
+    indiv_selections_ = []
+    comb_selections_ = []
+    indiv_headers_ = ["selections", "nevents", "abs eff"]
+    comb_headers_ = ["selections", "nevents", "abs eff", "rel eff"]
+    init = len(events)
+    comb_count_array = ak.Array(np.ones(init, dtype=bool))
+    for step_ in steps_:
+        count_array      = results.steps[step_]
+        comb_count_array = comb_count_array & count_array
+        count            = ak.sum(count_array)
+        comb_count       = ak.sum(comb_count_array)
+        indiv_selections_.append([step_, count, round(count/init,3)])
+        comb_selections_.append([step_, comb_count, round(comb_count/init,3)])
+    indiv_table_ = tabulate(indiv_selections_,
+                            indiv_headers_,
+                            tablefmt="pretty")
+    print(f"\n---> Efficiencies of individual selections: \n{indiv_table_}")
 
+    comb_selections_ = np.array(comb_selections_)
+    comb_selections_counts_ = comb_selections_[:,1]
+    comb_den_ = np.array([init] + comb_selections_counts_[:-1].tolist())
+    rel_eff_ = np.round(np.asarray(comb_selections_counts_, float)/np.asarray(comb_den_, float), decimals=3)
+    comb_selections_ = np.concatenate([comb_selections_, rel_eff_[:,None]], axis=1).tolist()
+    comb_table_ = tabulate(comb_selections_,
+                           comb_headers_,
+                           tablefmt="pretty")
+        
+    print(f"\n---> Efficiencies of combined selections: \n{comb_table_}")
+    
+
+def get_object_eff(results, tag):
+    from tabulate import tabulate
+    print(f"\n{tag}")
+    keys = [key for key in results.aux.keys() if key.startswith(f"{tag}_")]
+    rows = []
+    rows_evt_level = []
+
+    n0 = 0
+    nevt0 = 0
+
+    for i, key in enumerate(keys):
+        mask = results.aux[key]
+        n = ak.sum(ak.sum(mask, axis=1))
+        nevt = ak.sum(ak.any(mask, axis=1))
+        if i == 0:
+            n0 = n
+            nevt0 = nevt
+        rows.append([key, n, round(n/n0, 3)])
+        rows_evt_level.append([key, nevt, round(nevt/nevt0, 3)])
+    table = tabulate(rows, ["selection", f"n_{tag}", "abseff"], tablefmt="pretty")
+    evt_table = tabulate(rows_evt_level, ["selection", f"n_{tag}", "abseff"], tablefmt="pretty")
+    
+    print(f"object level : \n{table}")
+    print(f"event level  : \n{evt_table}")    
+"""
+
+    
 # exposed selectors
 # (those that can be invoked from the command line)
 @selector(
@@ -184,15 +244,19 @@ def main(
         results += json_filter_results
     else:
         results += SelectionResult(steps={"json": np.ones(len(events), dtype=bool)})
-    # --------- Sel : Trigger Selection -------- #
-    # trigger selection
-    events, trigger_results = self[trigger_selection](events, **kwargs)
-    results += trigger_results
+
 
     # -------- Sel : Met Filters -------- #
     # met filter selection
     events, met_filter_results = self[met_filters](events, **kwargs)
     results += met_filter_results
+
+
+    # --------- Sel : Trigger Selection -------- #
+    # trigger selection
+    events, trigger_results = self[trigger_selection](events, **kwargs)
+    results += trigger_results
+
     
     # -------- Sel : b-veto -------- #
     # jet selection
@@ -243,7 +307,7 @@ def main(
     )
     results += match_nlep
     
-
+    
     # e-tau pair i.e. hcand selection
     # e.g. [ [], [e1, tau1], [], [], [e1, tau2] ]
     etau_results, etau_indices_pair = self[etau_selection](events,
@@ -347,6 +411,8 @@ def main(
     #trigger_names = ak.concatenate([etau_trigger_names[:,None], mutau_trigger_names[:,None], tautau_trigger_names[:,None]], axis=1)
     #trigger_ids   = ak.concatenate([etau_trigger_ids[:,None], mutau_trigger_ids[:,None], tautau_trigger_ids[:,None]], axis=1)
     trigger_ids = ak.concatenate([etau_trigger_ids, mutau_trigger_ids, tautau_trigger_ids], axis=1)
+    trigger_ids = ak.values_astype(ak.fill_none(ak.firsts(trigger_ids, axis=1), 999), np.uint64)
+    #from IPython import embed; embed()
     # save the trigger_ids column
     events = set_ak_column(events, "trigger_ids", trigger_ids)
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
@@ -361,6 +427,8 @@ def main(
                                                                 hcand_pairs)
     results += extra_lepton_veto_results
     
+
+    #from IPython import embed; embed()
     # hcand results
     events, hcand_array, hcand_results = self[higgscand](events, hcand_pairs)
     results += hcand_results
@@ -407,5 +475,86 @@ def main(
         stats,
     )
 
-    #from IPython import embed; embed()
+    """
+    # inspect cuts
+    if self.config_inst.x.verbose.selection.main:
+        print(f"\n---> Inspecting event selections : ")
+        get_event_level_eff(events, results)
+        
+        print(f"\n---> Inspecting trigger selections: ")
+
+        from tabulate import tabulate        
+        # trigger details
+        trigger_names = results.aux["trigger_names"]
+        trigger_ids   = results.aux["trigger_ids"]
+
+        HLT_names = [trigger.name for trigger in self.config_inst.x.triggers]
+        HLT_ids   = [trigger.id for trigger in self.config_inst.x.triggers]
+
+        trig_info = []
+        for i in range(len(HLT_ids)):
+            HLT = HLT_names[i]
+            ID  = HLT_ids[i]
+            nPassed = ak.sum(ak.any(trigger_ids == ID, axis=1))
+            trig_info.append([HLT, ID, nPassed, round(nPassed/len(events), 3)])
+        trig_table = tabulate(trig_info, ["HLT", "ID", "nEvents Passed", "Efficiency"], tablefmt="pretty")
+        print(trig_table)
+
+        print(f"\n---> Inspecting object selections: ")
+        
+        # muon
+        get_object_eff(results, "muon")
+        get_object_eff(results, "electron")
+        get_object_eff(results, "tau")
+        
+        print(f"\n---> Inspecting pair selections: ")
+        
+        # pairs
+        print(f"\nBefore trigobj matching : ")
+        get_object_eff(results, "etau")
+        get_object_eff(results, "mutau")
+        get_object_eff(results, "tautau")
+        
+        print(f"\nAfter trigobj matching: ")
+        pairs = []
+        pairs.append(["etau", ak.sum(ak.num(results.aux["etau"]["pair_indices"], axis=1) == 2)])
+        pairs.append(["mutau", ak.sum(ak.num(results.aux["mutau"]["pair_indices"], axis=1) == 2)])
+        pairs.append(["tautau", ak.sum(ak.num(results.aux["tautau"]["pair_indices"], axis=1) == 2)])
+        pair_table = tabulate(pairs, ["pair", "nEvents with pair"], tablefmt="pretty")
+        
+        print(pair_table)
+
+        print(f"\nCategorization: ")
+        cats = []
+        cats.append(["is_etau", ak.sum(results.aux["cat_is_etau"])])
+        cats.append(["is_mutau", ak.sum(results.aux["cat_is_mutau"])])
+        cats.append(["is_tautau", ak.sum(results.aux["cat_is_tautau"])])
+        cats.append(["is_etau_mutau", ak.sum(results.aux["cat_is_etau_mutau"])])
+        cats.append(["is_etau_tautau", ak.sum(results.aux["cat_is_etau_tautau"])])
+        cats.append(["is_mutau_tautau", ak.sum(results.aux["cat_is_mutau_tautau"])])
+        cats_table = tabulate(cats, ["category", "nEvents"], tablefmt="pretty")
+
+        print(cats_table)
+
+        print(f"\nEvents selected per channel: ")
+        sel_ev = ak.sum(events.channel_id > 0)
+        print(f"nSelectedEvents : {sel_ev}")
+        channels = []
+        etau_ev = ak.sum(events.channel_id == 1)
+        mtau_ev = ak.sum(events.channel_id == 2)
+        ttau_ev = ak.sum(events.channel_id == 4)
+        mixed   = ak.sum(~((events.channel_id == 0)
+                           | (events.channel_id == 1)
+                           | (events.channel_id == 2)
+                           | (events.channel_id == 4)))
+        channels.append(["etau", etau_ev, round(etau_ev/sel_ev, 3)])
+        channels.append(["mutau", mtau_ev, round(mtau_ev/sel_ev, 3)])
+        channels.append(["tautau", ttau_ev, round(ttau_ev/sel_ev, 3)])
+        channels.append(["other", mixed, round(mixed/sel_ev, 3)])
+        channel_table = tabulate(channels, ["channel", "nEvents", "eff"], tablefmt="pretty")
+        
+        print(channel_table)
+        print(f"Total selected events in etau, mutau and tautau chennels : {etau_ev+mtau_ev+ttau_ev}\n\n")
+    """
+
     return events, results

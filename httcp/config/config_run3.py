@@ -16,6 +16,7 @@ import order as od
 from scinum import Number
 
 from columnflow.util import DotDict, maybe_import, dev_sandbox
+from columnflow.columnar_util import ColumnCollection, EMPTY_FLOAT
 from columnflow.config_util import (
     get_root_processes_from_campaign, 
     add_category,
@@ -28,9 +29,9 @@ ak = maybe_import("awkward")
 
 #thisdir = os.path.dirname(os.path.abspath(__file__))
 thisdir = "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/httcp/config"
-print(f"thisdir: {thisdir}")
+#print(f"thisdir: {thisdir}")
 corrdir = os.path.join(os.path.dirname(thisdir), "data")
-print(f"corrdir: {corrdir}")
+#print(f"corrdir: {corrdir}")
 
 def add_config (ana: od.Analysis,
                 campaign: od.Campaign,
@@ -63,12 +64,14 @@ def add_config (ana: od.Analysis,
         ## W + jets
         "w_lnu",
         ## Drell-Yan
+        "dy_lep_m10to50",
         "dy_lep_m50",
         ## TTJets
         "tt",
         ## Single top
-        "st_tchannel",
-        "st_twchannel",
+        "st",
+        #"st_tchannel",
+        #"st_twchannel",
         ## VV [diboson inclusive]
         "vv",
         ## Signal
@@ -94,32 +97,22 @@ def add_config (ana: od.Analysis,
     dataset_names = [
         ##W+jets
         "wj_incl_madgraph",
-        "wj_incl_ext1_madgraph",
         #Drell-Yan
+        "dy_lep_m10to50_madgraph",
         "dy_lep_m50_madgraph",
-        "dy_lep_m50_ext1_madgraph",
         ## ttbar
         "tt_sl",
-        "tt_sl_ext1",
         "tt_dl",
-        "tt_dl_ext1",
         "tt_fh",
-        "tt_fh_ext1",
         ##single top
         "st_tchannel_t",
         "st_tchannel_tbar",
         "st_tw_t_sl",
-        "st_tw_t_sl_ext1",
         "st_tw_tb_sl",
-        "st_tw_tb_sl_ext1",
         "st_tw_t_dl",
-        "st_tw_t_dl_ext1",
         "st_tw_tb_dl",
-        "st_tw_tb_dl_ext1",
         "st_tw_t_fh",
-        "st_tw_t_fh_ext1",
         "st_tw_tb_fh",
-        "st_tw_tb_fh_ext1",
         ##Diboson
         "ww",
         "wz",
@@ -248,7 +241,7 @@ def add_config (ana: od.Analysis,
     # https://twiki.cern.ch/twiki/bin/view/CMS/PdmVRun3Analysis
     if year == 2022:
         if postfix == "preEE":
-            cfg.x.luminosity = Number(7980.4, {
+            cfg.x.luminosity = Number(7_980, {
                 "total": 0.014j,
             })
         elif postfix == "postEE":
@@ -351,8 +344,15 @@ def add_config (ana: od.Analysis,
     })
   
     # Adding triggers
+    cfg.x.trigger_map = None
     if year == 2022:
-        from httcp.config.triggers import add_triggers_run3_2022
+        cfg.x.trigger_map = DotDict.wrap({
+            111000 : "HLT_Ele30_WPTight_Gsf",
+            11151  : "HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1",
+            131000 : "HLT_IsoMu24",
+            13151  : "HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1",
+        })
+        from httcp.config.triggers import add_triggers_run3_2022        
         add_triggers_run3_2022(cfg, postfix)
     elif year == 2023:
         from httcp.config.triggers import add_triggers_run3_2023
@@ -373,12 +373,12 @@ def add_config (ana: od.Analysis,
     external_path        = os.path.join(external_path_parent, f"{external_path_tail}")
     normtag_path = "/cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags"
 
-    print(f"external_path_parent : {external_path_parent}")
-    print(f"external_path        : {external_path}")
+    #print(f"external_path_parent : {external_path_parent}")
+    #print(f"external_path        : {external_path}")
 
     #json_mirror = os.path.join(os.environ.get('HTTCP_BASE'), f"httcp/data/jsonpog-integration")
     json_mirror = os.path.join(corrdir, "jsonpog-integration")
-    print(f"json_mirror          : {json_mirror}")
+    #print(f"json_mirror          : {json_mirror}")
 
     normtagjson = None
     if year == 2022:
@@ -392,8 +392,8 @@ def add_config (ana: od.Analysis,
 
     goldenjson  = glob(f"{external_path}/Lumi/*.json")[0]
 
-    print(f"GoldenJSON           : {goldenjson}")
-    print(f"NormtagJSON          : {normtagjson}")
+    #print(f"GoldenJSON           : {goldenjson}")
+    #print(f"NormtagJSON          : {normtagjson}")
 
     cfg.x.external_files = DotDict.wrap({
         # lumi files
@@ -484,11 +484,10 @@ def add_config (ana: od.Analysis,
     # ----------------------------------------------------------------------- #
     # names of muon correction sets and working points
     # (used in the muon producer)
-    cfg.x.muon_sf_names = (
-        "NUM_TightPFIso_DEN_MediumID", 
-        f"{year}_{postfix}"
-    )
-
+    #cfg.x.muon_sf_names     = ("NUM_TightPFIso_DEN_TightID",   f"{year}_{postfix}")
+    cfg.x.muon_id_sf_names  = ("NUM_TightID_DEN_TrackerMuons", f"{year}_{postfix}")
+    cfg.x.muon_iso_sf_names = ("NUM_TightPFIso_DEN_TightID",   f"{year}_{postfix}")
+    cfg.x.muon_IsoMu24_trigger_sf_names = ("NUM_IsoMu24_DEN_CutBasedIdMedium_and_PFIsoMedium", f"{year}_{postfix}")
 
     # register shifts
     #cfg.add_shift(name="nominal", id=0)
@@ -583,9 +582,12 @@ def add_config (ana: od.Analysis,
     cfg.add_shift(name="e_down", id=91, type="shape")
     add_shift_aliases(cfg, "e", {"electron_weight": "electron_weight_{direction}"})
 
-    cfg.add_shift(name="mu_up", id=100, type="shape")
-    cfg.add_shift(name="mu_down", id=101, type="shape")
-    add_shift_aliases(cfg, "mu", {"muon_weight": "muon_weight_{direction}"})
+    cfg.add_shift(name="mu_id_up", id=100, type="shape")
+    cfg.add_shift(name="mu_id_down", id=101, type="shape")
+    add_shift_aliases(cfg, "mu_id", {"muon_id_weight": "muon_id_weight_{direction}"})
+    cfg.add_shift(name="mu_iso_up", id=102, type="shape")
+    cfg.add_shift(name="mu_iso_down", id=103, type="shape")
+    add_shift_aliases(cfg, "mu_iso", {"muon_iso_weight": "muon_iso_weight_{direction}"})
 
     cfg.add_shift(name="pdf_up", id=130, type="shape")
     cfg.add_shift(name="pdf_down", id=131, type="shape")
@@ -611,8 +613,8 @@ def add_config (ana: od.Analysis,
     # target file size after MergeReducedEvents in MB
     cfg.x.reduced_file_size = 512.0
     
-    from httcp.config.variables import keep_columns
-    keep_columns(cfg)
+    #from httcp.config.variables import keep_columns
+    #keep_columns(cfg)
 
 
     # event weight columns as keys in an OrderedDict, mapped to shift instances they depend on
@@ -626,7 +628,8 @@ def add_config (ana: od.Analysis,
         "pu_weight"             : [], #get_shifts("minbias_xs"),
         #"pdf_weight"            : get_shifts("pdf"),
         "electron_weight"       : [], #get_shifts("e"),
-        "muon_weight"           : [], #get_shifts("mu"),
+        "muon_id_weight"        : [], #get_shifts("mu_id"),
+        "muon_iso_weight"       : [], #get_shifts("mu_iso"),
         "tau_weight"            : [], #get_shifts("tau"),
         #"tau_id_sf"            : [],
         #"tauspinner_weight": get_shifts("tauspinner"),
@@ -692,8 +695,96 @@ def add_config (ana: od.Analysis,
     # add categories using the "add_category" tool which adds auto-generated ids
     from httcp.config.categories import add_categories
     add_categories(cfg)
-        
+
     from httcp.config.variables import add_variables
     add_variables(cfg)
     
+    # columns to keep after certain steps                                                                                         
+    cfg.x.keep_columns = DotDict.wrap({
+        "cf.ReduceEvents": {
+            # TauProds                                                                                                            
+            "TauProd.*",
+            # general event info                                                                                                  
+            "run", "luminosityBlock", "event", "LHEPdfWeight",
+            "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
+            "trigger_ids",
+        } | {
+            f"PuppiMET.{var}" for var in [
+                "pt", "phi", "significance",
+                "covXX", "covXY", "covYY",
+            ]
+        } | {
+            f"MET.{var}" for var in [
+                "pt", "phi", "significance",
+                "covXX", "covXY", "covYY",
+            ]
+        } | {
+            f"Jet.{var}" for var in [
+                "pt", "eta", "phi", "mass",
+                "btagDeepFlavB", "hadronFlavour"
+            ]
+        } | {
+            f"Tau.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
+                "rawDeepTau2018v2p5VSjet","idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu",
+                "decayMode",
+                "decayModeHPS",
+                "decayModePNet",
+                "genPartFlav",
+                "rawIdx",
+                "pt_no_tes", "mass_no_tes"
+            ]
+            #} | {
+            #f"TauSpinner.weight_cp_{var}" for var in [
+            #    "0", "0_alt", "0p25", "0p25_alt", "0p375",
+            #    "0p375_alt", "0p5", "0p5_alt", "minus0p25", "minus0p25_alt"
+            #]
+        } | {
+            f"Muon.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
+                "decayMode", "pfRelIso04_all","mT", "rawIdx"
+            ]
+        } | {
+            f"Electron.{var}" for var in [
+                "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
+                "decayMode", "pfRelIso03_all", "mT", "rawIdx",
+                "deltaEtaSC",
+            ]
+        } | {
+            f"TrigObj.{var}" for var in [
+                "id", "pt", "eta", "phi", "filterBits",
+            ]
+        } | {
+            f"hcand.{var}" for var in [
+                "pt","eta","phi","mass", "charge",
+                "decayMode", "rawIdx"
+            ]
+        } | {
+            "GenTau.*", "GenTauProd.*",
+        } | {
+            f"hcandprod.{var}" for var in [
+                "pt", "eta", "phi", "mass", "charge",
+                "pdgId", "tauIdx",
+            ]
+        } | {ColumnCollection.ALL_FROM_SELECTOR},
+        "cf.MergeSelectionMasks": {
+            "normalization_weight",
+            "cutflow.*", "process_id", "category_ids",
+        },
+        "cf.UniteColumns": {
+            "*",
+        },
+    })
+
+    # For debugging
+    cfg.x.verbose = DotDict.wrap({
+        "selection": {
+            "main"                    : False,
+            "trigobject_matching"     : False,
+            "extra_lep_veto"          : False,
+            "dilep_veto"              : False,
+            "higgscand"               : False,
+        },        
+    })
+
     

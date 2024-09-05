@@ -1,6 +1,8 @@
 # coding: utf-8
 """
 A new and generalised approach for Trigger-Object matching
+Not very smartly written ... but algo is smart, if works ofc :(
+by - GS
 """
 
 from typing import Optional
