@@ -25,7 +25,7 @@ from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArran
 from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 #from httcp.production.weights import tauspinner_weight
 #from IPython import embed
-from httcp.production.weights import muon_id_weights, muon_iso_weights
+from httcp.production.weights import muon_id_weights, muon_iso_weights, IsoMu24_trigger_weights
 
 
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
@@ -103,12 +103,12 @@ def hcand_features(
         #muon_weights,
         muon_id_weights,
         muon_iso_weights,
+        IsoMu24_trigger_weights,
         electron_weights,
         tau_weight,
         ##tauspinner_weight,
         hcand_features,
         hcand_mass,
-        "trigger_ids",
     },
     produces={
         ##deterministic_seeds,
@@ -118,22 +118,23 @@ def hcand_features(
         IF_DATASET_HAS_LHE_WEIGHTS(pdf_weights),
         #muon_weights,
         muon_id_weights,
-        muon_iso_weights,        
+        muon_iso_weights,
+        IsoMu24_trigger_weights,
         electron_weights,
         tau_weight,
         ##tauspinner_weight,
         hcand_features,
         hcand_mass,
+        "channel_id",
+        "trigger_ids",
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
     # deterministic seeds
     #events = self[deterministic_seeds](events, **kwargs)
-    #from IPython import embed
     if self.dataset_inst.is_mc:
         events = self[normalization_weights](events, **kwargs)
-        #embed()
         processes = self.dataset_inst.processes.names()
         #print("Splitting Drell-Yan dataset...")
         #events = self[split_dy](events, **kwargs)
@@ -143,6 +144,7 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         #events = self[muon_weights](events, **kwargs)
         events = self[muon_id_weights](events, **kwargs)
         events = self[muon_iso_weights](events, **kwargs)
+        events = self[IsoMu24_trigger_weights](events, **kwargs)
         #from IPython import embed; embed()
         events = self[electron_weights](events, **kwargs)
         events = self[tau_weight](events, do_syst=True, **kwargs)

@@ -322,14 +322,7 @@ def add_config (ana: od.Analysis,
     # Adding triggers
     # --------------------------------------------------------------------------------------------- #
 
-    cfg.x.trigger_map = None
     if year == 2022:
-        cfg.x.trigger_id_map = DotDict.wrap({
-            111000 : "HLT_Ele30_WPTight_Gsf",
-            11151  : "HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1",
-            131000 : "HLT_IsoMu24",
-            13151  : "HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1",
-        })
         from httcp.config.triggers import add_triggers_run3_2022        
         add_triggers_run3_2022(cfg, postfix)
     elif year == 2023:
@@ -1013,12 +1006,3 @@ def add_config (ana: od.Analysis,
             "higgscand"               : False,
         },        
     })
-    
-    cfg.x.trigger_type = DotDict.wrap({
-        "single_e"      : 11,
-        "cross_e_tau"   : 1115,
-        "single_mu"     : 13,
-        "cross_mu_tau"  : 1315,
-        "cross_tautau"  : 1515
-    })
-  

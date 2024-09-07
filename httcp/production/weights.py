@@ -6,6 +6,7 @@ from columnflow.production.util import attach_coffea_behavior
 
 from columnflow.production.cms.muon import muon_weights
 
+from httcp.util import get_trigger_id_map
 
 ak     = maybe_import("awkward")
 np     = maybe_import("numpy")
@@ -57,11 +58,12 @@ muon_id_weights = muon_weights.derive("muon_id_weights", cls_dict={
     "weight_name": "muon_id_weight",
     "get_muon_config": (lambda self: self.config_inst.x.muon_id_sf_names),
 })
+
 muon_iso_weights = muon_weights.derive("muon_iso_weights", cls_dict={
     "weight_name": "muon_iso_weight",
     "get_muon_config": (lambda self: self.config_inst.x.muon_iso_sf_names),
 })
-"""
+
 muon_IsoMu24_trigger_weights = muon_weights.derive("muon_IsoMu24_trigger_weights", cls_dict={
     "weight_name": "muon_IsoMu24_trigger_weight",
     "get_muon_config": (lambda self: self.config_inst.x.muon_IsoMu24_trigger_sf_names),
@@ -69,31 +71,40 @@ muon_IsoMu24_trigger_weights = muon_weights.derive("muon_IsoMu24_trigger_weights
 
 @producer(
     uses={
-        "channel_id",
         "trigger_ids",
-        "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass",
-        muon_IsoMu24_trigger_weights
+        muon_IsoMu24_trigger_weights,
+    },
+    produces={
+        *[f"muon_IsoMu24_trigger_weight{tag}" for tag in ["", "_up", "_down"]],
     },
 )
 def IsoMu24_trigger_weights(self: Producer,
                        events: ak.Array,
                        **kwargs) -> ak.Array:
-    #
     #Producer that calculates the single lepton trigger weights.
-    #
+
+    # get trigger ids for IsoMu24
+    trigger_id_map = get_trigger_id_map(self.config_inst.x.triggers)
+    print(trigger_id_map)
+    trigger_id = trigger_id_map["HLT_IsoMu24"]
+    print(trigger_id)
+    
     # compute muon trigger SF weights (NOTE: trigger SFs are only defined for muons with
     # pt > 26 GeV, so create a copy of the events array with with all muon pt < 26 GeV set to 26 GeV)
-    IsoMu24_trigger_sf_events = set_ak_column_f32(events, "Muon.pt", ak.where(events.Muon.pt > 26., events.Muon.pt, 26.))
-    has_IsoMu
-    ak.where(events.channel_id == 2 )
-    trigger_sf_events = self[muon_trigger_weights](trigger_sf_events, **kwargs)
-    for route in self[muon_trigger_weights].produced_columns:
-        events = set_ak_column_f32(events, route, route.apply(trigger_sf_events))
+    trigger_sf_events = set_ak_column_f32(events, "Muon.pt", ak.where(events.Muon.pt > 26., events.Muon.pt, 26.))
+    trigger_sf_events = self[muon_IsoMu24_trigger_weights](trigger_sf_events, **kwargs)
+    for route in self[muon_IsoMu24_trigger_weights].produced_columns:
+        print(route)
+        events = set_ak_column_f32(events, route, ak.where(events.trigger_ids == trigger_id,
+                                                           route.apply(trigger_sf_events),
+                                                           1.0))
     # memory cleanup
     del trigger_sf_events
 
     return events
-"""
+
+
+
 # ------------------------------------------------- #
 # Calculate Tau weights
 # ------------------------------------------------- #
@@ -274,7 +285,8 @@ def tau_weight_setup(
     correctionlib.highlevel.Correction.__call__ = correctionlib.highlevel.Correction.evaluate
     
     correction_set = correctionlib.CorrectionSet.from_string(
-        bundle.files.tau_correction.load(formatter="gzip").decode("utf-8"),
+        #bundle.files.tau_correction.load(formatter="gzip").decode("utf-8"),
+        bundle.files.tau_sf.load(formatter="gzip").decode("utf-8"),
     )
     tagger_name = self.config_inst.x.deep_tau_tagger
     self.id_vs_jet_corrector    = correction_set[f"{tagger_name}VSjet"]
