@@ -79,15 +79,18 @@ def extra_lepton_veto(
     dummy = (events.event < 0)[:,None]
     # extra leps must be away from both leptons of the higgs candidates
     has_extra_lepton = ak.where(has_single_pair, 
-                                ak.all(dr_mask, axis=-1),
+                                ak.any(dr_mask, axis=-1),
                                 dummy)
+    #has_extra_lepton = ak.where(has_single_pair, 
+    #                            ak.all(dr_mask, axis=-1),
+    #                            dummy)
 
 
     has_no_extra_lepton = ak.sum(has_extra_lepton, axis=1) == 0
 
     # For the purpose of debugging
     if self.config_inst.x.verbose.selection.extra_lep_veto:
-        for i in range(100):
+        for i in range(1000):
             if events.channel_id[i] < 1: continue
             print(f"event : {events.event[i]}")
             print(f"hcand_pairs_pt: {hcand_pair.pt[i]}")
