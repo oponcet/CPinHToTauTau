@@ -54,8 +54,8 @@ def tau_energy_scale(self: Calibrator, events: ak.Array, **kwargs) -> ak.Array:
                                                             dm[mask],
                                                             match[mask],
                                                             deep_tau_tagger,
-                                                            self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_j,
-                                                            self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_e,
+                                                            self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_j["tautau"],
+                                                            self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_e["tautau"],
                                                             syst)
     tes_nom[mask2prong] = self.tes_corrector.evaluate(*tes_args(events, mask2prong, deep_tau_tagger, syst))
     tes_nom     = np.asarray(tes_nom)
@@ -89,8 +89,8 @@ def tau_energy_scale_setup(
     correctionlib.highlevel.Correction.__call__ = correctionlib.highlevel.Correction.evaluate
     
     correction_set = correctionlib.CorrectionSet.from_string(
-        bundle.files.tau_correction.load(formatter="gzip").decode("utf-8"),
-        #bundle.files.tau_sf.load(formatter="gzip").decode("utf-8"),
+        #bundle.files.tau_correction.load(formatter="gzip").decode("utf-8"),
+        bundle.files.tau_sf.load(formatter="gzip").decode("utf-8"),
     )
     #tagger_name = self.config_inst.x.deep_tau.tagger
     tagger_name = self.config_inst.x.deep_tau_tagger
