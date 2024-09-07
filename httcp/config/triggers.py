@@ -853,30 +853,54 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
             tags={"cross_trigger", "cross_mu_tau", "channel_mu_tau"},
         ),
         # https://cmshltinfo.app.cern.ch/summary?search=HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1&year=2022&paths=true&prescaled=false&stream-types=Physics,Scouting,Parking
-        #Trigger(
-        #    name="HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
-        #    id=15153,
-        #    #run_range=[355862,362760],
-        #    legs=[
-        #        TriggerLeg(
-        #            pdg_id=15,
-        #            min_pt=40.0,
-        #            max_abseta=2.1,
-        #            # filter names:
-        #            # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
-        #            trigger_bits=None, # TODO
-        #        ),
-        #        TriggerLeg(
-        #            pdg_id=15,
-        #            min_pt=40.0,
-        #            max_abseta=2.1,
-        #            # filter names:
-        #            # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
-        #            trigger_bits=None, #TODO
-        #        ),
-        #    ],
-        #    tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
-        #),
+        Trigger(
+            name="HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
+            id=15151,
+            #run_range=[355862,362760],
+            legs=[
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    max_abseta=2.1,
+                    # filter names:
+                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
+                    trigger_bits=None, # TODO
+                ),
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=40.0,
+                    max_abseta=2.1,
+                    # filter names:
+                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
+                    trigger_bits=None, #TODO
+                ),
+            ],
+            tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
+        ),
+        Trigger(
+            name="HLT_DoubleMediumDeepTauPFTauHPS30_L2NN_eta2p1_PFJet60",
+            id=15152,
+            #run_range=[355862,362760],
+            legs=[
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=35.0,
+                    max_abseta=2.1,
+                    # filter names:
+                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
+                    trigger_bits=None, # TODO
+                ),
+                TriggerLeg(
+                    pdg_id=15,
+                    min_pt=35.0,
+                    max_abseta=2.1,
+                    # filter names:
+                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
+                    trigger_bits=None, #TODO
+                ),
+            ],
+            tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
+        ),
     ])
 
 
