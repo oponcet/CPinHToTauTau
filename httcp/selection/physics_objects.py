@@ -120,7 +120,8 @@ def muon_selection(
     return events, SelectionResult(
         objects={
             "Muon": {
-                "Muon": good_muon_indices,
+                "RawMuon": sorted_indices,
+                "GoodMuon": good_muon_indices,
                 "VetoMuon": veto_muon_indices,
                 "DoubleVetoMuon": double_veto_muon_indices,
             },
@@ -233,7 +234,8 @@ def electron_selection(
     return events, SelectionResult(
         objects={
             "Electron": {
-                "Electron": good_electron_indices,
+                "RawElectron": sorted_indices,
+                "GoodElectron": good_electron_indices,
                 "VetoElectron": veto_electron_indices,
                 "DoubleVetoElectron": double_veto_electron_indices,
             },
@@ -351,7 +353,8 @@ def tau_selection(
     return events, SelectionResult(
         objects={
             "Tau": {
-                "Tau": good_tau_indices,
+                "RawTau": sorted_indices,
+                "GoodTau": good_tau_indices,
             },
         },
         aux=selection_steps,
@@ -425,6 +428,7 @@ def jet_selection(
         }, 
         objects = {
             "Jet": {
+                "RawJet": sorted_indices,
                 "Jet": good_jet_indices,
                 "bJet": b_jet_indices,
             },

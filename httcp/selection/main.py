@@ -108,7 +108,7 @@ def get_2n_pairs(etau_indices_pair,
 
     return has_at_least_one_pair    
 
-"""
+
 def get_event_level_eff(events, results):
     from tabulate import tabulate
     steps_ = results.steps.keys()
@@ -166,7 +166,6 @@ def get_object_eff(results, tag):
     
     print(f"object level : \n{table}")
     print(f"event level  : \n{evt_table}")    
-"""
 
     
 # exposed selectors
@@ -446,8 +445,6 @@ def main(
             events, gentau_results = self[gentau_selection](events, True)
             results += gentau_results
     """
-    #from IPython import embed; embed()
-    #1/0
 
     # create process ids
     #events = self[process_ids](events, **kwargs)
@@ -475,7 +472,7 @@ def main(
         stats,
     )
 
-    """
+
     # inspect cuts
     if self.config_inst.x.verbose.selection.main:
         print(f"\n---> Inspecting event selections : ")
@@ -555,6 +552,6 @@ def main(
         
         print(channel_table)
         print(f"Total selected events in etau, mutau and tautau chennels : {etau_ev+mtau_ev+ttau_ev}\n\n")
-    """
+
 
     return events, results

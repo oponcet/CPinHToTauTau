@@ -242,8 +242,34 @@ def higgscandprod(
     events = set_ak_column(events, "hcand",     hcand)
     events = set_ak_column(events, "hcandprod", hcand_prods_array)
 
+    # set Muon, Electron and Tau from hcands
+    hcand_idx = events.hcand.rawIdx
+    hcand_ele_idxs = ak.where(events.channel_id == etau_id, hcand_idx[:,0:1], events.Electron.rawIdx[:,:0])
+    hcand_muo_idxs = ak.where(events.channel_id == mutau_id, hcand_idx[:,0:1], events.Muon.rawIdx[:,:0])
+    hcand_tau_idxs = ak.where(events.channel_id == etau_id,
+                              hcand_idx[:,1:2],
+                              ak.where(events.channel_id == mutau_id,
+                                       hcand_idx[:,1:2],
+                                       ak.where(events.channel_id == tautau_id,
+                                                hcand_idx,
+                                                events.Tau.rawIdx[:,:0])
+                                       )
+                              )
+
+
     return events, SelectionResult(
         steps={
             "has_proper_tau_decay_products": ak.sum(hcand_prod_mask, axis=1) == 2,
+        },
+        objects={
+            "Muon": {
+                "Muon": hcand_muo_idxs,
+            },
+            "Electron": {
+                "Electron": hcand_ele_idxs,
+            },
+            "Tau": {
+                "Tau": hcand_tau_idxs,
+            },
         },
     )

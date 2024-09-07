@@ -51,13 +51,21 @@ def add_config (ana: od.Analysis,
 
     # get all root processes
     procs = get_root_processes_from_campaign(campaign)
+
     
-    # create a config by passing the campaign, so id and name will be identical
+    # --------------------------------------------------------------------------------------------- #
+    # create a config by passing the campaign, so id and name will be identical    
+    # --------------------------------------------------------------------------------------------- #
+
     cfg = ana.add_config(campaign,
                          name  = config_name,
                          id    = config_id)
 
+    
+    # --------------------------------------------------------------------------------------------- #
     # add processes we are interested in
+    # --------------------------------------------------------------------------------------------- #
+    
     process_names = [
         ## Data
         "data",
@@ -89,11 +97,16 @@ def add_config (ana: od.Analysis,
         proc = cfg.add_process(procs.get(process_name))
         #if proc.name == "h_ggf_tautau":
         #    proc.is_signal = True
+
     # configuration of colors, labels, etc. can happen here
     from httcp.config.styles import stylize_processes
     stylize_processes(cfg)    
 
+
+    # --------------------------------------------------------------------------------------------- #
     # add datasets we need to study
+    # --------------------------------------------------------------------------------------------- #
+
     dataset_names = [
         ##W+jets
         "wj_incl_madgraph",
@@ -179,7 +192,11 @@ def add_config (ana: od.Analysis,
     # verify that the root process of all datasets is part of any of the registered processes
     verify_config_processes(cfg, warn=True)
 
+    
+    # --------------------------------------------------------------------------------------------- #
     # default objects, such as calibrator, selector, producer, ml model, inference model, etc
+    # --------------------------------------------------------------------------------------------- #
+
     cfg.x.default_calibrator      = "main"
     cfg.x.default_selector        = "main"
     cfg.x.default_producer        = "main"
@@ -229,41 +246,60 @@ def add_config (ana: od.Analysis,
     # selector step groups for conveniently looping over certain steps
     # (used in cutflow tasks)
     cfg.x.selector_step_groups = {
-        "default": ["json", "met_filter", "dl_res_veto", "trigger", "lepton", "jet"],
+        "default": ["json",
+                    "met_filter",
+                    "trigger",
+                    "b_veto",
+                    "has_2_or_more_leps_with_at_least_1_tau",
+                    "dilepton_veto",
+                    "has_at_least_1_pair_before_trigobj_matching",
+                    "has_at_least_1_pair_after_trigobj_matching",
+                    "extra_lepton_veto",
+                    "One_higgs_cand_per_event",
+                    "has_proper_tau_decay_products"],
     }
 
     # whether to validate the number of obtained LFNs in GetDatasetLFNs
     # (currently set to false because the number of files per dataset is truncated to 2)
     cfg.x.validate_dataset_lfns = False
-    
-    # lumi values in inverse pb
+
+
+    # --------------------------------------------------------------------------------------------- #
+    # Luminosity and Normalization
+    # lumi values in inverse fb
     # TODO later: preliminary luminosity using norm tag. Must be corrected, when more data is available
     # https://twiki.cern.ch/twiki/bin/view/CMS/PdmVRun3Analysis
+    # --------------------------------------------------------------------------------------------- #
+
     if year == 2022:
         if postfix == "preEE":
-            cfg.x.luminosity = Number(7_980, {
-                "total": 0.014j,
+            cfg.x.luminosity = Number(7_980.4, {
+                #"total": 0.014j,
+                "lumi_13p6TeV_correlated": 0.014j,
             })
         elif postfix == "postEE":
-            cfg.x.luminosity = Number(26671.7, {
-                "total": 0.014j,
+            cfg.x.luminosity = Number(26_671.7, {
+                #"total": 0.014j,
+                "lumi_13p6TeV_correlated": 0.014j,
             })
         else:
             raise RuntimeError(f"Wrong postfix: {campaign.x.postfix}")
 
     elif year == 2023:
         if postfix == "preBPix":
-            cfg.x.luminosity = Number(17794 , {
+            cfg.x.luminosity = Number(17_794 , {
                 "lumi_13TeV_correlated": 0.0j,
             })
         elif postfix == "postBPix":
-            cfg.x.luminosity = Number(9451, {
+            cfg.x.luminosity = Number(9_451, {
                 "lumi_13TeV_correlated": 0.0j,
             })
+            
     elif year == 2024:
         cfg.x.luminosity = Number(0, {
             "lumi_13TeV_correlated": 0.0j,
         })
+        
     else:
         raise RuntimeError(f"Wrong year: {year}")
 
@@ -278,75 +314,17 @@ def add_config (ana: od.Analysis,
         year_postfix = "EE" if postfix == "postEE" else ""
     elif year == 2023:
         year_postfix = "BPix" if postfix == "postBPix" else ""
+
         
-    # b-tag working points
-    # https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer22/
-    # https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer22EE/
-    # TODO later: complete WP when data becomes available
-    btag_key = f"{year}{year_postfix}"
-    cfg.x.btag_working_points = DotDict.wrap({
-        "deepjet": {
-            "loose"  : {"2022": 0.0583, "2022EE": 0.0614, "2023": 0.0583, "2023BPix": 0.0583, "2024": 0.0}[btag_key],
-            "medium" : {"2022": 0.3086, "2022EE": 0.3196, "2023": 0.3086, "2023BPix": 0.3086, "2024": 0.0}[btag_key],
-            "tight"  : {"2022": 0.7183, "2022EE": 0.73,   "2023": 0.7183, "2023BPix": 0.7183, "2024": 0.0}[btag_key],
-            "vtight" : {"2022": 0.8111, "2022EE": 0.8184, "2023": 0.8111, "2023BPix": 0.8111, "2024": 0.0}[btag_key],
-            "vvtight": {"2022": 0.9512, "2022EE": 0.9542, "2023": 0.9512, "2023BPix": 0.9512, "2024": 0.0}[btag_key],
-        },
-        "robustParticleTransformer": {
-            "loose"  : {"2022": 0.0849, "2022EE": 0.0897, "2023": 0.0849, "2023BPix": 0.0849, "2024": 0.0}[btag_key],
-            "medium" : {"2022": 0.4319, "2022EE": 0.451,  "2023": 0.4319, "2023BPix": 0.4319, "2024": 0.0}[btag_key],
-            "tight"  : {"2022": 0.8482, "2022EE": 0.8604, "2023": 0.8482, "2023BPix": 0.8482, "2024": 0.0}[btag_key],
-            "vtight" : {"2022": 0.9151, "2022EE": 0.9234, "2023": 0.9151, "2023BPix": 0.9151, "2024": 0.0}[btag_key],
-            "vvtight": {"2022": 0.9874, "2022EE": 0.9893, "2023": 0.9874, "2023BPix": 0.9874, "2024": 0.0}[btag_key],
-        },
-        "particleNet": {
-            "loose"  : {"2022": 0.047,  "2022EE": 0.0499, "2023": 0.0499, "2023BPix": 0.0499, "2024": 0.0}[btag_key],
-            "medium" : {"2022": 0.245,  "2022EE": 0.2605, "2023": 0.2605, "2023BPix": 0.2605, "2024": 0.0}[btag_key],
-            "tight"  : {"2022": 0.6734, "2022EE": 0.6915, "2023": 0.6915, "2023BPix": 0.6915, "2024": 0.0}[btag_key],
-            "vtight" : {"2022": 0.7862, "2022EE": 0.8033, "2023": 0.8033, "2023BPix": 0.8033, "2024": 0.0}[btag_key],
-            "vvtight": {"2022": 0.961,  "2022EE": 0.9664, "2023": 0.9664, "2023BPix": 0.9664, "2024": 0.0}[btag_key],
-        },
-    })
-    # 2023 is dummy ... CORRECT IT LATER ===>> TODO
 
-    cfg.x.deep_tau_tagger = "DeepTau2018v2p5"
-    cfg.x.deep_tau_info = DotDict.wrap({
-        "DeepTau2018v2p5": {
-            "wp": {
-                "vs_e": {"VVVLoose": 1, "VVLoose": 2, "VLoose": 3, "Loose": 4, "Medium": 5, "Tight": 6, "VTight": 7, "VVTight": 8},
-                "vs_m": {"VVVLoose": 1, "VVLoose": 1, "VLoose": 1, "Loose": 2, "Medium": 3, "Tight": 4, "VTight": 4, "VVTight": 4},
-                "vs_j": {"VVVLoose": 1, "VVLoose": 2, "VLoose": 3, "Loose": 4, "Medium": 5, "Tight": 6, "VTight": 7, "VVTight": 8},
-            },
-            "vs_e": {
-                "etau"   : "Tight",
-                "mutau"  : "VVLoose",
-                "tautau" : "VVLoose",
-            },
-            "vs_m": {
-                "etau"   : "Loose",
-                "mutau"  : "Tight",
-                "tautau" : "VLoose",
-            },
-            "vs_j": {
-                "etau"   : "Tight",
-                "mutau"  : "Medium",
-                "tautau" : "Medium",
-            },
-        },
-    })
 
-    cfg.x.trigger_type = DotDict.wrap({
-        "single_e"      : 11,
-        "cross_e_tau"   : 1115,
-        "single_mu"     : 13,
-        "cross_mu_tau"  : 1315,
-        "cross_tautau"  : 1515
-    })
-  
+    # --------------------------------------------------------------------------------------------- #
     # Adding triggers
+    # --------------------------------------------------------------------------------------------- #
+
     cfg.x.trigger_map = None
     if year == 2022:
-        cfg.x.trigger_map = DotDict.wrap({
+        cfg.x.trigger_id_map = DotDict.wrap({
             111000 : "HLT_Ele30_WPTight_Gsf",
             11151  : "HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1",
             131000 : "HLT_IsoMu24",
@@ -363,8 +341,18 @@ def add_config (ana: od.Analysis,
         raise RuntimeError(f"Wrong year: {year}. Check __init__.py in cmsdb campaign")
 
 
+    # --------------------------------------------------------------------------------------------- #
+    # Adding met filters
+    # --------------------------------------------------------------------------------------------- #
+    
     from httcp.config.met_filters import add_met_filters
     add_met_filters(cfg)
+
+
+    # --------------------------------------------------------------------------------------------- #
+    # Adding external files e.g. goodlumi, normtag, SFs etc
+    # restructure the postfix names to build appropriate tags
+    # --------------------------------------------------------------------------------------------- #
 
     year2 = year%100
     #external_path_parent = os.path.join(os.environ.get('HTTCP_BASE'), f"httcp/data/corrections")
@@ -410,14 +398,16 @@ def add_config (ana: od.Analysis,
 
         # Add Muon POG scale factors
         "muon_sf": (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/muon_Z.json.gz", "v1"),
-        #"muon_sf": (f"{external_path_parent}/muon_SFs_2022_preEE.root", "v1"),
         
         # electron scale factors
         "electron_sf": (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electron.json.gz", "v1"),
         
         # tau energy correction and scale factors
-        #"tau_sf": (f"{external_path_parent}/tau_DeepTau2018v2p5_2022_preEE.json.gz", "v1"),  # noqa
-        "tau_correction": (f"{external_path_parent}/tau_DeepTau2018v2p5_2022_preEE.json.gz", "v1"),  # noqa
+        #"tau_correction": (f"{external_path_parent}/tau_DeepTau2018v2p5_2022_preEE.json.gz", "v1"),  # noqa
+        "tau_sf": (f"{json_mirror}/POG/TAU/{year}_{postfix}/tau_DeepTau2018v2p5_{year}_{postfix}.json.gz", "v1"), # noqa 
+        
+        # jetveto maps
+        "jet_veto_map": (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz", "v1"),
 
         # btag scale factor
         #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz", "v1"),
@@ -427,24 +417,123 @@ def add_config (ana: od.Analysis,
         # "met_phi_corr": (f"{json_mirror}/POG/JME/2018_UL/met.json.gz", "v1"),
     })
 
-    # register shifts
-    cfg.add_shift(name="nominal", id=0)
 
-    """
-    # ----------------------------------------------------------------------- #
-    #                       jec & jer configuration                           #
-    # ----------------------------------------------------------------------- #
+    # --------------------------------------------------------------------------------------------- #
+    # electron settings
+    # names of electron correction sets and working points
+    # (used in the electron_sf producer)
+    # --------------------------------------------------------------------------------------------- #
+    
+    electron_sf_tag = ""
+    if year == 2022:
+        electron_sf_tag = "2022Re-recoE+PromptFG" if year_postfix else "2022Re-recoBCD"
+    elif year == 2023:
+        electron_sf_tag = "2023PromptC" if year_postfix else "2023PromptD"
+    elif year == 2024:
+        raise RuntimeWarning("too early")
+    else:
+        raise RuntimeError("wrong year")
+    
+    cfg.x.electron_sf_names = (
+        "Electron-ID-SF",
+        electron_sf_tag,
+        "wp80iso",
+    )
+
+
+    # --------------------------------------------------------------------------------------------- #
+    # muon settings
+    # names of muon correction sets and working points
+    # (used in the muon producer)
+    # --------------------------------------------------------------------------------------------- #
+
+    cfg.x.muon_id_sf_names  = (
+        "NUM_MediumID_DEN_TrackerMuons",
+        f"{year}_{postfix}"
+    )
+    cfg.x.muon_iso_sf_names = (
+        "NUM_TightPFIso_DEN_MediumID",
+        f"{year}_{postfix}"
+    )
+    cfg.x.muon_IsoMu24_trigger_sf_names = (
+        "NUM_IsoMu24_DEN_CutBasedIdMedium_and_PFIsoMedium",
+        f"{year}_{postfix}"
+    )
+
+
+    # --------------------------------------------------------------------------------------------- #
+    # jet settings
+    # TODO: keep a single table somewhere that configures all settings: btag correlation, year
+    #       dependence, usage in calibrator, etc
+    # common jec/jer settings configuration
     # https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC?rev=201
-    # TODO later: check this corrections summary correction_file (jet_jerc.json.gz) after setting sandbox_dev
-    # https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/tree/master/POG/JME?ref_type=heads
+    # https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution?rev=107
+    # --------------------------------------------------------------------------------------------- #
+
+    if year == 2022:
+        # TODO: check versions
+        jec_campaign = f"Summer{year2}{year_postfix}_22Sep2023"
+        jec_version = {2022: "V2"}[year]
+        jer_campaign = f"Summer{year2}{year_postfix}_22Sep2023"
+        jer_version = "JR" + {2022: "V1"}[year]
+        jet_type = "AK4PFPuppi"
+    else:
+        assert False
+
     cfg.x.jec = DotDict.wrap({
-        "campaign": f"Summer{year2}{year_postfix}_22Sep2023",                  # campaign name for this JEC corrections
-        "version": {2022: "V2", 2023: "V1"}[year],                             # version of the corrections 
-        "jet_type": "AK4PFPuppi",                                              # Type of jets that the corrections should be applied on
-        "levels": ["L1FastJet", "L2Relative", "L2L3Residual", "L3Absolute"],   # relevant levels in the derivation process of the JEC
-        "levels_for_type1_met": ["L1FastJet"],                                 # relevant levels in the derivation process of the Type 1 MET JEC
-        "uncertainty_sources": [                                               # names of the uncertainties to be applied
+        "campaign": jec_campaign,     # campaign name for this JEC corrections
+        "version": jec_version,       # version of the corrections
+        "jet_type": jet_type,         # Type of jets that the corrections should be applied on
+        "levels": ["L1FastJet", "L2Relative", "L2L3Residual", "L3Absolute"], # relevant levels in the derivation process of the JEC 
+        "levels_for_type1_met": ["L1FastJet"], # relevant levels in the derivation process of the Type 1 MET JEC
+        "uncertainty_sources": [      # names of the uncertainties to be applied
+            # "AbsoluteStat",
+            # "AbsoluteScale",
+            # "AbsoluteSample",
+            # "AbsoluteFlavMap",
+            # "AbsoluteMPFBias",
+            # "Fragmentation",
+            # "SinglePionECAL",
+            # "SinglePionHCAL",
+            # "FlavorQCD",
+            # "TimePtEta",
+            # "RelativeJEREC1",
+            # "RelativeJEREC2",
+            # "RelativeJERHF",
+            # "RelativePtBB",
+            # "RelativePtEC1",
+            # "RelativePtEC2",
+            # "RelativePtHF",
+            # "RelativeBal",
+            # "RelativeSample",
+            # "RelativeFSR",
+            # "RelativeStatFSR",
+            # "RelativeStatEC",
+            # "RelativeStatHF",
+            # "PileUpDataMC",
+            # "PileUpPtRef",
+            # "PileUpPtBB",
+            # "PileUpPtEC1",
+            # "PileUpPtEC2",
+            # "PileUpPtHF",
+            # "PileUpMuZero",
+            # "PileUpEnvelope",
+            # "SubTotalPileUp",
+            # "SubTotalRelative",
+            # "SubTotalPt",
+            # "SubTotalScale",
+            # "SubTotalAbsolute",
+            # "SubTotalMC",
             "Total",
+            # "TotalNoFlavor",
+            # "TotalNoTime",
+            # "TotalNoFlavorNoTime",
+            # "FlavorZJet",
+            # "FlavorPhotonJet",
+            # "FlavorPureGluon",
+            # "FlavorPureQuark",
+            # "FlavorPureCharm",
+            # "FlavorPureBottom",
             "CorrelationGroupMPFInSitu",
             "CorrelationGroupIntercalibration",
             "CorrelationGroupbJES",
@@ -454,43 +543,95 @@ def add_config (ana: od.Analysis,
     })
 
     # JER
-    # https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution?rev=107 # TODO later: check this
     cfg.x.jer = DotDict.wrap({
-        "campaign": f"Summer{year2}{year_postfix}_22Sep2023",
-        "version": "JR" + {2022: "V1", 2023: "V1"}[year],
-        "jet_type": "AK4PFPuppi",
+        "campaign": jer_campaign,
+        "version": jer_version,
+        "jet_type": jet_type,
     })
-    """
 
-    # ----------------------------------------------------------------------- #
-    #                                electron id SF                           #
-    # ----------------------------------------------------------------------- #
-    # names of electron correction sets and working points
-    # (used in the electron_sf producer)    
-    electron_sf_tag = ""
-    if year == 2022:
-        electron_sf_tag = "2022Re-recoE+PromptFG" if year_postfix else "2022Re-recoBCD"
-    elif year == 2023:
-        electron_sf_tag = "2023PromptC" if year_postfix else "2023PromptD"
+
+    # --------------------------------------------------------------------------------------------- #
+    # bjet settings
+    # b-tag working points
+    # https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer22/
+    # https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer22EE/
+    # TODO later: complete WP when data becomes available
+    # --------------------------------------------------------------------------------------------- #
+
+    btag_key = f"{year}{year_postfix}"
+    cfg.x.btag_working_points = DotDict.wrap({
+        "deepjet": {
+            "loose"  : {"2022": 0.0583, "2022EE": 0.0614, "2023": 0.0583, "2023BPix": 0.0583, "2024": 0.0}[btag_key],
+            "medium" : {"2022": 0.3086, "2022EE": 0.3196, "2023": 0.3086, "2023BPix": 0.3086, "2024": 0.0}[btag_key],
+            "tight"  : {"2022": 0.7183, "2022EE": 0.73,   "2023": 0.7183, "2023BPix": 0.7183, "2024": 0.0}[btag_key],
+            "vtight" : {"2022": 0.8111, "2022EE": 0.8184, "2023": 0.8111, "2023BPix": 0.8111, "2024": 0.0}[btag_key],
+            "vvtight": {"2022": 0.9512, "2022EE": 0.9542, "2023": 0.9512, "2023BPix": 0.9512, "2024": 0.0}[btag_key],
+        },
+        "robustParticleTransformer": {
+            "loose"  : {"2022": 0.0849, "2022EE": 0.0897, "2023": 0.0849, "2023BPix": 0.0849, "2024": 0.0}[btag_key],
+            "medium" : {"2022": 0.4319, "2022EE": 0.451,  "2023": 0.4319, "2023BPix": 0.4319, "2024": 0.0}[btag_key],
+            "tight"  : {"2022": 0.8482, "2022EE": 0.8604, "2023": 0.8482, "2023BPix": 0.8482, "2024": 0.0}[btag_key],
+            "vtight" : {"2022": 0.9151, "2022EE": 0.9234, "2023": 0.9151, "2023BPix": 0.9151, "2024": 0.0}[btag_key],
+            "vvtight": {"2022": 0.9874, "2022EE": 0.9893, "2023": 0.9874, "2023BPix": 0.9874, "2024": 0.0}[btag_key],
+        },
+        "particleNet": {
+            "loose"  : {"2022": 0.047,  "2022EE": 0.0499, "2023": 0.0499, "2023BPix": 0.0499, "2024": 0.0}[btag_key],
+            "medium" : {"2022": 0.245,  "2022EE": 0.2605, "2023": 0.2605, "2023BPix": 0.2605, "2024": 0.0}[btag_key],
+            "tight"  : {"2022": 0.6734, "2022EE": 0.6915, "2023": 0.6915, "2023BPix": 0.6915, "2024": 0.0}[btag_key],
+            "vtight" : {"2022": 0.7862, "2022EE": 0.8033, "2023": 0.8033, "2023BPix": 0.8033, "2024": 0.0}[btag_key],
+            "vvtight": {"2022": 0.961,  "2022EE": 0.9664, "2023": 0.9664, "2023BPix": 0.9664, "2024": 0.0}[btag_key],
+        },
+    })
+    # 2023 is dummy ... CORRECT IT LATER ===>> TODO
+
+
+    # --------------------------------------------------------------------------------------------- #
+    # tau settings
+    # tau-id working points
+    # --------------------------------------------------------------------------------------------- #
+
+    cfg.x.deep_tau_tagger = "DeepTau2018v2p5"
+    cfg.x.deep_tau_info = DotDict.wrap({
+        "DeepTau2018v2p5": {
+            "wp": {
+                "vs_e": {"VVVLoose": 1, "VVLoose": 2, "VLoose": 3, "Loose": 4, "Medium": 5, "Tight": 6, "VTight": 7, "VVTight": 8},
+                "vs_m": {"VVVLoose": 1, "VVLoose": 1, "VLoose": 1, "Loose": 2, "Medium": 3, "Tight": 4, "VTight": 4, "VVTight": 4},
+                "vs_j": {"VVVLoose": 1, "VVLoose": 2, "VLoose": 3, "Loose": 4, "Medium": 5, "Tight": 6, "VTight": 7, "VVTight": 8},
+            },
+            "vs_e": {
+                "etau"   : "Tight",
+                "mutau"  : "VVLoose",
+                "tautau" : "VVLoose",
+            },
+            "vs_m": {
+                "etau"   : "Loose",
+                "mutau"  : "Tight",
+                "tautau" : "VLoose",
+            },
+            "vs_j": {
+                "etau"   : "Tight",
+                "mutau"  : "Medium",
+                "tautau" : "Medium",
+            },
+        },
+    })
     
-    cfg.x.electron_sf_names = (
-        "Electron-ID-SF",
-        electron_sf_tag,
-        "wp80iso",
-    )
 
-    # ----------------------------------------------------------------------- #
-    #                                muon id SF                               #
-    # ----------------------------------------------------------------------- #
-    # names of muon correction sets and working points
-    # (used in the muon producer)
-    #cfg.x.muon_sf_names     = ("NUM_TightPFIso_DEN_TightID",   f"{year}_{postfix}")
-    cfg.x.muon_id_sf_names  = ("NUM_TightID_DEN_TrackerMuons", f"{year}_{postfix}")
-    cfg.x.muon_iso_sf_names = ("NUM_TightPFIso_DEN_TightID",   f"{year}_{postfix}")
-    cfg.x.muon_IsoMu24_trigger_sf_names = ("NUM_IsoMu24_DEN_CutBasedIdMedium_and_PFIsoMedium", f"{year}_{postfix}")
+    # --------------------------------------------------------------------------------------------- #
+    # met settings
+    # --------------------------------------------------------------------------------------------- #
 
+    
+    
+    # --------------------------------------------------------------------------------------------- #
     # register shifts
-    #cfg.add_shift(name="nominal", id=0)
+    # --------------------------------------------------------------------------------------------- #
+
+    # load jec sources
+    with open(os.path.join(thisdir, "jec_sources.yaml"), "r") as f:
+        all_jec_sources = yaml.load(f, yaml.Loader)["names"]
+
+    cfg.add_shift(name="nominal", id=0)
 
     cfg.add_shift(name="minbias_xs_up", id=7, type="shape")
     cfg.add_shift(name="minbias_xs_down", id=8, type="shape")
@@ -502,10 +643,6 @@ def add_config (ana: od.Analysis,
             #"normalized_pu_weight": "normalized_pu_weight_{name}",
         },
     )
-    """
-    # load jec sources
-    with open(os.path.join(thisdir, "jec_sources.yaml"), "r") as f:
-        all_jec_sources = yaml.load(f, yaml.Loader)["names"]
 
     for jec_source in cfg.x.jec.uncertainty_sources:
         idx = all_jec_sources.index(jec_source)
@@ -546,48 +683,45 @@ def add_config (ana: od.Analysis,
             "MET.phi": "MET.phi_{name}",
         },
     )
-    """
-    """
-    for i, (match, dm) in enumerate(itertools.product(["jet", "e"], [0, 1, 10, 11])):
-        cfg.add_shift(name=f"tec_{match}_dm{dm}_up", id=20 + 2 * i, type="shape", tags={"tec"})
-        cfg.add_shift(name=f"tec_{match}_dm{dm}_down", id=21 + 2 * i, type="shape", tags={"tec"})
-        add_shift_aliases(
-            cfg,
-            f"tec_{match}_dm{dm}",
-            {
-                "Tau.pt": "Tau.pt_{name}",
-                "Tau.mass": "Tau.mass_{name}",
-                "MET.pt": "MET.pt_{name}",
-                "MET.phi": "MET.phi_{name}",
-            },
-        )
-    """
-    """
-    # start at id=50
-    cfg.x.tau_unc_names = [
-        "jet_dm0", "jet_dm1", "jet_dm10",
-        "e_barrel", "e_endcap",
-        "mu_0p0To0p4", "mu_0p4To0p8", "mu_0p8To1p2", "mu_1p2To1p7", "mu_1p7To2p3",
-    ]
-    for i, unc in enumerate(cfg.x.tau_unc_names):
-        cfg.add_shift(name=f"tau_{unc}_up", id=50 + 2 * i, type="shape")
-        cfg.add_shift(name=f"tau_{unc}_down", id=51 + 2 * i, type="shape")
-        add_shift_aliases(cfg, f"tau_{unc}", {"tau_weight": f"tau_weight_{unc}_" + "{direction}"})
-    """
+
     cfg.add_shift(name=f"tau_up", id=50, type="shape")
     cfg.add_shift(name=f"tau_down", id=51, type="shape")
-    add_shift_aliases(cfg, f"tau", {"tau_weight": "tau_weight_{direction}"})
+    add_shift_aliases(
+        cfg,
+        "tau",
+        {
+            "tau_weight": "tau_weight_{direction}",
+        },
+    )
 
     cfg.add_shift(name="e_up", id=90, type="shape")
     cfg.add_shift(name="e_down", id=91, type="shape")
-    add_shift_aliases(cfg, "e", {"electron_weight": "electron_weight_{direction}"})
+    add_shift_aliases(
+        cfg,
+        "e",
+        {
+            "electron_weight": "electron_weight_{direction}",
+        },
+    )
 
     cfg.add_shift(name="mu_id_up", id=100, type="shape")
     cfg.add_shift(name="mu_id_down", id=101, type="shape")
-    add_shift_aliases(cfg, "mu_id", {"muon_id_weight": "muon_id_weight_{direction}"})
+    add_shift_aliases(
+        cfg,
+        "mu_id",
+        {
+            "muon_id_weight": "muon_id_weight_{direction}",
+        },
+    )
     cfg.add_shift(name="mu_iso_up", id=102, type="shape")
     cfg.add_shift(name="mu_iso_down", id=103, type="shape")
-    add_shift_aliases(cfg, "mu_iso", {"muon_iso_weight": "muon_iso_weight_{direction}"})
+    add_shift_aliases(
+        cfg,
+        "mu_iso",
+        {
+            "muon_iso_weight": "muon_iso_weight_{direction}",
+        },
+    )
 
     cfg.add_shift(name="pdf_up", id=130, type="shape")
     cfg.add_shift(name="pdf_down", id=131, type="shape")
@@ -613,15 +747,15 @@ def add_config (ana: od.Analysis,
     # target file size after MergeReducedEvents in MB
     cfg.x.reduced_file_size = 512.0
     
-    #from httcp.config.variables import keep_columns
-    #keep_columns(cfg)
 
-
+    #---------------------------------------------------------------------------------------------#
     # event weight columns as keys in an OrderedDict, mapped to shift instances they depend on
     # get_shifts = functools.partial(get_shifts_from_sources, cfg)
     # configurations for all possible event weight columns as keys in an OrderedDict,
     # mapped to shift instances they depend on
     # (this info is used by weight producers)
+    #---------------------------------------------------------------------------------------------#
+
     get_shifts = functools.partial(get_shifts_from_sources, cfg)
     cfg.x.event_weights = DotDict({
         "normalization_weight"  : [],
@@ -643,14 +777,18 @@ def add_config (ana: od.Analysis,
             }
     cfg.x.default_weight_producer = "all_weights"
 
+
+    #---------------------------------------------------------------------------------------------#
+    # No Idea
     # versions per task family, either referring to strings or to callables receving the invoking
     # task instance and parameters to be passed to the task family
+    #---------------------------------------------------------------------------------------------#
+        
     def set_version(cls, inst, params):
         # per default, use the version set on the command line
         version = inst.version 
         return version if version else 'dev1'
-            
-        
+
     cfg.x.versions = {
         "cf.CalibrateEvents"    : set_version,
         "cf.SelectEvents"       : set_version,
@@ -660,11 +798,23 @@ def add_config (ana: od.Analysis,
         "cf.MergeReductionStats": set_version,
         "cf.MergeReducedEvents" : set_version,
     }
-    # channels
+
+    
+    #---------------------------------------------------------------------------------------------#
+    # Channels [possible to avoid as category id does the same]
+    #---------------------------------------------------------------------------------------------#
+
     cfg.add_channel(name="etau",   id=1)
     cfg.add_channel(name="mutau",  id=2)
     cfg.add_channel(name="tautau", id=4)
-    
+
+
+    #---------------------------------------------------------------------------------------------#
+    # LFN settings
+    # Campaigns must have creator names as desy or IPHC
+    # the main path is in the campaign __init__, the basepath is mentioned in the dataset info
+    #---------------------------------------------------------------------------------------------#
+
     campaign_tag = cfg.campaign.x("custom").get("creator")
     if campaign_tag == "desy" or campaign_tag == "IPHC":
         def get_dataset_lfns(dataset_inst: od.Dataset, shift_inst: od.Shift, dataset_key: str) -> list[str]:
@@ -691,20 +841,33 @@ def add_config (ana: od.Analysis,
         cfg.x.get_dataset_lfns_sandbox = dev_sandbox("bash::$CF_BASE/sandboxes/cf.sh")
         # define custom remote fs's to look at
         cfg.x.get_dataset_lfns_remote_fs =  lambda dataset_inst: "wlcg_fs_eoscms_redirector"
+
         
-    # add categories using the "add_category" tool which adds auto-generated ids
+    #---------------------------------------------------------------------------------------------#
+    # Add categories described in categorization.py
+    #---------------------------------------------------------------------------------------------#
+        
     from httcp.config.categories import add_categories
     add_categories(cfg)
 
+    
+    #---------------------------------------------------------------------------------------------#
+    # Add variables described in variables.py
+    #---------------------------------------------------------------------------------------------#
+    
     from httcp.config.variables import add_variables
     add_variables(cfg)
+
     
-    # columns to keep after certain steps                                                                                         
+    #---------------------------------------------------------------------------------------------#
+    # columns to keep after reduce events, MergeSelectionMasks and UniteColumns tasks
+    #---------------------------------------------------------------------------------------------#
+    
     cfg.x.keep_columns = DotDict.wrap({
         "cf.ReduceEvents": {
-            # TauProds                                                                                                            
+            # TauProds
             "TauProd.*",
-            # general event info                                                                                                  
+            # general event info
             "run", "luminosityBlock", "event", "LHEPdfWeight",
             "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
             "trigger_ids",
@@ -723,7 +886,19 @@ def add_config (ana: od.Analysis,
                 "pt", "eta", "phi", "mass",
                 "btagDeepFlavB", "hadronFlavour"
             ]
-        } | {
+        } | { # raw tau in events before any selection
+            f"RawTau.{var}" for var in [
+                "pt","eta","phi","mass",
+                "decayMode",
+                "rawIdx",
+            ]
+        } | { # taus after good selection
+            f"GoodTau.{var}" for var in [
+                "pt","eta","phi","mass",
+                "decayMode",
+                "rawIdx",
+            ]
+        } | { # taus in hcand 
             f"Tau.{var}" for var in [
                 "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
                 "rawDeepTau2018v2p5VSjet","idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu",
@@ -739,12 +914,60 @@ def add_config (ana: od.Analysis,
             #    "0", "0_alt", "0p25", "0p25_alt", "0p375",
             #    "0p375_alt", "0p5", "0p5_alt", "minus0p25", "minus0p25_alt"
             #]
-        } | {
+        } | { # muon before any selection 
+            f"RawMuon.{var}" for var in [
+                "pt","eta","phi","mass","dxy",
+                "decayMode",
+                "rawIdx"
+            ]
+        } | { # good muons after selection
+            f"GoodMuon.{var}" for var in [
+                "pt","eta","phi","mass","dxy",
+                "decayMode",
+                "rawIdx"
+            ]
+        } | { # to check if extra lep veto work correctly
+            f"VetoMuon.{var}" for var in [
+                "pt","eta","phi","mass","dxy",
+                "decayMode",
+                "rawIdx"
+            ]
+        } | { # to check if dilep veto work correctly
+            f"DoubleVetoMuon.{var}" for var in [
+                "pt","eta","phi","mass","dxy",
+                "decayMode",
+                "rawIdx"
+            ]
+        } | { # muons from hcand
             f"Muon.{var}" for var in [
                 "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
                 "decayMode", "pfRelIso04_all","mT", "rawIdx"
             ]
-        } | {
+        } | { # eles before any selection
+            f"RawElectron.{var}" for var in [
+                "pt","eta","phi","mass","dxy",
+                "decayMode",
+                "rawIdx",
+            ]
+        } | { # eles after good selection
+            f"GoodElectron.{var}" for var in [
+                "pt","eta","phi","mass","dxy",
+                "decayMode",
+                "rawIdx",
+            ]
+        } | { # to check if extra lep veto work correctly
+            f"VetoElectron.{var}" for var in [
+                "pt","eta","phi","mass","dxy",
+                "decayMode",
+                "rawIdx",
+            ]
+        } | { # to check if dilep veto work correctly
+            f"DoubleVetoElectron.{var}" for var in [
+                "pt","eta","phi","mass","dxy",
+                "decayMode",
+                "rawIdx",
+            ]
+        } | { # electrons from hcand
             f"Electron.{var}" for var in [
                 "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
                 "decayMode", "pfRelIso03_all", "mT", "rawIdx",
@@ -776,7 +999,11 @@ def add_config (ana: od.Analysis,
         },
     })
 
-    # For debugging
+    
+    #---------------------------------------------------------------------------------------------#
+    # Helper switch for debugging
+    #---------------------------------------------------------------------------------------------#
+
     cfg.x.verbose = DotDict.wrap({
         "selection": {
             "main"                    : False,
@@ -786,5 +1013,12 @@ def add_config (ana: od.Analysis,
             "higgscand"               : False,
         },        
     })
-
     
+    cfg.x.trigger_type = DotDict.wrap({
+        "single_e"      : 11,
+        "cross_e_tau"   : 1115,
+        "single_mu"     : 13,
+        "cross_mu_tau"  : 1315,
+        "cross_tautau"  : 1515
+    })
+  
