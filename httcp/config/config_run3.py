@@ -275,7 +275,7 @@ def add_config (ana: od.Analysis,
 
     if year == 2022:
         if postfix == "preEE":
-            cfg.x.luminosity = Number(7_980.4, {
+            cfg.x.luminosity = Number(7_980, {
                 #"total": 0.014j,
                 "lumi_13p6TeV_correlated": 0.014j,
             })
