@@ -346,7 +346,9 @@ def zpt_reweight(
     zpt = ak.where(events.GenZ.pt > 600.0, 600.0, events.GenZ.pt)
     zm  = ak.where(events.GenZ.mass > 1000.0, 1000.0, events.GenZ.mass)
 
-    sf_nom = self.zpt_corrector.evaluate(zm, zpt)
+    sf_nom = ak.where(((zpt > 0.0) & (zm > 0.0)),
+                      self.zpt_corrector.evaluate(zm, zpt),
+                      1.0)
 
     events = set_ak_column(events, "zpt_reweight", sf_nom, value_type=np.float32)
     
