@@ -54,8 +54,8 @@ def tau_energy_scale(self: Calibrator, events: ak.Array, **kwargs) -> ak.Array:
                                                             dm[mask],
                                                             match[mask],
                                                             deep_tau_tagger,
-                                                            self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_j["mutau"],
-                                                            self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_e["mutau"],
+                                                            self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_j["etau"],
+                                                            self.config_inst.x.deep_tau_info[deep_tau_tagger].vs_e["etau"],
                                                             syst)
     tes_nom[mask2prong] = self.tes_corrector.evaluate(*tes_args(events, mask2prong, deep_tau_tagger, syst))
     tes_nom     = np.asarray(tes_nom)
