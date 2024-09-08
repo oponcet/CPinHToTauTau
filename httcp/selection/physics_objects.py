@@ -8,6 +8,7 @@ from collections import defaultdict
 
 from typing import Optional
 from columnflow.selection import Selector, SelectionResult, selector
+from columnflow.selection.cms.jets import jet_veto_map
 from columnflow.selection.util import sorted_indices_from_mask
 from columnflow.util import maybe_import, DotDict
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
@@ -361,6 +362,17 @@ def tau_selection(
     ), good_tau_indices
 
 
+@tau_selection.init
+def tau_selection_init(self: Selector) -> None:
+    # register tec shifts
+    self.shifts |= {
+        shift_inst.name
+        for shift_inst in self.config_inst.shifts
+        if shift_inst.has_tag("tec")
+    }
+
+
+    
 # ------------------------------------------------------------------------------------------------------- #
 # Jet Selection
 # Reference:
@@ -372,7 +384,7 @@ def tau_selection(
         [
             "pt", "eta", "phi", "mass",
             "jetId", "btagDeepFlavB"
-        ]} | {optional("Jet.puId")} ,
+        ]} | {optional("Jet.puId")} | {IF_RUN3(jet_veto_map)} ,
     exposed=False,
 )
 def jet_selection(
@@ -385,6 +397,7 @@ def jet_selection(
     """
     year = self.config_inst.campaign.x.year
     is_run2 = (self.config_inst.campaign.x.year in [2016,2017,2018])
+    is_run3 = (self.config_inst.campaign.x.year in [2022,2023,2024])
     
    
     # nominal selection
@@ -422,7 +435,8 @@ def jet_selection(
     bjet_veto = ak.sum(b_jet_mask, axis=1) == 0
     #from IPython import embed; embed()
 
-    return events, SelectionResult(
+    
+    results = SelectionResult(
         steps = {
             "b_veto": bjet_veto,
         }, 
@@ -435,7 +449,27 @@ def jet_selection(
         },
         aux = selection_steps,
     )
+
     
+    # additional jet veto map, vetoing entire events
+    # NO chEmEF INFO IN JET ????????? IMPORTANT !!!!
+    """
+    if is_run3:
+        events, veto_result = self[jet_veto_map](events, **kwargs)
+        results += veto_result
+    """
+    
+    return events, results
+
+
+@jet_selection.init
+def jet_selection_init(self: Selector) -> None:
+    # register shifts
+    self.shifts |= {
+        shift_inst.name
+        for shift_inst in self.config_inst.shifts
+        if shift_inst.has_tag(("jec", "jer"))
+    }
 
 
 # ------------------------------------------------------------------------------------------------------- #

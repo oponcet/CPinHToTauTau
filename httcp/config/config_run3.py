@@ -402,6 +402,9 @@ def add_config (ana: od.Analysis,
         # jetveto maps
         "jet_veto_map": (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz", "v1"),
 
+        # zpt reweight sf
+        "zpt_rewt_sf": (f"{external_path}/Zpt/myZptCorrections.json.gz", "v1"),
+        
         # btag scale factor
         #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz", "v1"),
 

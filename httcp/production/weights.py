@@ -325,3 +325,76 @@ def tauspinner_weight(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
             the_weight = buf
         events = set_ak_column_f32(events, f"tauspinner_weight{the_name}", the_weight)
     return events
+
+
+# ------------------------------------------------- #
+# Calculate Zpt weights
+# ------------------------------------------------- #
+
+@producer(
+    uses={
+        "GenPart.*",
+    },
+    produces={
+        "zpt_reweight",
+    },
+    mc_only=True,
+)
+def zpt_reweight(
+        self: Producer,
+        events: ak.Array,
+        **kwargs,
+) :
+    gen_ids = ak.local_index(events.GenPart.pt)
+    sel_gen_ids = gen_ids[((((np.abs(events.GenPart.pdgId) >= 11) & (np.abs(events.GenPart.pdgId) <= 16))
+                            & (events.GenPart.hasFlags(["FromHardProcess"]))
+                            & (events.GenPart.status == 1)) | (events.GenPart.hasFlags(["IsDirectHardProcessTauDecayProduct"])))]
+    
+    gen_part = events.GenPart[sel_gen_ids]
+
+    # form LV
+    p4_gen_part = ak.with_name(gen_part, "PtEtaPhiMLorentzVector")
+    p4_gen_part = ak.zip(
+        {
+            "px" : p4_gen_part.px,
+            "py" : p4_gen_part.py,
+            "pz" : p4_gen_part.pz,
+            "energy": p4_gen_part.energy,
+        },
+        with_name="LorentzVector",
+        behavior=
+    )
+    sum_p4_gen_part = ak.sum(p4_gen_part, axis=1)
+
+    zpt = sum_p4_gen_part.pt
+    zm  = sum_p4_gen_part.mass
+
+    
+
+}
+
+
+
+
+@zpt_reweight.requires
+def zpt_reweight_requires(self: Producer, reqs: dict) -> None:
+    if "external_files" in reqs:
+        return
+    
+    from columnflow.tasks.external import BundleExternalFiles
+    reqs["external_files"] = BundleExternalFiles.req(self.task)
+
+@zpt_reweight.setup
+def zpt_reweight_setup(
+    self: Producer,
+    reqs: dict,
+    inputs: dict,
+    reader_targets: InsertableDict,
+) -> None:
+    bundle = reqs["external_files"]
+    import correctionlib
+    correctionlib.highlevel.Correction.__call__ = correctionlib.highlevel.Correction.evaluate
+    
+    correction_set = correctionlib.CorrectionSet.from_string(
+        bundle.files.zpt_rewt_sf.load(formatter="gzip").decode("utf-8"),
+    )

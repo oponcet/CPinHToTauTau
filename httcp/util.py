@@ -252,3 +252,9 @@ def custom_increment_stats(
 
     return events, results
 
+
+def get_trigger_id_map(triggers):
+    tmap = {}
+    for trigger in triggers:
+        tmap[trigger.name] = trigger.id
+    return tmap
