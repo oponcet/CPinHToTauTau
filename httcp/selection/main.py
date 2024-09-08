@@ -38,7 +38,7 @@ from httcp.selection.higgscand import higgscand, higgscandprod
 from httcp.production.weights import scale_mc_weight
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
 
-from httcp.util import filter_by_triggers, get_objs_p4, trigger_object_matching_deep
+from httcp.util import filter_by_triggers, get_objs_p4, trigger_object_matching_deep, IF_DATASET_IS_DY_LO
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -179,7 +179,8 @@ def get_object_eff(results, tag):
         met_filters, 
         scale_mc_weight, 
         process_ids,
-        trigger_selection, 
+        trigger_selection,
+        IF_DATASET_IS_DY_LO(genZ_selection),
         muon_selection, 
         electron_selection, 
         tau_selection, 
@@ -202,7 +203,8 @@ def get_object_eff(results, tag):
     produces={
         # selectors / producers whose newly created columns should be kept
         scale_mc_weight, 
-        trigger_selection, 
+        trigger_selection,
+        IF_DATASET_IS_DY_LO(genZ_selection),
         muon_selection, 
         electron_selection, 
         tau_selection, 
@@ -256,6 +258,10 @@ def main(
     events, trigger_results = self[trigger_selection](events, **kwargs)
     results += trigger_results
 
+
+    # -------- Get genZ collection for Zpt reweight
+    if self.dataset_inst.has_tag("is_dy_LO"):
+        events = self[genZ_selection](events, **kwargs)
     
     # -------- Sel : b-veto -------- #
     # jet selection

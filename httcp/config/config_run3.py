@@ -183,6 +183,8 @@ def add_config (ana: od.Analysis,
         dataset = cfg.add_dataset(campaign.get_dataset(dataset_name))
         if re.match(r"^(ww|wz|zz)$", dataset.name):
             dataset.add_tag("no_lhe_weights")
+        if re.match(r"^dy_lep_m50_madgraph$", dataset.name):
+            dataset.add_tag("is_dy_LO")
         
         # for testing purposes, limit the number of files to 1
         for info in dataset.info.values():
@@ -771,6 +773,10 @@ def add_config (ana: od.Analysis,
             dataset.x.event_weights = {
                 "pdf_weight": [], #get_shifts("pdf"),
             }
+        if dataset.x("is_dy_LO", True):
+            dataset.x.event_weights = {
+                "zpt_reweight": [],
+            }
     cfg.x.default_weight_producer = "all_weights"
 
 
@@ -867,6 +873,15 @@ def add_config (ana: od.Analysis,
             "run", "luminosityBlock", "event", "LHEPdfWeight",
             "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
             "trigger_ids",
+        } | {
+            f"GenPart.{var}" for var in [
+                "pt", "eta", "phi", "mass",
+                "status", "pdgId", "statusFlags",
+            ]
+        } | {
+            f"GenZ.{var}" for var in [
+                "pt", "eta", "phi", "mass",
+            ]
         } | {
             f"PuppiMET.{var}" for var in [
                 "pt", "phi", "significance",

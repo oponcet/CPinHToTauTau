@@ -25,7 +25,7 @@ from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArran
 from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 #from httcp.production.weights import tauspinner_weight
 #from IPython import embed
-from httcp.production.weights import muon_id_weights, muon_iso_weights, IsoMu24_trigger_weights
+from httcp.production.weights import muon_id_weights, muon_iso_weights, IsoMu24_trigger_weights, zpt_reweight
 
 
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
@@ -33,7 +33,7 @@ from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO:
 from httcp.production.weights import tau_weight
 from httcp.production.sample_split import split_dy
 
-from httcp.util import IF_DATASET_HAS_LHE_WEIGHTS
+from httcp.util import IF_DATASET_HAS_LHE_WEIGHTS, IF_DATASET_IS_DY_LO
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -107,6 +107,7 @@ def hcand_features(
         electron_weights,
         tau_weight,
         ##tauspinner_weight,
+        IF_DATASET_IS_DY_LO(zpt_reweight),
         hcand_features,
         hcand_mass,
     },
@@ -123,6 +124,7 @@ def hcand_features(
         electron_weights,
         tau_weight,
         ##tauspinner_weight,
+        IF_DATASET_IS_DY_LO(zpt_reweight),
         hcand_features,
         hcand_mass,
         "channel_id",
@@ -149,8 +151,10 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         events = self[electron_weights](events, **kwargs)
         events = self[tau_weight](events, do_syst=True, **kwargs)
         #events = self[tauspinner_weight](events, **kwargs)
+        if self.dataset_inst.has_tag("is_dy_LO"):
+            events = self[zpt_reweight](events, **kwargs)
     events = self[hcand_features](events, **kwargs)       
-    #embed()
+
     # features
     events = self[hcand_mass](events, **kwargs)
     # events = self[mT](events, **kwargs)

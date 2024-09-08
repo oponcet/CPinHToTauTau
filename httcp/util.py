@@ -68,6 +68,16 @@ def IF_DATASET_HAS_LHE_WEIGHTS(
 
     return None if func.dataset_inst.has_tag("no_lhe_weights") else self.get()
 
+@deferred_column
+def IF_DATASET_IS_DY_LO(
+    self: ArrayFunction.DeferredColumn,
+    func: ArrayFunction,
+) -> Any | set[Any]:
+    if getattr(func, "dataset_inst", None) is None:
+        return self.get()
+
+    return None if not func.dataset_inst.has_tag("is_dy_LO") else self.get()
+
 
 def transverse_mass(lepton: ak.Array, met: ak.Array) -> ak.Array:
     dphi_lep_met = lepton.delta_phi(met)

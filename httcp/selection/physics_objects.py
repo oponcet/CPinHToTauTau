@@ -18,7 +18,7 @@ from httcp.util import IF_NANO_V9, IF_NANO_V11, IF_RUN2, IF_RUN3, getGenTauDecay
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
-
+coffea = maybe_import("coffea")
 
 # ------------------------------------------------------------------------------------------------------- #
 # Muon Selection
@@ -617,3 +617,75 @@ def gentau_selection(
         },
         aux = selection_steps,
     )
+
+
+
+# ------------------------------------------------------------------------------------------------------- #
+# GenZ selection
+# will be used for Zpt reweighting
+# https://github.com/danielwinterbottom/ICHiggsTauTau/blob/UL_ditau/Analysis/HiggsTauTauRun2/src/HTTWeights.cc#L2079-L2114
+# ------------------------------------------------------------------------------------------------------- #
+@selector(
+    uses={
+        "GenPart.*",
+    },
+    produces={
+        "GenZ.pt", "GenZ.eta", "GenZ.phi", "GenZ.mass",
+    },
+    mc_only=True,
+    exposed=False,
+)
+def genZ_selection(
+        self: Selector,
+        events: ak.Array,
+        **kwargs
+) -> ak.Array:
+    """
+    
+    References:
+      - 
+    """
+    genpart_indices = ak.local_index(events.GenPart.pt)
+    sel_gen_ids = genpart_indices[((((np.abs(events.GenPart.pdgId) >= 11) & (np.abs(events.GenPart.pdgId) <= 16))
+                                    & (events.GenPart.hasFlags(["isHardProcess"]))
+                                    & (events.GenPart.status == 1)) | (events.GenPart.hasFlags(["isDirectHardProcessTauDecayProduct"])))]
+    
+    gen_part = events.GenPart[sel_gen_ids]
+
+    # form LV
+    gen_part = ak.Array(gen_part, behavior=coffea.nanoevents.methods.nanoaod.behavior)
+    p4_gen_part = ak.with_name(gen_part, "PtEtaPhiMLorentzVector")    
+    p4_gen_part = ak.zip(
+        {
+            "x" : p4_gen_part.px,
+            "y" : p4_gen_part.py,
+            "z" : p4_gen_part.pz,
+            "t": p4_gen_part.energy,
+        },
+        with_name="LorentzVector",
+        behavior=coffea.nanoevents.methods.vector.behavior,
+    )
+    #sum_p4_gen_part = ak.sum(p4_gen_part, axis=1)
+    sum_p4_gen_part = ak.zip(
+        {
+            "x" : ak.sum(p4_gen_part.x, axis=1),
+            "y" : ak.sum(p4_gen_part.y, axis=1),
+            "z" : ak.sum(p4_gen_part.z, axis=1),
+            "t" : ak.sum(p4_gen_part.energy, axis=1),
+        },
+        with_name="LorentzVector",
+        behavior=coffea.nanoevents.methods.vector.behavior,
+    )
+
+    p4_gen_part_array = ak.zip(
+        {
+            "pt"  : ak.nan_to_num(sum_p4_gen_part.pt, 0.0),  # nan values are for empty genpart
+            "eta" : ak.nan_to_num(sum_p4_gen_part.eta, 0.0), 
+            "phi" : ak.nan_to_num(sum_p4_gen_part.phi, 0.0),
+            "mass": ak.nan_to_num(sum_p4_gen_part.mass, 0.0),
+        }
+    )
+
+    events = set_ak_column(events, "GenZ", p4_gen_part_array)
+                                           
+    return events    

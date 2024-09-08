@@ -85,16 +85,13 @@ def IsoMu24_trigger_weights(self: Producer,
 
     # get trigger ids for IsoMu24
     trigger_id_map = get_trigger_id_map(self.config_inst.x.triggers)
-    print(trigger_id_map)
     trigger_id = trigger_id_map["HLT_IsoMu24"]
-    print(trigger_id)
     
     # compute muon trigger SF weights (NOTE: trigger SFs are only defined for muons with
     # pt > 26 GeV, so create a copy of the events array with with all muon pt < 26 GeV set to 26 GeV)
     trigger_sf_events = set_ak_column_f32(events, "Muon.pt", ak.where(events.Muon.pt > 26., events.Muon.pt, 26.))
     trigger_sf_events = self[muon_IsoMu24_trigger_weights](trigger_sf_events, **kwargs)
     for route in self[muon_IsoMu24_trigger_weights].produced_columns:
-        print(route)
         events = set_ak_column_f32(events, route, ak.where(events.trigger_ids == trigger_id,
                                                            route.apply(trigger_sf_events),
                                                            1.0))
@@ -204,7 +201,7 @@ def tau_weight(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak.
     no_dm_5_and_6 = flat_np_view(((events.Tau.decayModeHPS != 5) & (events.Tau.decayModeHPS != 6)), axis=1)
     
     for the_shift in shifts:
-        print(f"tau_weight_shift: {the_shift}")
+        #print(f"tau_weight_shift: {the_shift}")
         #from IPython import embed; embed()
         sf_values[the_shift] = _sf.copy()
         #Calculate scale factors for tau vs electron classifier 
@@ -333,7 +330,7 @@ def tauspinner_weight(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
 @producer(
     uses={
-        "GenPart.*",
+        "GenZ.pt", "GenZ.mass",
     },
     produces={
         "zpt_reweight",
@@ -345,35 +342,15 @@ def zpt_reweight(
         events: ak.Array,
         **kwargs,
 ) :
-    gen_ids = ak.local_index(events.GenPart.pt)
-    sel_gen_ids = gen_ids[((((np.abs(events.GenPart.pdgId) >= 11) & (np.abs(events.GenPart.pdgId) <= 16))
-                            & (events.GenPart.hasFlags(["FromHardProcess"]))
-                            & (events.GenPart.status == 1)) | (events.GenPart.hasFlags(["IsDirectHardProcessTauDecayProduct"])))]
+
+    zpt = ak.where(events.GenZ.pt > 600.0, 600.0, events.GenZ.pt)
+    zm  = ak.where(events.GenZ.mass > 1000.0, 1000.0, events.GenZ.mass)
+
+    sf_nom = self.zpt_corrector.evaluate(zm, zpt)
+
+    events = set_ak_column(events, "zpt_reweight", sf_nom, value_type=np.float32)
     
-    gen_part = events.GenPart[sel_gen_ids]
-
-    # form LV
-    p4_gen_part = ak.with_name(gen_part, "PtEtaPhiMLorentzVector")
-    p4_gen_part = ak.zip(
-        {
-            "px" : p4_gen_part.px,
-            "py" : p4_gen_part.py,
-            "pz" : p4_gen_part.pz,
-            "energy": p4_gen_part.energy,
-        },
-        with_name="LorentzVector",
-        behavior=
-    )
-    sum_p4_gen_part = ak.sum(p4_gen_part, axis=1)
-
-    zpt = sum_p4_gen_part.pt
-    zm  = sum_p4_gen_part.mass
-
-    
-
-}
-
-
+    return events
 
 
 @zpt_reweight.requires
@@ -398,3 +375,4 @@ def zpt_reweight_setup(
     correction_set = correctionlib.CorrectionSet.from_string(
         bundle.files.zpt_rewt_sf.load(formatter="gzip").decode("utf-8"),
     )
+    self.zpt_corrector    = correction_set["zptreweight"]
