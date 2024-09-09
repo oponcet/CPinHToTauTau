@@ -25,7 +25,7 @@ args:
     # == wj ==
     - wj_incl_madgraph
     # == dy ==
-    - dy_lep_m10to50_madgraph
+    #- dy_lep_m10to50_madgraph
     - dy_lep_m50_madgraph
     # == tt ==
     - tt_dl
@@ -50,7 +50,7 @@ args:
   processes :
     - data
     - w_lnu
-    - dy_lep_m10to50
+    #- dy_lep_m10to50
     - dy_lep_m50
     - tt
     #- st_tchannel
@@ -112,4 +112,4 @@ args:
     - PhiCP_IPDP
 
   extras:
-    - process-settings "h_ggf_tautau,unstack"
+    - process-settings "h_ggf_tautau,unstack,1000"
