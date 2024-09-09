@@ -342,12 +342,21 @@ def zpt_reweight(
         events: ak.Array,
         **kwargs,
 ) :
+    # if no gen particle found, all fields of GenZ will be zero
+    # Those events will have nominal zpt rewt = 1.0
+    # the same will be applied also for the evnts outside the range
+    is_outside_range = (
+        ((events.GenZ.pt == 0.0) & (events.GenZ.mass == 0.0))
+        | ((events.GenZ.pt >= 600.0) | (events.GenZ.mass >= 1000.0))
+    )
 
-    zpt = ak.where(events.GenZ.pt > 600.0, 600.0, events.GenZ.pt)
-    zm  = ak.where(events.GenZ.mass > 1000.0, 1000.0, events.GenZ.mass)
+    # for safety
+    zm  = ak.where(events.GenZ.mass > 1000.0, 999.99, events.GenZ.mass)
+    zpt = ak.where(events.GenZ.pt > 600.0, 599.99, events.GenZ.pt)
 
-    sf_nom = ak.where(((zpt > 0.0) & (zm > 0.0)),
-                      self.zpt_corrector.evaluate(zm, zpt),
+    sf_nom = ak.where(is_outside_range,
+                      self.zpt_corrector.evaluate(zm,
+                                                  zpt),
                       1.0)
 
     events = set_ak_column(events, "zpt_reweight", sf_nom, value_type=np.float32)
