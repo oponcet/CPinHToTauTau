@@ -218,3 +218,8 @@ def sel_FFDRIso_tautau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[a
 def sel_FFDRantiIso_tautau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     ch = self.config_inst.get_channel("FFDRantiIso_tautau")
     return events, events["channel_id"] == ch.id
+
+@categorizer(uses={"channel_id"})
+def sel_tautau_antiIso(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("tautau_antiIso")
+    return events, events["channel_id"] == ch.id

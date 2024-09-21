@@ -55,6 +55,7 @@ def add_config (ana: od.Analysis,
     cfg = ana.add_config(campaign,
                          name  = config_name,
                          id    = config_id)
+                         
 
     # add processes we are interested in
     process_names = [
@@ -74,7 +75,6 @@ def add_config (ana: od.Analysis,
         ## Signal
         "h_ggf_tautau",
     ]
-
     for process_name in process_names:
         # development switch in case datasets are not _yet_ there
         if process_name not in procs:
@@ -182,7 +182,6 @@ def add_config (ana: od.Analysis,
     cfg.x.default_ml_model        = None
     cfg.x.default_inference_model = "example"
     cfg.x.default_categories      = ("incl",)
-    #cfg.x.default_variables = ("n_jet", "jet1_pt")
     cfg.x.default_variables       = ("event","channel_id")
 
     # process groups for conveniently looping over certain processs
@@ -345,7 +344,11 @@ def add_config (ana: od.Analysis,
     else:
         raise RuntimeError(f"Wrong year: {year}. Check __init__.py in cmsdb campaign")
 
+    # add hist hooks
+    # from httcp.config.hist_hooks import add_hist_hooks
+    # add_hist_hooks(cfg)
 
+    # Adding met filters
     from httcp.config.met_filters import add_met_filters
     add_met_filters(cfg)
 
@@ -645,6 +648,7 @@ def add_config (ana: od.Analysis,
     cfg.add_channel(name="tautau", id=4)
     cfg.add_channel(name="FFDRIso_tautau", id=9)
     cfg.add_channel(name="FFDRantiIso_tautau", id=10)
+    cfg.add_channel(name="tautau_antiIso", id=11)
 
     
     campaign_tag = cfg.campaign.x("custom").get("creator")

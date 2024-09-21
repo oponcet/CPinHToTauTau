@@ -30,12 +30,23 @@ def stylize_processes(config: od.Config) -> None:
         brown="#a96b59",
     )
 
-    if (p := config.get_process("h_ggf_tautau", default=None)):
+    for kl in ["0", "1", "2p45", "5"]:
+        if (p := config.get_process(f"hh_ggf_hbb_htt_kl{kl}_kt1", default=None)):
+            p.color1 = cfg.x.colors.bright_blue
+            p.label = (
+                r"$HH_{ggf} \rightarrow bb\tau\tau$ __SCALE__"
+                "\n"
+                rf"($\kappa_{{\lambda}}$={kl.replace('p', '.')},$\kappa_{{t}}$=1)"
+            )
+
+    if (p := config.get_process("hh_vbf_hbb_htt_kv1_k2v1_kl1", default=None)):
         p.color1 = cfg.x.colors.dark_blue
         p.label = (
-            r"$H_{ggf} \rightarrow \tau\tau$"
+            r"$HH_{vbf} \rightarrow bb\tau\tau$ __SCALE__"
+            "\n"
+            r"($\kappa_{\lambda}$=1,$\kappa_{V}$=1,$\kappa_{2V}$=1)"
         )
-        
+
     if (p := config.get_process("h", default=None)):
         p.color1 = cfg.x.colors.purple
 
@@ -47,8 +58,6 @@ def stylize_processes(config: od.Config) -> None:
         p.color1 = cfg.x.colors.aubergine
 
     if (p := config.get_process("dy", default=None)):
-        p.color1 = cfg.x.colors.dark_orange
-    if (p := config.get_process("dy_lep_m50", default=None)):
         p.color1 = cfg.x.colors.dark_orange
 
     if (p := config.get_process("vv", default=None)):
@@ -63,9 +72,13 @@ def stylize_processes(config: od.Config) -> None:
     if (p := config.get_process("w", default=None)):
         p.color1 = cfg.x.colors.teal
         p.label = "W"
-    if (p := config.get_process("w_lnu", default=None)):
+
+    if (p := config.get_process("z", default=None)):
+        p.color1 = cfg.x.colors.brown
+        p.label = "Z"
+
+    if (p := config.get_process("v", default=None)):
         p.color1 = cfg.x.colors.teal
-        p.label = "W"
 
     if (p := config.get_process("ewk", default=None)):
         p.color1 = cfg.x.colors.brown

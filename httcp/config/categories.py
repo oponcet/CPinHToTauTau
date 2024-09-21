@@ -186,3 +186,10 @@ def add_categories(config: od.Config) -> None:
         selection="sel_FFDRantiIso_tautau",
         label="FFDRantiIso_tautau_channel",
     )
+    add_category(
+        config,
+        name="tautau_antiIso",
+        id=700,
+        selection="sel_tautau_antiIso",
+        label="tautau_antiIso_channel",
+    )

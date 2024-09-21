@@ -273,8 +273,9 @@ def tau_selection(
         **kwargs
 ) -> tuple[ak.Array, SelectionResult, ak.Array]:
     """
-    Tau selection returning two sets of indidces for default and veto muons.
-    
+    Tau selection returning a set of indices for taus that are at least VVLoose isolated (vs jet)
+    and a second mask to select the action Medium isolated ones, eventually to separate normal and
+    iso inverted taus for QCD estimations.
     References:
       - 
     """

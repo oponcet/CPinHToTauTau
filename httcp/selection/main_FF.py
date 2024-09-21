@@ -30,6 +30,7 @@ from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
 from httcp.selection.lepton_pair_FFDRIsotautau import FFDRIso_tautau_selection
 from httcp.selection.lepton_pair_FFDRantiIsotautau import FFDRantiIso_tautau_selection
+from httcp.selection.lepton_pair_tautau_antiIso import tautau_antiIso_selection
 from httcp.selection.event_category import get_categories
 from httcp.selection.match_trigobj import match_trigobj
 from httcp.selection.lepton_veto import *
@@ -117,7 +118,8 @@ def custom_increment_stats(
         mutau_selection, 
         tautau_selection,
         FFDRIso_tautau_selection, 
-        FFDRantiIso_tautau_selection, 
+        FFDRantiIso_tautau_selection,
+        tautau_antiIso_selection, 
         get_categories,
         extra_lepton_veto, 
         double_lepton_veto, 
@@ -143,6 +145,7 @@ def custom_increment_stats(
         tautau_selection,
         FFDRIso_tautau_selection, 
         FFDRantiIso_tautau_selection, 
+        tautau_antiIso_selection,
         get_categories, 
         process_ids,
         extra_lepton_veto, 
@@ -320,6 +323,19 @@ def main_FF(
     FFDRantiIso_tautau_pair = ak.concatenate([events.Tau[FFDRantiIso_tautau_indices_pair[:,0:1]], 
                                 events.Tau[FFDRantiIso_tautau_indices_pair[:,1:2]]], 
                                  axis=1)
+
+    ## Application region 
+    tautau_antiIso_results, tautau_antiIso_indices_pair = self[tautau_antiIso_selection](events,
+                                                                 good_tau_indices,
+                                                                 call_force=True,
+                                                                 **kwargs)
+    results += tautau_antiIso_results
+
+    tautau_antiIso_indices_pair = ak.concatenate([events.Tau[tautau_antiIso_indices_pair[:,0:1]],
+                                    events.Tau[tautau_antiIso_indices_pair[:,1:2]]],
+                                    axis=1)
+
+    
 
     #tautau_pair_matched_triggerID = ak.concatenate([matched_triggerID_tau[tautau_indices_pair[:,0:1]],
     #                                                matched_triggerID_tau[tautau_indices_pair[:,1:2]]],
