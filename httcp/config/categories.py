@@ -20,13 +20,6 @@ def add_categories(config: od.Config) -> None:
         selection="cat_incl",
         label="inclusive",
     )
-    add_category(
-        config,
-        name="2j",
-        id=100,
-        selection="cat_2j",
-        label="2 jets",
-    )
 
     # ------------------------------- #
     #              e-tau              #
@@ -38,6 +31,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_etau",
         label="etau",
     )
+    # --> e-pi
     add_category(
         config,
         name="etau_pi",
@@ -45,6 +39,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_etau_pi",
         label="etau_pion",
     )
+    # --> e-rho
     add_category(
         config,
         name="etau_rho",
@@ -52,6 +47,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_etau_rho",
         label="etau_rho",
     )
+    # --> e-a1 (DM2)
     add_category(
         config,
         name="etau_a1_1pr_2pi0",
@@ -59,6 +55,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_etau_a1_1pr_2pi0",
         label="etau_a1_1pr_2pi0",
     )
+    # --> e-a1 (DM10)
     add_category(
         config,
         name="etau_a1_3pr_0pi0",
@@ -66,6 +63,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_etau_a1_3pr_0pi0",
         label="etau_a1_3pr_0pi0",
     )
+    # --> e-a1 (DM11)
     add_category(
         config,
         name="etau_a1_3pr_1pi0",
@@ -84,6 +82,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_mutau",
         label="mutau",
     )
+    # --> mu-pi
     add_category(
         config,
         name="mutau_pi",
@@ -91,6 +90,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_mutau_pi",
         label="mutau_pion",
     )
+    # --> mu-rho
     add_category(
         config,
         name="mutau_rho",
@@ -98,6 +98,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_mutau_rho",
         label="mutau_rho",
     )
+    # --> mu-a1 (DM2)
     add_category(
         config,
         name="mutau_a1_1pr_2pi0",
@@ -105,6 +106,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_mutau_a1_1pr_2pi0",
         label="mutau_a1_1pr_2pi0",
     )
+    # --> mu-a1 (DM10)
     add_category(
         config,
         name="mutau_a1_3pr_0pi0",
@@ -112,6 +114,7 @@ def add_categories(config: od.Config) -> None:
         selection="sel_mutau_a1_3pr_0pi0",
         label="mutau_a1_3pr_0pi0",
     )
+    # --> mu-a1 (DM11)
     add_category(
         config,
         name="mutau_a1_3pr_1pi0",
@@ -130,45 +133,123 @@ def add_categories(config: od.Config) -> None:
         selection="sel_tautau",
         label="tautau_channel",
     )
+    # --> pi-pi
     add_category(
         config,
-        name="tautau_pionpion",
+        name="tautau_pi_pi",
         id=302,
-        selection="sel_tautau_pionpion",
-        label="tautau_channel_pi_pi",
+        selection="sel_tautau_pi_pi",
+        label="tautau_pi_pi",
     )
+    # --> rho-rho
     add_category(
         config,
-        name="tautau_rhorho",
+        name="tautau_rho_rho",
         id=303,
-        selection="sel_tautau_rhorho",
-        label="tautau_channel_rho_rho",
+        selection="sel_tautau_rho_rho",
+        label="tautau_rho_rho",
     )
+    # --> a1(DM2) - a1(DM2)
     add_category(
         config,
-        name="tautau_a1a1",
+        name="tautau_a1_1pr_2pi0_a1_1pr_2pi0",
         id=304,
-        selection="sel_tautau_a1a1",
-        label="tautau_channel_a1_a1",
+        selection="sel_tautau_a1_1pr_2pi0_a1_1pr_2pi0",
+        label="tautau_a1_1pr_2pi0_a1_1pr_2pi0",
     )
+    # --> a1(DM10) - a1(DM10)
     add_category(
         config,
-        name="tautau_pionrho",
+        name="tautau_a1_3pr_0pi0_a1_3pr_0pi0",
         id=305,
-        selection="sel_tautau_pionrho",
-        label="tautau_channel_pi_rho",
+        selection="sel_tautau_a1_3pr_0pi0_a1_3pr_0pi0",
+        label="tautau_a1_3pr_0pi0_a1_3pr_0pi0",
     )
+    # --> a1(DM11) - a1(DM11)
     add_category(
         config,
-        name="tautau_a1pion",
+        name="tautau_a1_3pr_1pi0_a1_3pr_1pi0",
         id=306,
-        selection="sel_tautau_a1pion",
-        label="tautau_channel_a1_pion",
+        selection="sel_tautau_a1_3pr_1pi0_a1_3pr_1pi0",
+        label="tautau_a1_3pr_1pi0_a1_3pr_1pi0",
     )
+    # --> pi - rho
     add_category(
         config,
-        name="tautau_a1rho",
+        name="tautau_pi_rho",
         id=307,
-        selection="sel_tautau_a1rho",
-        label="tautau_channel_a1_rho",
+        selection="sel_tautau_pi_rho",
+        label="tautau_pi_rho",
+    )
+    # --> pi - a1(DM2)
+    add_category(
+        config,
+        name="tautau_pi_a1_1pr_2pi0",
+        id=308,
+        selection="sel_tautau_pi_a1_1pr_2pi0",
+        label="tautau_pi_a1_1pr_2pi0",
+    )
+    # --> pi - a1(DM10)
+    add_category(
+        config,
+        name="tautau_pi_a1_3pr_0pi0",
+        id=309,
+        selection="sel_tautau_pi_a1_3pr_0pi0",
+        label="tautau_pi_a1_3pr_0pi0",
+    )
+    # --> pi - a1(DM11)
+    add_category(
+        config,
+        name="tautau_pi_a1_3pr_1pi0",
+        id=310,
+        selection="sel_tautau_pi_a1_3pr_1pi0",
+        label="tautau_pi_a1_3pr_1pi0",
+    )
+    # --> rho - a1(DM2)
+    add_category(
+        config,
+        name="tautau_rho_a1_1pr_2pi0",
+        id=311,
+        selection="sel_tautau_rho_a1_1pr_2pi0",
+        label="tautau_rho_a1_1pr_2pi0",
+    )
+    # --> rho - a1(DM10)    
+    add_category(
+        config,
+        name="tautau_rho_a1_3pr_0pi0",
+        id=312,
+        selection="sel_tautau_rho_a1_3pr_0pi0",
+        label="tautau_rho_a1_3pr_0pi0",
+    )
+    # --> rho - a1(DM11)    
+    add_category(
+        config,
+        name="tautau_rho_a1_3pr_1pi0",
+        id=313,
+        selection="sel_tautau_rho_a1_3pr_1pi0",
+        label="tautau_rho_a1_3pr_1pi0",
+    )
+    # --> a1(DM2) - a1(DM10)
+    add_category(
+        config,
+        name="tautau_a1_1pr_2pi0_a1_3pr_0pi0",
+        id=314,
+        selection="sel_tautau_a1_1pr_2pi0_a1_3pr_0pi0",
+        label="tautau_a1_1pr_2pi0_a1_3pr_0pi0",
+    )
+    # --> a1(DM2) - a1(DM11)
+    add_category(
+        config,
+        name="tautau_a1_1pr_2pi0_a1_3pr_1pi0",
+        id=315,
+        selection="sel_tautau_a1_1pr_2pi0_a1_3pr_1pi0",
+        label="tautau_a1_1pr_2pi0_a1_3pr_1pi0",
+    )
+    # --> a1(DM10) - a1(DM11)
+    add_category(
+        config,
+        name="tautau_a1_3pr_0pi0_a1_3pr_1pi0",
+        id=316,
+        selection="sel_tautau_a1_3pr_0pi0_a1_3pr_1pi0",
+        label="tautau_a1_3pr_0pi0_a1_3pr_1pi0",
     )
