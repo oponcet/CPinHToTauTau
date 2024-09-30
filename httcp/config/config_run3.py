@@ -74,6 +74,8 @@ def add_config (ana: od.Analysis,
         ## Drell-Yan
         "dy_lep_m10to50",
         "dy_lep_m50",
+        "dy_z2ll",
+        "dy_z2tautau",
         ## TTJets
         "tt",
         ## Single top
@@ -135,7 +137,8 @@ def add_config (ana: od.Analysis,
         #"st_tbar_wplus_to_lnu2q",
         #"st_tbar_wplus_to_2l2nu",
         "h_ggf_tautau_prod_cp_even_sm",
-        "h_ggf_tautau_flat",
+        #"h_ggf_tautau_flat",
+        "h_ggf_tautau_uncorrelated_filter",
     ]
     
     datasets_data = []
@@ -385,34 +388,18 @@ def add_config (ana: od.Analysis,
             "normtag" : (normtagjson, "v1"),
         },
 
-        # pileup weight corrections
-        "pu_sf": (f"{json_mirror}/POG/LUM/{year}_Summer{year2}{year_postfix}/puWeights.json.gz", "v1"),
-
-        # jet energy correction
-        "jet_jerc": (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jet_jerc.json.gz", "v1"),
-
-        # Add Muon POG scale factors
-        "muon_sf": (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/muon_Z.json.gz", "v1"),
-        
-        # electron scale factors
-        "electron_sf": (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electron.json.gz", "v1"),
-        
-        # tau energy correction and scale factors
-        #"tau_correction": (f"{external_path_parent}/tau_DeepTau2018v2p5_2022_preEE.json.gz", "v1"),  # noqa
-        "tau_sf": (f"{json_mirror}/POG/TAU/{year}_{postfix}/tau_DeepTau2018v2p5_{year}_{postfix}.json.gz", "v1"), # noqa 
-        
-        # jetveto maps
-        "jet_veto_map": (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz", "v1"),
-
-        # zpt reweight sf
-        "zpt_rewt_sf": (f"{external_path}/Zpt/myZptCorrections.json.gz", "v1"),
-        
-        # btag scale factor
-        #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz", "v1"),
-
-        # met phi corrector 
-        # unavailable for Run3
-        # "met_phi_corr": (f"{json_mirror}/POG/JME/2018_UL/met.json.gz", "v1"),
+        "pu_sf"             : (f"{json_mirror}/POG/LUM/{year}_Summer{year2}{year_postfix}/puWeights.json.gz",          "v1"), # PU
+        "jet_jerc"          : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jet_jerc.json.gz",           "v1"), # JEC
+        "muon_sf"           : (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/muon_Z.json.gz",             "v1"), # Mu POG SF
+        "muon_xtrig_sf"     : (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/CrossMuTauHlt.json",         "v1"), # Mu xTrig SF
+        "electron_sf"       : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electron.json.gz",           "v1"), # Ele POG SF
+        "electron_trig_sf"  : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electronHlt.json.gz",        "v1"), # Ele HLT SF
+        "electron_xtrig_sf" : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/CrossEleTauHlt.json",        "v1"), # Ele xTrig SF
+        "tau_sf"            : (f"{json_mirror}/POG/TAU/{year}_{postfix}/tau_DeepTau2018v2p5_{year}_{postfix}.json.gz", "v1"), # TEC and ID SF
+        "jet_veto_map"      : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz",        "v1"), # JetVeto
+        "zpt_rewt_sf"       : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
+        #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz",                "v1"),
+        #"met_phi_corr": (f"{json_mirror}/POG/JME/2018_UL/met.json.gz",                                                "v1"), #met phi, unavailable Run3
     })
 
 
@@ -437,7 +424,17 @@ def add_config (ana: od.Analysis,
         electron_sf_tag,
         "wp80iso",
     )
-
+    cfg.x.electron_trig_sf_names = (
+        "Electron-HLT-SF",
+        electron_sf_tag,
+        "HLT_SF_Ele30_TightID",
+    )
+    cfg.x.electron_xtrig_sf_names = (
+        "Electron-HLT-SF",
+        electron_sf_tag,
+        "HLT_SF_Ele24_TightID",
+    )
+    
 
     # --------------------------------------------------------------------------------------------- #
     # muon settings
@@ -457,7 +454,11 @@ def add_config (ana: od.Analysis,
         "NUM_IsoMu24_DEN_CutBasedIdMedium_and_PFIsoMedium",
         f"{year}_{postfix}"
     )
-
+    cfg.x.muon_xtrig_sf_names = (
+        "NUM_IsoMu20_DEN_CutBasedIdMedium_and_PFIsoMedium",
+        f"{year}_{postfix}"
+    )
+    
 
     # --------------------------------------------------------------------------------------------- #
     # jet settings
@@ -625,12 +626,10 @@ def add_config (ana: od.Analysis,
     # register shifts
     # --------------------------------------------------------------------------------------------- #
 
-    # load jec sources
-    with open(os.path.join(thisdir, "jec_sources.yaml"), "r") as f:
-        all_jec_sources = yaml.load(f, yaml.Loader)["names"]
-
     cfg.add_shift(name="nominal", id=0)
 
+
+    # --- >>> PU weight <<< --- #
     cfg.add_shift(name="minbias_xs_up", id=7, type="shape")
     cfg.add_shift(name="minbias_xs_down", id=8, type="shape")
     add_shift_aliases(
@@ -641,6 +640,10 @@ def add_config (ana: od.Analysis,
             #"normalized_pu_weight": "normalized_pu_weight_{name}",
         },
     )
+    
+    # load jec sources
+    with open(os.path.join(thisdir, "jec_sources.yaml"), "r") as f:
+        all_jec_sources = yaml.load(f, yaml.Loader)["names"]
 
     for jec_source in cfg.x.jec.uncertainty_sources:
         idx = all_jec_sources.index(jec_source)
@@ -681,7 +684,8 @@ def add_config (ana: od.Analysis,
             "MET.phi": "MET.phi_{name}",
         },
     )
-
+    
+    # --- >>> tau weight <<< --- #
     cfg.add_shift(name=f"tau_up", id=50, type="shape")
     cfg.add_shift(name=f"tau_down", id=51, type="shape")
     add_shift_aliases(
@@ -691,17 +695,46 @@ def add_config (ana: od.Analysis,
             "tau_weight": "tau_weight_{direction}",
         },
     )
+    #cfg.add_shift(name=f"tes_up", id=52, type="shape")
+    #cfg.add_shift(name=f"tes_down", id=53, type="shape")
+    #add_shift_aliases(
+    #    cfg,
+    #    "tes",
+    #    {
+    #        "tes_weight": "tes_weight_{direction}",
+    #    },
+    #)
 
+    # --- >>> ele weight <<< --- #
     cfg.add_shift(name="e_up", id=90, type="shape")
     cfg.add_shift(name="e_down", id=91, type="shape")
     add_shift_aliases(
         cfg,
         "e",
         {
-            "electron_weight": "electron_weight_{direction}",
+            "electron_idiso_weight": "electron_idiso_weight_{direction}",
+        },
+    )
+    cfg.add_shift(name="e_trig_up", id=92, type="shape")
+    cfg.add_shift(name="e_trig_down", id=93, type="shape")
+    add_shift_aliases(
+        cfg,
+        "e_trig",
+        {
+            "electron_Ele30_WPTight_trigger_weight": "electron_Ele30_WPTight_trigger_weight_{direction}",
+        },
+    )
+    cfg.add_shift(name="e_xtrig_up", id=94, type="shape")
+    cfg.add_shift(name="e_xtrig_down", id=95, type="shape")
+    add_shift_aliases(
+        cfg,
+        "e_xtrig",
+        {
+            "electron_xtrig_weight": "electron_xtrig_weight_{direction}",
         },
     )
 
+    # --- >>> mu weight <<< --- #
     cfg.add_shift(name="mu_id_up", id=100, type="shape")
     cfg.add_shift(name="mu_id_down", id=101, type="shape")
     add_shift_aliases(
@@ -720,7 +753,26 @@ def add_config (ana: od.Analysis,
             "muon_iso_weight": "muon_iso_weight_{direction}",
         },
     )
+    cfg.add_shift(name="mu_trig_up", id=104, type="shape")
+    cfg.add_shift(name="mu_trig_down", id=105, type="shape")
+    add_shift_aliases(
+        cfg,
+        "mu_trig",
+        {
+            "muon_IsoMu24_trigger_weight": "muon_IsoMu24_trigger_weight_{direction}",
+        },
+    )
+    cfg.add_shift(name="mu_xtrig_up", id=106, type="shape")
+    cfg.add_shift(name="mu_xtrig_down", id=107, type="shape")
+    add_shift_aliases(
+        cfg,
+        "mu_xtrig",
+        {
+            "muon_xtrig_weight": "muon_xtrig_weight_{direction}",
+        },
+    )
 
+    # --- >>> pdf weight <<< --- #    
     cfg.add_shift(name="pdf_up", id=130, type="shape")
     cfg.add_shift(name="pdf_down", id=131, type="shape")
     add_shift_aliases(
@@ -731,7 +783,8 @@ def add_config (ana: od.Analysis,
             #"normalized_pdf_weight": "normalized_pdf_weight_{direction}",
         },
     )
-    """
+
+    # --- >>> tau spinner weight <<< --- #
     cfg.add_shift(name="tauspinner_up",   id=150, type="shape")
     cfg.add_shift(name="tauspinner_down", id=151, type="shape")
     add_shift_aliases(
@@ -741,7 +794,18 @@ def add_config (ana: od.Analysis,
             "tauspinner_weight": "tauspinner_weight_{direction}",
         },
     )
-    """
+
+    # --- >>> zpt weight <<< --- #    
+    cfg.add_shift(name="zpt_up", id=160, type="shape")
+    cfg.add_shift(name="zpt_down", id=161, type="shape")
+    add_shift_aliases(
+        cfg,
+        "zpt",
+        {
+            "zpt_weight": "zpt_reweight_{direction}",
+            #"normalized_pdf_weight": "normalized_pdf_weight_{direction}",
+        },
+    )
     # target file size after MergeReducedEvents in MB
     cfg.x.reduced_file_size = 512.0
     
@@ -756,15 +820,18 @@ def add_config (ana: od.Analysis,
 
     get_shifts = functools.partial(get_shifts_from_sources, cfg)
     cfg.x.event_weights = DotDict({
-        "normalization_weight"  : [],
-        "pu_weight"             : [], #get_shifts("minbias_xs"),
-        #"pdf_weight"            : get_shifts("pdf"),
-        "electron_weight"       : [], #get_shifts("e"),
-        "muon_id_weight"        : [], #get_shifts("mu_id"),
-        "muon_iso_weight"       : [], #get_shifts("mu_iso"),
-        "tau_weight"            : [], #get_shifts("tau"),
-        #"tau_id_sf"            : [],
-        #"tauspinner_weight": get_shifts("tauspinner"),
+        "normalization_weight"                  : [],
+        "pu_weight"                             : [], #get_shifts("minbias_xs"),
+        "electron_idiso_weight"                 : [], #get_shifts("e"),
+        "electron_Ele30_WPTight_trigger_weight" : [], #get_shifts("e_xtrig"),
+        "electron_xtrig_weight"                 : [], #get_shifts("e_xtrig"),
+        "muon_id_weight"                        : [], #get_shifts("mu_id"),
+        "muon_iso_weight"                       : [], #get_shifts("mu_iso"),
+        "muon_IsoMu24_trigger_weight"           : [], #get_shifts("mu_trig"),
+        "muon_xtrig_weight"                     : [], #get_shifts("mu_xtrig"),
+        "tau_weight"                            : [], #get_shifts("tau"),
+        #"tes_weight"                           : [], #get_shifts("tes"),
+        #"tauspinner_weight"                    : get_shifts("tauspinner"),
     })
 
     # define per-dataset event weights
@@ -777,6 +844,7 @@ def add_config (ana: od.Analysis,
             dataset.x.event_weights = {
                 "zpt_reweight": [],
             }
+
     cfg.x.default_weight_producer = "all_weights"
 
 
@@ -873,6 +941,10 @@ def add_config (ana: od.Analysis,
             "run", "luminosityBlock", "event", "LHEPdfWeight",
             "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
             "trigger_ids",
+            "single_triggered", "cross_triggered",
+            "single_e_triggered", "cross_e_triggered",
+            "single_mu_triggered", "cross_mu_triggered",
+            "cross_tau_triggered", "cross_tau_jet_triggered",
         } | {
             f"GenPart.{var}" for var in [
                 "pt", "eta", "phi", "mass",
@@ -920,11 +992,11 @@ def add_config (ana: od.Analysis,
                 "rawIdx",
                 "pt_no_tes", "mass_no_tes"
             ]
-            #} | {
-            #f"TauSpinner.weight_cp_{var}" for var in [
-            #    "0", "0_alt", "0p25", "0p25_alt", "0p375",
-            #    "0p375_alt", "0p5", "0p5_alt", "minus0p25", "minus0p25_alt"
-            #]
+        } | {
+            f"TauSpinner.weight_cp_{var}" for var in [
+                "0", "0_alt", "0p25", "0p25_alt", "0p375",
+                "0p375_alt", "0p5", "0p5_alt", "minus0p25", "minus0p25_alt"
+            ]
         } | { # muon before any selection 
             f"RawMuon.{var}" for var in [
                 "pt","eta","phi","mass","dxy",
@@ -991,7 +1063,8 @@ def add_config (ana: od.Analysis,
         } | {
             f"hcand.{var}" for var in [
                 "pt","eta","phi","mass", "charge",
-                "decayMode", "rawIdx"
+                "decayMode", "rawIdx",
+                "IPx", "IPy", "IPz", "IPsig",
             ]
         } | {
             "GenTau.*", "GenTauProd.*",
@@ -1016,6 +1089,10 @@ def add_config (ana: od.Analysis,
     #---------------------------------------------------------------------------------------------#
 
     cfg.x.verbose = DotDict.wrap({
+        "calibration": {
+            "main"                    : False,
+            "tau"                     : False,
+        },
         "selection": {
             "main"                    : False,
             "trigobject_matching"     : False,
@@ -1023,4 +1100,9 @@ def add_config (ana: od.Analysis,
             "dilep_veto"              : False,
             "higgscand"               : False,
         },        
+    })
+
+
+    cfg.x.extra_tags = DotDict.wrap({
+        "genmatch"       : False,
     })
