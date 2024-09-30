@@ -5,168 +5,11 @@ from columnflow.config_util import add_category
 import order as od
 
 from columnflow.columnar_util import EMPTY_FLOAT
-from columnflow.util import DotDict
+from columnflow.util import DotDict, maybe_import
 from columnflow.columnar_util import ColumnCollection
 
-""" lxplus
-def keep_columns(cfg: od.Config) -> None:
-    # columns to keep after certain steps
-    cfg.x.keep_columns = DotDict.wrap({
-        "cf.ReduceEvents": {
-            # TauProds
-            "TauProd.*",
-            # general event info
-            "run", "luminosityBlock", "event", "LHEPdfWeight",
-            "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-        } | {
-            f"PuppiMET.{var}" for var in [
-                "pt", "phi", "significance",
-                "covXX", "covXY", "covYY",
-            ]
-        } | {
-            f"MET.{var}" for var in [
-                "pt", "phi", "significance",
-                "covXX", "covXY", "covYY",
-            ]     
-        } | {
-            f"Jet.{var}" for var in [
-                "pt", "eta", "phi", "mass", 
-                "btagDeepFlavB", "hadronFlavour"
-            ] 
-        } | {
-            f"Tau.{var}" for var in [
-                "pt","eta","phi","mass","dxy","dz", "charge", 
-                "rawDeepTau2018v2p5VSjet","idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", 
-                "decayMode", "decayModePNet", "genPartFlav", "rawIdx",
-                "pt_no_tes", "mass_no_tes"
-            ] 
-        } | {
-            f"Muon.{var}" for var in [
-                "pt","eta","phi","mass","dxy","dz", "charge",
-		"decayMode", "pfRelIso04_all","mT", "rawIdx"
-            ] 
-        } | {
-            f"Electron.{var}" for var in [
-                "pt","eta","phi","mass","dxy","dz", "charge", 
-                "decayMode", "pfRelIso03_all", "mT", "rawIdx",
-                "deltaEtaSC",
-            ] 
-        } | {
-            f"{var}_triggerd" for var in [ #Trigger variables to have a track of a particular trigger fired
-                "single_electron", "cross_electron",
-                "single_muon", "cross_muon",
-                "cross_tau",
-            ]
-        } | {
-            f"matched_triggerID_{var}" for var in [
-                "e", "mu", "tau",
-            ]
-        } | {
-            f"TrigObj.{var}" for var in [
-                "id", "pt", "eta", "phi", "filterBits",
-            ]
-        } | {
-            f"hcand.{var}" for var in [
-                "pt","eta","phi","mass", "charge", 
-                "decayMode", "rawIdx"
-            ]
-        } | {
-            "GenTau.*", "GenTauProd.*",
-        } | {
-            f"hcandprod.{var}" for var in [
-                "pt", "eta", "phi", "mass", "charge",
-                "pdgId", "tauIdx",
-            ]
-        } | {ColumnCollection.ALL_FROM_SELECTOR},
-        "cf.MergeSelectionMasks": {
-            "normalization_weight", 
-            "cutflow.*", "process_id", "category_ids",
-        },
-        "cf.UniteColumns": {
-            "*",
-        },
-    })
-"""
-
-def keep_columns(cfg: od.Config) -> None:
-    # columns to keep after certain steps                                                                                         
-    cfg.x.keep_columns = DotDict.wrap({
-        "cf.ReduceEvents": {
-            # TauProds                                                                                                            
-            "TauProd.*",
-            # general event info                                                                                                  
-            "run", "luminosityBlock", "event", "LHEPdfWeight",
-            "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-            "trigger_ids",
-        } | {
-            f"PuppiMET.{var}" for var in [
-                "pt", "phi", "significance",
-                "covXX", "covXY", "covYY",
-            ]
-        } | {
-            f"MET.{var}" for var in [
-                "pt", "phi", "significance",
-                "covXX", "covXY", "covYY",
-            ]
-        } | {
-            f"Jet.{var}" for var in [
-                "pt", "eta", "phi", "mass",
-                "btagDeepFlavB", "hadronFlavour"
-            ]
-        } | {
-            f"Tau.{var}" for var in [
-                "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
-                "rawDeepTau2018v2p5VSjet","idDeepTau2018v2p5VSjet", "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu",
-                "decayMode",
-                "decayModeHPS",
-                "decayModePNet",
-                "genPartFlav",
-                "rawIdx",
-                "pt_no_tes", "mass_no_tes"
-            ]
-            #} | {
-            #f"TauSpinner.weight_cp_{var}" for var in [
-            #    "0", "0_alt", "0p25", "0p25_alt", "0p375",
-            #    "0p375_alt", "0p5", "0p5_alt", "minus0p25", "minus0p25_alt"
-            #]
-        } | {
-            f"Muon.{var}" for var in [
-                "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
-                "decayMode", "pfRelIso04_all","mT", "rawIdx"
-            ]
-        } | {
-            f"Electron.{var}" for var in [
-                "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
-                "decayMode", "pfRelIso03_all", "mT", "rawIdx",
-                "deltaEtaSC",
-            ]
-        } | {
-            f"TrigObj.{var}" for var in [
-                "id", "pt", "eta", "phi", "filterBits",
-            ]
-        } | {
-            f"hcand.{var}" for var in [
-                "pt","eta","phi","mass", "charge",
-                "decayMode", "rawIdx"
-            ]
-        } | {
-            "GenTau.*", "GenTauProd.*",
-        } | {
-            f"hcandprod.{var}" for var in [
-                "pt", "eta", "phi", "mass", "charge",
-                "pdgId", "tauIdx",
-            ]
-        } | {ColumnCollection.ALL_FROM_SELECTOR},
-        "cf.MergeSelectionMasks": {
-            "normalization_weight",
-            "cutflow.*", "process_id", "category_ids",
-        },
-        "cf.UniteColumns": {
-            "*",
-        },
-    })
-    
-
+np = maybe_import("numpy")
+ak = maybe_import("awkward")
 
 def add_common_features(cfg: od.config) -> None:
     """
@@ -223,6 +66,13 @@ def add_lepton_features(cfg: od.Config) -> None:
                 binning=(25, -2.5, 2.5),
                 x_title=obj + r" $\eta$",
             )
+            cfg.add_variable(
+                name=f"{obj.lower()}_{i+1}_IPsig",
+                expression=f"{obj}.IPsig[:,{i}]",
+                null_value=EMPTY_FLOAT,
+                binning=(80, -10.0, 10.0) if obj == "Tau" else (40, 0.0, 10.0),
+                x_title=obj + r" $IP Significance$",
+            )
         cfg.add_variable(
             name=f"{obj.lower()}_mT",
             expression=f"{obj}.mT",
@@ -232,6 +82,31 @@ def add_lepton_features(cfg: od.Config) -> None:
             x_title=obj + r"$m_{T}$",
     )
 
+def add_gen_features(cfg: od.Config) -> None:
+    for i in range(2):
+        cfg.add_variable(
+            name=f"gentau_{i+1}_IPx",
+            expression=f"GenTau.IPx[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(60, -60.0, 60.0),
+            unit="GeV",
+            x_title=f"GenTau[{i+1}]" + r" $IPx$",
+        )
+        cfg.add_variable(
+            name=f"gentau_{i+1}_IPy",
+            expression=f"GenTau.IPy[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(60, -60.0, 60.0),
+            x_title=f"GenTau[{i+1}]" + r" $IPy$",
+        )
+        cfg.add_variable(
+            name=f"gentau_{i+1}_IPz",
+            expression=f"GenTau.IPz[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(60, -60.0, 60.0),
+            x_title=f"GenTau[{i+1}]" + r" $IPz$",
+        )
+        
 
 def add_jet_features(cfg: od.Config) -> None:
     """
@@ -320,27 +195,34 @@ def add_highlevel_features(cfg: od.Config) -> None:
     )
     
     
-    
-    
 
 def add_weight_features(cfg: od.Config) -> None:
     """
     Adds weights
     """
-    cfg.add_variable(
-        name="mc_weight",
-        expression="mc_weight",
-        binning=(200, -10, 10),
-        x_title="MC weight",
-    )
-    cfg.add_variable(
-        name="pu_weight",
-        expression="pu_weight",
-        null_value=EMPTY_FLOAT,
-        binning=(30, 0,3),
-        unit="GeV",
-        x_title=r"Pileup weight",
-    )
+    weights = ["mc", "pu",
+               "muon_id", "muon_iso", "muon_IsoMu24_trigger", "muon_xtrig",
+               "electron_idiso", "electron_Ele30_WPTight_trigger", "electron_xtrig",
+               "tau", "tau_trigger"]
+
+    for wt in weights:
+        cfg.add_variable(
+            name=f"{wt}_weight",
+            expression=f"{wt}_weight",
+            null_value=EMPTY_FLOAT,
+            binning=(60, -3, 3),
+            x_title=f"{wt} weight",
+            tags={"mc_only"},
+        )
+        cfg.add_variable(
+            name=f"{wt}_weight_log",
+            expression=f"{wt}_weight",
+            null_value=EMPTY_FLOAT,
+            binning=list(np.logspace(-3, 3, 100)),
+            log_x=True,
+            x_title=f"{wt} weight",
+            tags={"mc_only"},
+        )
 
     
 
@@ -391,6 +273,34 @@ def add_hcand_features(cfg: od.Config) -> None:
             binning=(12, -1, 11),
             x_title=f"hcand[{i+1}]" + r" $DM$",
         )
+        cfg.add_variable(
+            name=f"hcand_{i+1}_IPx",
+            expression=f"hcand.IPx[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(30, -0.015, 0.015),
+            x_title=f"hcand[{i+1}]" + r" $IPx$",
+        )
+        cfg.add_variable(
+            name=f"hcand_{i+1}_IPy",
+            expression=f"hcand.IPy[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(30, -0.015, 0.015),
+            x_title=f"hcand[{i+1}]" + r" $IPy$",
+        )
+        cfg.add_variable(
+            name=f"hcand_{i+1}_IPz",
+            expression=f"hcand.IPz[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(30, -0.015, 0.015),
+            x_title=f"hcand[{i+1}]" + r" $IPz$",
+        )
+        cfg.add_variable(
+            name=f"hcand_{i+1}_IPsig",
+            expression=f"hcand.IPsig[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(40, 0.0, 10),
+            x_title=f"hcand[{i+1}]" + r" $IP Significance$",
+        )
 
     cfg.add_variable(
         name="hcand_invm",
@@ -407,65 +317,190 @@ def add_hcand_features(cfg: od.Config) -> None:
         binning=(40, 0, 5),
         x_title=r"$\Delta R(h1,h2)$",
     )
+    # PhiCP - Det
     cfg.add_variable(
         name="PhiCP_IPIP",
         expression="PhiCP_IPIP",
         null_value=EMPTY_FLOAT,
-        binning=(16, 0, 6.4),
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
         x_title=r"$\Phi_{CP}^{IP-IP}$ (rad)",
-    )
-    cfg.add_variable(
-        name="PhiCP_IPDP",
-        expression="PhiCP_IPDP",
-        null_value=EMPTY_FLOAT,
-        binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{IP-DP}$ (rad)",
-    )
-    cfg.add_variable(
-        name="PhiCP_IPPV",
-        expression="PhiCP_IPPV",
-        null_value=EMPTY_FLOAT,
-        binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{IP-PV}$ (rad)",
-    )
-    cfg.add_variable(
-        name="PhiCP_PVPV",
-        expression="PhiCP_PVPV",
-        null_value=EMPTY_FLOAT,
-        binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{PV-PV}$ (rad)",
-    )
-    cfg.add_variable(
-        name="PhiCPGen_PVPV",
-        expression="PhiCPGen_PVPV",
-        null_value=EMPTY_FLOAT,
-        binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{PV-PV}$ [Gen] (rad)",
     )
     cfg.add_variable(
         name="PhiCP_DPDP",
         expression="PhiCP_DPDP",
         null_value=EMPTY_FLOAT,
-        binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{DP-DP}$ [Gen] (rad)",
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{NP-NP}$ (rad)",
+    )
+    cfg.add_variable(
+        name="PhiCP_PVPV",
+        expression="PhiCP_PVPV",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{PV-PV}$ (rad)",
+    )
+    cfg.add_variable(
+        name="PhiCP_IPDP",
+        expression="PhiCP_IPDP",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad)",
+    )
+    cfg.add_variable(
+        name="PhiCP_IPPV",
+        expression="PhiCP_IPPV",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-PV}$ (rad)",
+    )
+    # PhiCP - Gen
+    cfg.add_variable(
+        name="PhiCPGen_IPIP",
+        expression="PhiCPGen_IPIP",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [Gen level]",
     )
     cfg.add_variable(
         name="PhiCPGen_DPDP",
         expression="PhiCPGen_DPDP",
         null_value=EMPTY_FLOAT,
-        binning=(16, 0, 6.4),
-        x_title=r"$\Phi_{CP}^{DP-DP}$ [Gen] (rad)",
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{NP-NP}$ (rad) [Gen level]",
+    )
+    cfg.add_variable(
+        name="PhiCPGen_PVPV",
+        expression="PhiCPGen_PVPV",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{PV-PV}$ (rad) [Gen level]",
+    )
+    cfg.add_variable(
+        name="PhiCPGen_IPDP",
+        expression="PhiCPGen_IPDP",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [Gen level]",
+    )
+    cfg.add_variable(
+        name="PhiCPGen_IPPV",
+        expression="PhiCPGen_IPPV",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-PV}$ (rad) [Gen level]",
+    )
+    # alpha minus Det
+    cfg.add_variable(
+        name="Alpha",
+        expression="alpha",
+        null_value=EMPTY_FLOAT,
+        binning=(20, 0, np.pi),
+        x_title=r"$\alpha_{-}$",
+    )
+    # alpha minus Gen
+    cfg.add_variable(
+        name="AlphaGen",
+        expression="alphaGen",
+        null_value=EMPTY_FLOAT,
+        binning=(20, 0, np.pi),
+        x_title=r"$\alpha_{-} [GenLevel]$",
+    )
+    # conditional PhiCP
+    # TODO:
+    cfg.add_variable(
+        name="PhiCP_IPIP_alpha_lt_piby4",
+        expression="PhiCP_IPIP_alpha_lt_piby4",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- < pi/4]",
+    )
+    cfg.add_variable(
+        name="PhiCP_IPIP_alpha_gt_piby4",
+        expression="PhiCP_IPIP_alpha_gt_piby4",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- > pi/4]",
+    )
+    cfg.add_variable(
+        name="PhiCP_IPDP_alpha_lt_piby4",
+        expression="PhiCP_IPDP_alpha_lt_piby4",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- < pi/4]",
+    )
+    cfg.add_variable(
+        name="PhiCP_IPDP_alpha_gt_piby4",
+        expression="PhiCP_IPDP_alpha_gt_piby4",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- > pi/4]",
+    )
+    cfg.add_variable(
+        name="PhiCPGen_IPIP_alpha_lt_piby4",
+        expression="PhiCPGen_IPIP_alpha_lt_piby4",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- < pi/4] [Gen Level]",
+    )
+    cfg.add_variable(
+        name="PhiCPGen_IPIP_alpha_gt_piby4",
+        expression="PhiCPGen_IPIP_alpha_gt_piby4",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- > pi/4] [Gen Level]",
+    )
+    cfg.add_variable(
+        name="PhiCPGen_IPDP_alpha_lt_piby4",
+        expression="PhiCPGen_IPDP_alpha_lt_piby4",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- < pi/4] [Gen Level]",
+    )
+    cfg.add_variable(
+        name="PhiCPGen_IPDP_alpha_gt_piby4",
+        expression="PhiCPGen_IPDP_alpha_gt_piby4",
+        null_value=EMPTY_FLOAT,
+        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- > pi/4] [Gen Level]",
     )
 
+    
+
 def add_test_variables(cfg: od.Config) -> None:
+        cfg.add_variable(
+            name="tau_pt",
+            expression="Tau.pt",
+            null_value=EMPTY_FLOAT,
+            binning=(20, 0, 100),
+            unit="GeV",
+            x_title=r"tau $p_{T}$ (TES)",
+        )
+        cfg.add_variable(
+            name="tau_mass",
+            expression="Tau.mass",
+            null_value=EMPTY_FLOAT,
+            binning=(30, 25, 85),
+            unit="GeV",
+            x_title=r"tau $M$ (TES)",
+        )
+
         cfg.add_variable(
             name="tau_pt_no_tes",
             expression="Tau.pt_no_tes",
             null_value=EMPTY_FLOAT,
-            binning=(30, 25, 85),
+            binning=(20, 0, 100),
             unit="GeV",
             x_title=r"tau $p_{T}$ (no TES)",
         )
+        cfg.add_variable(
+            name="tau_mass_no_tes",
+            expression="Tau.mass_no_tes",
+            null_value=EMPTY_FLOAT,
+            binning=(30, 25, 85),
+            unit="GeV",
+            x_title=r"tau $M$ (TES)",
+        )
+
         cfg.add_variable(
             name="mutau_mass_no_tes",
             expression="mutau_mass_no_tes",
@@ -520,3 +555,4 @@ def add_variables(cfg: od.Config) -> None:
     add_weight_features(cfg)
     add_cutflow_features(cfg)
     add_test_variables(cfg)
+    add_gen_features(cfg)

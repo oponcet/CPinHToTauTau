@@ -11,6 +11,8 @@ from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 
 from httcp.util import enforce_hcand_type, IF_RUN2, IF_RUN3
 
+from httcp.calibration.tau import insert_calibrated_taus
+
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
@@ -60,7 +62,8 @@ def higgscand(
                                           "rawIdx"        : "int64",
                                           "IPx"           : "float64",
                                           "IPy"           : "float64",
-                                          "IPz"           : "float64"
+                                          "IPz"           : "float64",
+                                          "IPsig"         : "float64",
                                           }
                                          )
     else:
@@ -132,16 +135,6 @@ def assign_tauprod_mass_charge(
 
     return events
 
-"""
-is_pion         = lambda prods : ((np.abs(prods.pdgId) == 211) | (np.abs(prods.pdgId) == 321))
-is_photon       = lambda prods : prods.pdgId == 22
-has_one_pion    = lambda prods : (ak.sum(is_pion(prods),   axis = 1) == 1)[:,None]
-has_atleast_one_pion = lambda prods : (ak.sum(is_pion(prods),   axis = 1) >= 1)[:,None] # new
-has_three_pions = lambda prods : (ak.sum(is_pion(prods),   axis = 1) == 3)[:,None]
-has_photons     = lambda prods : (ak.sum(is_photon(prods), axis = 1) >  0)[:,None]
-has_no_photons  = lambda prods : (ak.sum(is_photon(prods), axis = 1) == 0)[:,None]
-"""
-
 def build_hcand_mask(hcand, hcandprods, dummy):
     is_pion         = lambda prods : ((np.abs(prods.pdgId) == 211) | (np.abs(prods.pdgId) == 321))
     is_photon       = lambda prods : prods.pdgId == 22
@@ -168,13 +161,17 @@ def build_hcand_mask(hcand, hcandprods, dummy):
 
 @selector(
     uses={
-        "channel_id", "TauProd.*", assign_tauprod_mass_charge,
+        "Tau.*",
+        "channel_id", "TauProd.*",
+        assign_tauprod_mass_charge,
+        insert_calibrated_taus,
     },
     produces={
         "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.charge", "hcand.rawIdx", "hcand.decayMode",
-        IF_RUN3("hcand.IPx", "hcand.IPy", "hcand.IPz"),
+        IF_RUN3("hcand.IPx", "hcand.IPy", "hcand.IPz"), "hcand.IPsig",
         "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass", "hcandprod.charge", "hcandprod.pdgId", "hcandprod.tauIdx",
         assign_tauprod_mass_charge,
+        insert_calibrated_taus,
     },
     exposed=False,
 )
@@ -242,20 +239,26 @@ def higgscandprod(
     events = set_ak_column(events, "hcand",     hcand)
     events = set_ak_column(events, "hcandprod", hcand_prods_array)
 
+    if self.dataset_inst.is_mc:
+        events = self[insert_calibrated_taus](events)
+    
     # set Muon, Electron and Tau from hcands
     hcand_idx = events.hcand.rawIdx
-    hcand_ele_idxs = ak.where(events.channel_id == etau_id, hcand_idx[:,0:1], events.Electron.rawIdx[:,:0])
-    hcand_muo_idxs = ak.where(events.channel_id == mutau_id, hcand_idx[:,0:1], events.Muon.rawIdx[:,:0])
+    raw_ele_idx_dummy = events.Electron.rawIdx[:,:0]
+    raw_mu_idx_dummy  = events.Muon.rawIdx[:,:0]
+    raw_tau_idx_dummy = events.Tau.rawIdx[:,:0]
+    
+    hcand_ele_idxs = ak.where(events.channel_id == etau_id, hcand_idx[:,0:1], raw_ele_idx_dummy)
+    hcand_muo_idxs = ak.where(events.channel_id == mutau_id, hcand_idx[:,0:1], raw_mu_idx_dummy)
     hcand_tau_idxs = ak.where(events.channel_id == etau_id,
                               hcand_idx[:,1:2],
                               ak.where(events.channel_id == mutau_id,
                                        hcand_idx[:,1:2],
                                        ak.where(events.channel_id == tautau_id,
                                                 hcand_idx,
-                                                events.Tau.rawIdx[:,:0])
+                                                raw_tau_idx_dummy)
                                        )
                               )
-
 
     return events, SelectionResult(
         steps={

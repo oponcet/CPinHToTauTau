@@ -39,6 +39,7 @@ def trigger_selection(
     leg_matched_trigobj_idxs_concat  = []
     leg_matched_trigobjs_concat      = []
     leg_min_pt_concat                = []
+    leg_max_eta_concat               = []
 
     fired_and_all_legs_match_concat  = []
     
@@ -55,6 +56,7 @@ def trigger_selection(
         is_single_mu = trigger.has_tag("single_mu")
         is_cross_mu  = trigger.has_tag("cross_mu_tau")
         is_cross_tau = trigger.has_tag("cross_tau_tau")
+        is_cross_tau_jet = trigger.has_tag("cross_tau_tau_jet")
 
         trigger_type_temp = ak.Array([""])
         if is_single_e:
@@ -67,6 +69,8 @@ def trigger_selection(
             trigger_type_temp = ak.Array(["cross_mu_tau"])
         elif is_cross_tau:
             trigger_type_temp = ak.Array(["cross_tau_tau"])
+        elif is_cross_tau_jet:
+            trigger_type_temp = ak.Array(["cross_tau_tau_jet"])
             
         trigger_name_temp = ak.Array([trigger.name])
         trigger_name_array, _ = ak.broadcast_arrays(trigger_name_temp, events.event)
@@ -100,6 +104,7 @@ def trigger_selection(
         leg_matched_trigobj_idxs         = []
         leg_matched_trigobjs             = []
         leg_min_pt                       = []
+        leg_max_eta                      = []
         leg_matched_trigobj_idxs_concat_legs  = None
         leg_matched_trigobjs_concat_legs      = None
         all_legs_match = True
@@ -115,6 +120,11 @@ def trigger_selection(
                 min_pt = leg.min_pt * ak.ones_like(events.event)
                 leg_min_pt.append(min_pt[:,None])
                 leg_mask = leg_mask & (events.TrigObj.pt >= leg.min_pt)
+            # eta cut
+            if leg.max_abseta is not None:
+                max_eta = leg.max_abseta * ak.ones_like(events.event)
+                leg_max_eta.append(max_eta[:,None])
+                leg_mask = leg_mask & (np.abs(events.TrigObj.eta) <= leg.max_abseta)
             # trigger bits match
             if leg.trigger_bits is not None:
                 # OR across bits themselves, AND between all decision in the list
@@ -154,6 +164,11 @@ def trigger_selection(
         leg_min_pt_concat_legs = ak.concatenate([*leg_min_pt], axis=1)
         leg_min_pt_concat.append(leg_min_pt_concat_legs[:,None])
 
+        # store the trigger legs pt threshold mentioned in the triggers description [probably redundant]
+        leg_max_eta_concat_legs = ak.concatenate([*leg_max_eta], axis=1)
+        leg_max_eta_concat.append(leg_max_eta_concat_legs[:,None])
+
+        
         #from IPython import embed; embed()
         
     fired_and_all_legs_match_concat = ak.concatenate([*fired_and_all_legs_match_concat], axis=1)
@@ -162,6 +177,7 @@ def trigger_selection(
     trigger_types            = ak.concatenate(trigger_types, axis=1)
     #from IPython import embed; embed()
     leg_min_pt_concat        = ak.concatenate([*leg_min_pt_concat], axis=1)
+    leg_max_eta_concat       = ak.concatenate([*leg_max_eta_concat], axis=1)
     leg_matched_trigobj_idxs = ak.concatenate([*leg_matched_trigobj_idxs_concat], axis=1)
     leg_matched_trigobjs     = ak.concatenate([*leg_matched_trigobjs_concat], axis=1)
     
@@ -221,7 +237,12 @@ def trigger_selection(
     # ]
     leg2_minpt_filtered    = ak.fill_none(ak.firsts(leg_minpt_filtered[:,:,1:2], axis=-1), -1.0)
 
-    
+
+    leg_maxeta_filtered     = ak.drop_none(ak.mask(leg_max_eta_concat,  fired_and_all_legs_match_concat))
+    leg1_maxeta_filtered    = ak.firsts(leg_maxeta_filtered[:,:,0:1], axis=-1) # 
+    leg2_maxeta_filtered    = ak.fill_none(ak.firsts(leg_maxeta_filtered[:,:,1:2], axis=-1), -1.0)
+
+        
     # leg mathced trig obj indices:
     # [
     #  [ [[0]] ],
@@ -323,6 +344,8 @@ def trigger_selection(
         "trigger_ids"    : trigger_ids_filtered,
         "leg1_minpt"     : leg1_minpt_filtered,
         "leg2_minpt"     : leg2_minpt_filtered,
+        "leg1_maxeta"     : leg1_maxeta_filtered,
+        "leg2_maxeta"     : leg2_maxeta_filtered,
         "leg1_matched_trigobj_idxs" : leg1_matched_trigobj_idxs_filtered,
         "leg2_matched_trigobj_idxs" : leg2_matched_trigobj_idxs_filtered,
         "leg1_matched_trigobjs" : leg1_matched_trigobjs_filtered,
