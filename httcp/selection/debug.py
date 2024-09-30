@@ -163,7 +163,7 @@ def debug_main(events, results, triggers):
     channel_table = tabulate(channels, ["channel", "nEvents", "eff"], tablefmt="pretty")
     
     print(channel_table)
-    print(f"Total selected events in etau, mutau and tautau chennels : {etau_ev+mtau_ev+ttau_ev}\n\n")
+    print(f" ---> Total selected events in etau, mutau and tautau chennels : {etau_ev+mtau_ev+ttau_ev}\n\n")
 
 
 
