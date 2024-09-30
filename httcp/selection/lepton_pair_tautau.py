@@ -9,7 +9,7 @@ from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.selection.util import create_collections_from_masks
 from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
-
+from columnflow.columnar_util import optional_column as optional
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -20,12 +20,10 @@ maybe_import("coffea.nanoevents.methods.nanoaod")
 
 def get_sorted_pair(
         dtrpairs: ak.Array,
-        dtrpairindices: ak.Array,
 )->ak.Array:
     # redundant, because taus were sorted by the deeptau before
     sorted_idx = ak.argsort(dtrpairs["0"].rawDeepTau2018v2p5VSjet, ascending=False)
     dtrpairs = dtrpairs[sorted_idx]
-    dtrpairindices = dtrpairindices[sorted_idx]
 
     # if the deep tau val of tau-0 is the same for the first two pair
     where_same_iso_1 = (
@@ -39,7 +37,7 @@ def get_sorted_pair(
                           ak.argsort(dtrpairs["1"].rawDeepTau2018v2p5VSjet, ascending=False),
                           sorted_idx)
     dtrpairs = dtrpairs[sorted_idx]
-    dtrpairindices = dtrpairindices[sorted_idx]
+
     # if the deep tau val of tau-1 is the same for the first two pair 
     where_same_iso_2 = (
         ak.firsts(dtrpairs["1"].rawDeepTau2018v2p5VSjet[:,:1], axis=1)
@@ -52,7 +50,7 @@ def get_sorted_pair(
                           ak.argsort(dtrpairs["0"].pt, ascending=False),
                           sorted_idx)
     dtrpairs = dtrpairs[sorted_idx]
-    dtrpairindices = dtrpairindices[sorted_idx]
+
     # check if the first two pairs have the second tau with same rawDeepTau2017v2p1VSjet
     where_same_pt_1 = (
         ak.firsts(dtrpairs["0"].pt[:,:1], axis=1)
@@ -67,25 +65,25 @@ def get_sorted_pair(
 
     # finally, the pairs are sorted
     dtrpairs = dtrpairs[sorted_idx]
-    dtrpairindices = dtrpairindices[sorted_idx]
+
 
     lep1 = ak.singletons(ak.firsts(dtrpairs["0"], axis=1))
     lep2 = ak.singletons(ak.firsts(dtrpairs["1"], axis=1))
 
-    lep1idx = ak.singletons(ak.firsts(dtrpairindices["0"], axis=1))
-    lep2idx = ak.singletons(ak.firsts(dtrpairindices["1"], axis=1))
-    # print(f"lep1 pt: {lep1.pt}")
-    # print(f"lep2 pt: {lep2.pt}")
     dtrpair    = ak.concatenate([lep1, lep2], axis=1) 
-    dtrpairidx = ak.concatenate([lep1idx, lep2idx], axis=1)     
 
-    return dtrpairidx
+    return dtrpair
 
 
 
 @selector(
     uses={
-        "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
+        optional("Tau.pt"),
+        optional("Tau.pt_tautau"),
+        optional("Tau.mass"),
+        optional("Tau.mass_tautau"),
+        "Tau.eta", "Tau.phi",
+        "Tau.rawIdx",
         "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet",
         "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", "Tau.idDeepTau2018v2p5VSmu",
     },
@@ -98,6 +96,7 @@ def tautau_selection(
         **kwargs,
 ) -> tuple[ak.Array, SelectionResult, ak.Array]:
 
+    taus            = events.Tau[lep_indices]
     # Extra channel specific selections on tau
     # -------------------- #
     tau_tagger      = self.config_inst.x.deep_tau_tagger
@@ -106,29 +105,33 @@ def tautau_selection(
     vs_mu_wp        = self.config_inst.x.deep_tau_info[tau_tagger].vs_m["tautau"]
     vs_jet_wp       = self.config_inst.x.deep_tau_info[tau_tagger].vs_j["tautau"]
 
-    taus            = events.Tau[lep_indices]
     is_good_tau     = (
         (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j[vs_jet_wp])
         & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e[vs_e_wp])
         & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m[vs_mu_wp])
     )
-    lep_indices    = lep_indices[is_good_tau]
+
+    taus = taus[is_good_tau]
+
+    if self.dataset_inst.is_mc:
+        taus = ak.without_field(taus, "pt")
+        taus = ak.with_field(taus, taus.pt_tautau, "pt")
+        taus = ak.without_field(taus, "mass")
+        taus = ak.with_field(taus, taus.mass_tautau, "mass")
+    
     # -------------------- # 
 
     #from IPython import embed; embed()
     
     # Sorting leps [Tau] by deeptau [descending]
-    lep_sort_key       = events.Tau[lep_indices].rawDeepTau2018v2p5VSjet
-    lep_sorted_indices = ak.argsort(lep_sort_key, axis=-1, ascending=False)
-    lep_indices        = lep_indices[lep_sorted_indices]
+    taus_sort_idx = ak.argsort(taus.rawDeepTau2018v2p5VSjet, axis=-1, ascending=False)
+    taus = taus[taus_sort_idx]
 
-    leps_pair        = ak.combinations(events.Tau[lep_indices], 2, axis=1)
-    lep_indices_pair = ak.combinations(lep_indices, 2, axis=1)
+    leps_pair        = ak.combinations(taus, 2, axis=1)
     
     # pair of leptons: probable higgs candidate -> leps_pair
     # and their indices                         -> lep_indices_pair 
     lep1, lep2 = ak.unzip(leps_pair)
-    lep1_idx, lep2_idx = ak.unzip(lep_indices_pair)
 
     preselection = {
         "tautau_is_pt_40"      : (lep1.pt > 40) & (lep2.pt > 40),
@@ -138,7 +141,7 @@ def tautau_selection(
         "tautau_invmass_40"    : (1*lep1 + 1*lep2).mass > 40, # invariant_mass(lep1, lep2) > 40
     }
 
-    good_pair_mask = lep1_idx >= 0
+    good_pair_mask = lep1.rawIdx >= 0
     pair_selection_steps = {}
     pair_selection_steps["tautau_starts_with"] = good_pair_mask
     for cut in preselection.keys():
@@ -146,21 +149,17 @@ def tautau_selection(
         pair_selection_steps[cut] = good_pair_mask
         
     leps_pair_sel = leps_pair[good_pair_mask]
-    lep_indices_pair_sel = lep_indices_pair[good_pair_mask]
 
-    #lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
-    #lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
-    lep1idx = lep_indices_pair_sel["0"]
-    lep2idx = lep_indices_pair_sel["1"]
+    lep1, lep2  = ak.unzip(leps_pair)
     
-    lep_indices_pair_sel_single = ak.concatenate([lep1idx, lep2idx], axis=1)
+    leps_pair_sel_single = ak.concatenate([lep1, lep2], axis=1)
 
-    where_many   = ak.num(lep_indices_pair_sel, axis=1) > 1
-    pair_indices = ak.where(where_many, 
-                            get_sorted_pair(leps_pair_sel,
-                                            lep_indices_pair_sel),
-                            lep_indices_pair_sel_single)
+    where_many   = ak.num(leps_pair_sel_single, axis=1) > 2
 
+    pairs = ak.where(where_many, 
+                     get_sorted_pair(leps_pair_sel),
+                     leps_pair_sel_single)
+    
     return SelectionResult(
         aux = pair_selection_steps,
-    ), pair_indices
+    ), pairs

@@ -9,6 +9,7 @@ from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.selection.util import create_collections_from_masks
 from columnflow.util import maybe_import
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
+from columnflow.columnar_util import optional_column as optional
 
 from httcp.util import transverse_mass
 from httcp.util import IF_RUN2, IF_RUN3
@@ -71,7 +72,7 @@ def get_sorted_pair(
     # Concatenate lep1 and lep2 to create the final dtrpair
     dtrpair    = ak.concatenate([lep1, lep2], axis=1)
 
-    return dtrpair.rawIdx
+    return dtrpair
 
 
 
@@ -80,10 +81,14 @@ def get_sorted_pair(
     uses={
         # muon
         "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
-        "Muon.charge", "Muon.pfRelIso03_all",
+        "Muon.charge", "Muon.pfRelIso03_all", "Muon.rawIdx",
         # tau
-        "Tau.pt", "Tau.eta", "Tau.phi", "Tau.mass",
-        "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet",
+        optional("Tau.pt"),
+        optional("Tau.pt_mutau"),
+        "Tau.eta", "Tau.phi",
+        optional("Tau.mass"),
+        optional("Tau.mass_mutau"),
+        "Tau.charge", "Tau.rawDeepTau2018v2p5VSjet", "Tau.rawIdx",
         "Tau.idDeepTau2018v2p5VSjet", "Tau.idDeepTau2018v2p5VSe", "Tau.idDeepTau2018v2p5VSmu",
         # met
         IF_RUN2("MET.pt", "MET.phi"),
@@ -102,7 +107,8 @@ def mutau_selection(
     # lep1 and lep2 e.g.
     # lep1: [ [m1], [m1],    [m1,m2], [],   [m1,m2] ]
     # lep2: [ [t1], [t1,t2], [t1],    [t1], [t1,t2] ]
-    taus            = events.Tau[lep2_indices]
+    muons = events.Muon[lep1_indices] 
+    taus  = events.Tau[lep2_indices]
 
     # Extra channel specific selections on m or tau
     # -------------------- #
@@ -117,22 +123,26 @@ def mutau_selection(
         & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e[vs_e_wp])
         & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m[vs_mu_wp])
     )
-    lep2_indices    = lep2_indices[is_good_tau]
+
+    taus = taus[is_good_tau]
+
+    if self.dataset_inst.is_mc:
+        taus = ak.without_field(taus, "pt")
+        taus = ak.with_field(taus, taus.pt_mutau, "pt")
+        taus = ak.without_field(taus, "mass")
+        taus = ak.with_field(taus, taus.mass_mutau, "mass")
+
     # -------------------- # 
     
     met = events.MET if self.config_inst.campaign.x.year < 2022 else events.PuppiMET
 
     # Sorting lep1 [Electron] by isolation [ascending]
-    lep1_sort_key       = events.Muon[lep1_indices].pfRelIso03_all
-    lep1_sorted_indices = ak.argsort(lep1_sort_key, axis=-1, ascending=True)
-    lep1_indices        = lep1_indices[lep1_sorted_indices]
-    # Sorting lep2 [Tau] by DeepTau [descending]
-    lep2_sort_key       = events.Tau[lep2_indices].rawDeepTau2018v2p5VSjet
-    lep2_sorted_indices = ak.argsort(lep2_sort_key, axis=-1, ascending=False)
-    lep2_indices        = lep2_indices[lep2_sorted_indices]
-
-    leps_pair        = ak.cartesian([events.Muon[lep1_indices], 
-                                     events.Tau[lep2_indices]], axis=1)
+    muons_sort_idxs = ak.argsort(muons.pfRelIso03_all, axis=-1, ascending=True)
+    muons = muons[muons_sort_idxs]
+    taus_sort_idx = ak.argsort(taus.rawDeepTau2018v2p5VSjet, axis=-1, ascending=False)
+    taus = taus[taus_sort_idx]
+        
+    leps_pair        = ak.cartesian([muons, taus], axis=1)
     
     # pair of leptons: probable higgs candidate -> leps_pair
     # and their indices                         -> lep_indices_pair 
@@ -154,17 +164,16 @@ def mutau_selection(
         
     leps_pair_sel = leps_pair[good_pair_mask]
 
-    lep1 = leps_pair_sel["0"]
-    lep2 = leps_pair_sel["1"]
+    lep1, lep2 = ak.unzip(leps_pair_sel)
     
     leps_pair_sel_single = ak.concatenate([lep1,lep2], axis=1)
 
     where_many   = ak.num(leps_pair_sel_single, axis=1) > 2
     
-    pair_indices = ak.where(where_many,
-                            get_sorted_pair(leps_pair_sel),
-                            leps_pair_sel_single.rawIdx)
+    pairs = ak.where(where_many,
+                     get_sorted_pair(leps_pair_sel),
+                     leps_pair_sel_single)
 
     return SelectionResult(
         aux = pair_selection_steps,
-    ), pair_indices
+    ), pairs

@@ -11,6 +11,7 @@ from columnflow.util import maybe_import
 from columnflow.columnar_util import set_ak_column
 
 from httcp.calibration.tau import tau_energy_scale
+from httcp.util import IF_RUN2, IF_RUN3
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
