@@ -109,6 +109,7 @@ def trigger_object_matching_deep(
         vectors1: ak.Array,
         vectors2: ak.Array,
         legminpt: ak.Array,
+        legmaxeta: ak.Array,
         checkpt: bool = True,
         threshold: float = 0.5,
         axis: int = 1,
@@ -132,9 +133,13 @@ def trigger_object_matching_deep(
     # pt match
     if checkpt:
         obj_pt = vectors1.pt
+        obj_eta = np.abs(vectors1.eta)
         obj_pt_brdcst, minpt_brdcst = ak.broadcast_arrays(obj_pt, legminpt[:,None], depth_limit=-1)
-        match_pt = (obj_pt_brdcst - minpt_brdcst) >= 0.0 # 100000 * var * var * ?bool
-        match_dr = match_dr & match_pt
+        obj_eta_brdcst, maxeta_brdcst = ak.broadcast_arrays(obj_eta, legmaxeta[:,None], depth_limit=-1)        
+        #match_pt = (obj_pt_brdcst - minpt_brdcst) >= 0.0 # 100000 * var * var * ?bool
+        match_pt  = obj_pt_brdcst >= minpt_brdcst   # 100000 * var * var * ?bool
+        match_eta = obj_eta_brdcst <= maxeta_brdcst # 100000 * var * var * ?bool
+        match_dr = match_dr & match_pt & match_eta
         
     match_dr = ak.fill_none(match_dr, False) # 100000 * var * var * bool
     match_dr = ak.enforce_type(ak.values_astype(match_dr, "bool"), "var * var * bool") # 100000 * var * var * bool
@@ -170,12 +175,16 @@ def getGenTauDecayMode(prod: ak.Array):
 
     is_ele  = np.abs(pids) == 11
     is_muon = np.abs(pids) == 13
-    is_charged = ((np.abs(pids) == 211) | (np.abs(pids) == 321))
-    is_neutral = ((pids == 111) | (pids == 311) | (pids == 130) | (pids == 310))
+    is_charged = ((np.abs(pids) == 211) | (np.abs(pids) == 321)) # | (np.abs(pids) == 323) | (np.abs(pids) == 325) | (np.abs(pids) == 327) | (np.abs(pids) == 329) )
+    is_neutral = ((pids == 111) | (pids == 311) | (pids == 130) | (pids == 310)) # | (pids == 313) | (pids == 315) | (pids == 317) | (pids == 319))
 
     edecay = ak.sum(is_ele,  axis=-1) > 0
     mdecay = ak.sum(is_muon, axis=-1) > 0
-    hdecay = (ak.sum(is_charged, axis=-1) > 0) | (ak.sum(is_neutral, axis=-1) >= 0)
+    #hdecay = (ak.sum(is_charged, axis=-1) > 0) | (ak.sum(is_neutral, axis=-1) >= 0)
+    hdecay = (
+        (ak.sum(is_charged, axis=-1) > 0)
+        & (ak.sum(is_neutral, axis=-1) >= 0)
+    ) # either, one prong i.e. only one charged hadron or more than one prong where at least one charged hadron with zero or more neutral hadrons
 
     Nc = ak.sum(is_charged, axis=-1)
     Np = ak.sum(is_neutral, axis=-1)
