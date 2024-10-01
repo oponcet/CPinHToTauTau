@@ -141,7 +141,8 @@ def ProduceCosPsi(
     # calculate angle
     num    = (ez.cross(p)).dot(n.cross(p))
     den    = (ez.cross(p).absolute() * n.cross(p).absolute())
-    cospsi = num/den #ak.where(np.abs(den) > 0.0, num/den, 0.0)
+    # cospsi : always +ve
+    cospsi = np.abs(num/den)
     psi    = np.arccos(cospsi)
 
     return events, psi

@@ -394,7 +394,7 @@ def add_hcand_features(cfg: od.Config) -> None:
         name="Alpha",
         expression="alpha",
         null_value=EMPTY_FLOAT,
-        binning=(20, 0, np.pi),
+        binning=(20, 0, np.pi/2.0),
         x_title=r"$\alpha_{-}$",
     )
     # alpha minus Gen
@@ -402,7 +402,7 @@ def add_hcand_features(cfg: od.Config) -> None:
         name="AlphaGen",
         expression="alphaGen",
         null_value=EMPTY_FLOAT,
-        binning=(20, 0, np.pi),
+        binning=(20, 0, np.pi/2.0),
         x_title=r"$\alpha_{-} [GenLevel]$",
     )
     # conditional PhiCP
