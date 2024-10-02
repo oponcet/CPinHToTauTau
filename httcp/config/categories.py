@@ -1,188 +1,88 @@
+
 # coding: utf-8
 
 """
 Definition of categories.
+- etau__incl__os__iso
+- etau__incl__os__noniso
+- etau__incl__ss__iso
+- etau__incl__ss__noniso
+- etau__2j__os__iso
+- etau__2j__os__noniso
+- etau__2j__ss__iso
+- etau__2j__ss__noniso
+- mutau__incl__os__iso
+- mutau__incl__os__noniso
+- mutau__incl__ss__iso
+- mutau__incl__ss__noniso
+- mutau__2j__os__iso
+- mutau__2j__os__noniso
+- mutau__2j__ss__iso
+- mutau__2j__ss__noniso
+- tautau__incl__os__iso : tautau incl opposite sign both tau passing MediumvsJet WP = SR (D)
+- tautau__incl__os__noniso : tautau incl opposite sign both tau passing VVLoosevsJet WP but not Medium = AR (C)
+- tautau__incl__ss__iso : tautau incl same sign both tau passing MediumvsJet WP = DR (A)
+- tautau__incl__ss__noniso : tautau incl same sign both tau passing VVLoosevsJet WP but not Medium = DR (B)
+- tautau__2j__os__iso
+- tautau__2j__os__noniso
+- tautau__2j__ss__iso
+- tautau__2j__ss__noniso
+
 """
 
 import order as od
 
-from columnflow.config_util import add_category
+from columnflow.config_util import add_category, create_category_combinations
 
 
 def add_categories(config: od.Config) -> None:
     """
     Adds all categories to a *config*.
     """
-    add_category(
-        config,
-        name="incl",
-        id=1,
-        selection="cat_incl",
-        label="inclusive",
-    )
-    add_category(
-        config,
-        name="2j",
-        id=100,
-        selection="cat_2j",
-        label="2 jets",
-    )
+    # lepton channels
+    add_category(config, name="etau", id=1, selection="cat_etau", label=r"$e\tau_{h}$")
+    add_category(config, name="mutau", id=2, selection="cat_mutau", label=r"$\mu\tau_{h}$")
+    add_category(config, name="tautau", id=4, selection="cat_tautau", label=r"$\tau_{h}\tau_{h}$")
 
-    # ------------------------------- #
-    #              e-tau              #
-    # ------------------------------- #
-    add_category(
-        config,
-        name="etau",
-        id=101,
-        selection="sel_etau",
-        label="etau",
-    )
-    # add_category(
-    #     config,
-    #     name="etau_pi",
-    #     id=102,
-    #     selection="sel_etau_pi",
-    #     label="etau_pion",
-    # )
-    # add_category(
-    #     config,
-    #     name="etau_rho",
-    #     id=103,
-    #     selection="sel_etau_rho",
-    #     label="etau_rho",
-    # )
-    # add_category(
-    #     config,
-    #     name="etau_a1_1pr_2pi0",
-    #     id=104,
-    #     selection="sel_etau_a1_1pr_2pi0",
-    #     label="etau_a1_1pr_2pi0",
-    # )
-    # add_category(
-    #     config,
-    #     name="etau_a1_3pr_0pi0",
-    #     id=105,
-    #     selection="sel_etau_a1_3pr_0pi0",
-    #     label="etau_a1_3pr_0pi0",
-    # )
-    # add_category(
-    #     config,
-    #     name="etau_a1_3pr_1pi0",
-    #     id=106,
-    #     selection="sel_etau_a1_3pr_1pi0",
-    #     label="etau_a1_3pr_1pi0",
-    # )
+    # Fake factors regions
+    add_category(config, name="os", id=10, selection="cat_os", label="Opposite sign", tags={"os"})
+    add_category(config, name="ss", id=11, selection="cat_ss", label="Same sign", tags={"ss"})
+    add_category(config, name="iso", id=12, selection="cat_iso", label=r"$\tau_{h,2} isolated$", tags={"iso"})
+    add_category(config, name="noniso", id=13, selection="cat_noniso", label=r"$\tau_{h,2} non-isolated$", tags={"noniso"})  # noqa: E501
 
-    # ------------------------------- #
-    #              mu-tau             #
-    # ------------------------------- #
-    add_category(
-        config,
-        name="mutau",
-        id=201,
-        selection="sel_mutau",
-        label="mutau",
-    )
-    # add_category(
-    #     config,
-    #     name="mutau_pi",
-    #     id=202,
-    #     selection="sel_mutau_pi",
-    #     label="mutau_pion",
-    # )
-    # add_category(
-    #     config,
-    #     name="mutau_rho",
-    #     id=203,
-    #     selection="sel_mutau_rho",
-    #     label="mutau_rho",
-    # )
-    # add_category(
-    #     config,
-    #     name="mutau_a1_1pr_2pi0",
-    #     id=204,
-    #     selection="sel_mutau_a1_1pr_2pi0",
-    #     label="mutau_a1_1pr_2pi0",
-    # )
-    # add_category(
-    #     config,
-    #     name="mutau_a1_3pr_0pi0",
-    #     id=205,
-    #     selection="sel_mutau_a1_3pr_0pi0",
-    #     label="mutau_a1_3pr_0pi0",
-    # )
-    # add_category(
-    #     config,
-    #     name="mutau_a1_3pr_1pi0",
-    #     id=206,
-    #     selection="sel_mutau_a1_3pr_1pi0",
-    #     label="mutau_a1_3pr_1pi0",
-    # )
+    # kinematic categories
+    add_category(config, name="incl", id=100, selection="cat_incl", label="inclusive")
+    add_category(config, name="2j", id=110, selection="cat_2j", label="2 jets")
 
-    # ------------------------------- #
-    #             tau-tau             #
-    # ------------------------------- #
-    add_category(
-        config,
-        name="tautau",
-        id=301,
-        selection="sel_tautau",
-        label="tautau_channel",
-    )
-    # add_category(
-    #     config,
-    #     name="tautau_pionpion",
-    #     id=302,
-    #     selection="sel_tautau_pionpion",
-    #     label="tautau_channel_pi_pi",
-    # )
-    # add_category(
-    #     config,
-    #     name="tautau_rhorho",
-    #     id=303,
-    #     selection="sel_tautau_rhorho",
-    #     label="tautau_channel_rho_rho",
-    # )
-    # add_category(
-    #     config,
-    #     name="tautau_a1a1",
-    #     id=304,
-    #     selection="sel_tautau_a1a1",
-    #     label="tautau_channel_a1_a1",
-    # )
-    # add_category(
-    #     config,
-    #     name="tautau_pionrho",
-    #     id=305,
-    #     selection="sel_tautau_pionrho",
-    #     label="tautau_channel_pi_rho",
-    # )
-    # add_category(
-    #     config,
-    #     name="tautau_a1pion",
-    #     id=306,
-    #     selection="sel_tautau_a1pion",
-    #     label="tautau_channel_a1_pion",
-    # )
-    # add_category(
-    #     config,
-    #     name="tautau_a1rho",
-    #     id=307,
-    #     selection="sel_tautau_a1rho",
-    #     label="tautau_channel_a1_rho",
-    # )
-    add_category(
-        config,
-        name="FFDRIso_tautau",
-        id=500,
-        selection="sel_FFDRIso_tautau",
-        label="FFDRIso_tautau_channel",
-    )
-    add_category(
-        config,
-        name="FFDRantiIso_tautau",
-        id=600,
-        selection="sel_FFDRantiIso_tautau",
-        label="FFDRantiIso_tautau_channel",
-    )
+    #
+    # build groups
+    #
+
+    categories = {
+        # channels first
+        "channel": [config.get_category("etau"), config.get_category("mutau"), config.get_category("tautau")],
+        # kinematic regions in the middle (to be extended)
+        "kin": [config.get_category("incl"), config.get_category("2j")],
+        # Fake factors regions last
+        "sign": [config.get_category("os"), config.get_category("ss")],
+        "tau2": [config.get_category("iso"), config.get_category("noniso")],
+    }
+
+    def name_fn(categories):
+        return "__".join(cat.name for cat in categories.values() if cat)
+
+    def kwargs_fn(categories):
+        return {
+            # just increment the category id
+            # NOTE: for this to be deterministic, the order of the categories must no change!
+            "id": "+",
+            # join all tags
+            "tags": set.union(*[cat.tags for cat in categories.values() if cat]),
+            # auxiliary information
+            "aux": {
+                # the fake factors group name
+                "fakefactors_group": name_fn({name: cat for name, cat in categories.items() if name not in {"sign", "tau2"}}),
+            },
+        }
+
+    create_category_combinations(config, categories, name_fn, kwargs_fn)
