@@ -95,23 +95,31 @@ def tautau_selection(
         self: Selector,
         events: ak.Array,
         lep_indices: ak.Array,
+        tau_iso_mask: ak.Array,
         **kwargs,
 ) -> tuple[ak.Array, SelectionResult, ak.Array]:
 
-    #from IPython import embed; embed()
+    # # prepare vectors for output vectors
+    false_mask = (abs(events.event) < 0)
+    tau2_isolated = false_mask
+    leptons_os = false_mask
+    channel_id = np.uint8(1) * false_mask
 
-    # Extra channel specific selections on tau
-    # -------------------- #
-    taus            = events.Tau[lep_indices]
-    tau_tagger      = self.config_inst.x.deep_tau_tagger
-    tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
-    is_good_tau     = (
-        (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j.Medium)
-        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
-        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose)
-    )
-    lep_indices    = lep_indices[is_good_tau]
-    # -------------------- # 
+
+    # #from IPython import embed; embed()
+
+    # # Extra channel specific selections on tau
+    # # -------------------- #
+    # taus            = events.Tau[lep_indices]
+    # tau_tagger      = self.config_inst.x.deep_tau_tagger
+    # tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
+    # is_good_tau     = (
+    #     (taus.idDeepTau2018v2p5VSjet   >= tau_tagger_wps.vs_j.Medium)
+    #     & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
+    #     & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose)
+    # )
+    # lep_indices    = lep_indices[is_good_tau]
+    # # -------------------- # 
 
     
     # Sorting leps [Tau] by deeptau [descending]
@@ -121,39 +129,83 @@ def tautau_selection(
 
     leps_pair        = ak.combinations(events.Tau[lep_indices], 2, axis=1)
     lep_indices_pair = ak.combinations(lep_indices, 2, axis=1)
+
     
     # pair of leptons: probable higgs candidate -> leps_pair
     # and their indices                         -> lep_indices_pair 
     lep1, lep2 = ak.unzip(leps_pair)
     lep1_idx, lep2_idx = ak.unzip(lep_indices_pair)
 
+    # # determine the os/ss charge sign relation
+    is_os = (lep1.charge * lep2.charge) < 0
+
+    # Check if the number of isolated taus per event is 2 or more (passing Medium WPvsJet)
+    is_iso = ak.sum(tau_iso_mask, axis=1) >= 2
+
+    tau2_isolated = is_iso
+
     preselection = {
         "tautau_is_pt_40"      : (lep1.pt > 40) & (lep2.pt > 40),
         "tautau_is_eta_2p1"    : (np.abs(lep1.eta) < 2.1) & (np.abs(lep2.eta) < 2.1),
-        "tautau_is_os"         : (lep1.charge * lep2.charge) < 0,
+        # "leptons_os"         : (lep1.charge * lep2.charge) < 0,
         "tautau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  #deltaR(lep1, lep2) > 0.5,
+        # "tau2_isolated"        : is_iso
     }
 
+    # Initialize a mask to identify good pairs based on the condition that `lep1_idx` is non-negative.
     good_pair_mask = lep1_idx >= 0
+
+    # Create a dictionary to store the selection steps for pairs.
     pair_selection_steps = {}
     for cut in preselection.keys():
+        # Update the good_pair_mask by applying each cut in conjunction with the current mask.
         good_pair_mask = good_pair_mask & preselection[cut]
+        # Store the current state of the good_pair_mask in the pair_selection_steps dictionary.
         pair_selection_steps[cut] = good_pair_mask
-        
+
+
+    # Select pairs of leptons based on the good_pair_mask, filtering the original pairs.    
     leps_pair_sel = leps_pair[good_pair_mask]
     lep_indices_pair_sel = lep_indices_pair[good_pair_mask]
 
+    # Extract the first index of each lepton in the selected pairs, treating them as singletons.
     lep1idx = ak.singletons(ak.firsts(lep_indices_pair_sel["0"], axis=1))
     lep2idx = ak.singletons(ak.firsts(lep_indices_pair_sel["1"], axis=1))
 
+    
+    # Concatenate the indices of the selected leptons into a single array.
     lep_indices_pair_sel_single = ak.concatenate([lep1idx, lep2idx], axis=1)
 
+    # Identify pairs with more than one lepton.
     where_many   = ak.num(lep_indices_pair_sel, axis=1) > 1
+    # For pairs with multiple leptons, sort them; otherwise, use the single concatenated indices.
     pair_indices = ak.where(where_many, 
                             get_sorted_pair(leps_pair_sel,
                                             lep_indices_pair_sel),
                             lep_indices_pair_sel_single)
 
-    return SelectionResult(
-        aux = pair_selection_steps,
+    
+    # Update the isolation status and OS selection
+    tau2_isolated = ak.where(good_pair_mask, is_iso, False)  # Set based on good pairs
+    leptons_os = ak.where(good_pair_mask, is_os, False)  # Set based on good pairs
+    leptons_os = ak.fill_none(leptons_os, False)
+
+    # Save new columns in the events object
+    events = set_ak_column(events, "leptons_os", leptons_os)
+    events = set_ak_column(events, "tau2_isolated", tau2_isolated)
+
+
+    # Return a selection result containing the auxiliary steps and the calculated pair indices.
+    return events, SelectionResult(
+        steps = pair_selection_steps,
+        objects = {
+            "Tau": {
+                "Tau": 
+            }
+        }
+        aux = {
+            "tautau_pair" = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
+                                  events.Tau[tautau_indices_pair[:,1:2]]], 
+                                 axis=1)
+        },
     ), pair_indices

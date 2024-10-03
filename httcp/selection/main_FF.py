@@ -28,8 +28,6 @@ from httcp.selection.trigger import trigger_selection
 from httcp.selection.lepton_pair_etau import etau_selection
 from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
-from httcp.selection.lepton_pair_FFDRIsotautau import FFDRIso_tautau_selection
-from httcp.selection.lepton_pair_FFDRantiIsotautau import FFDRantiIso_tautau_selection
 from httcp.selection.event_category import get_categories
 from httcp.selection.match_trigobj import match_trigobj
 from httcp.selection.lepton_veto import *
@@ -116,8 +114,6 @@ def custom_increment_stats(
         etau_selection, 
         mutau_selection, 
         tautau_selection,
-        FFDRIso_tautau_selection, 
-        FFDRantiIso_tautau_selection, 
         get_categories,
         extra_lepton_veto, 
         double_lepton_veto, 
@@ -141,8 +137,6 @@ def custom_increment_stats(
         etau_selection, 
         mutau_selection, 
         tautau_selection,
-        FFDRIso_tautau_selection, 
-        FFDRantiIso_tautau_selection, 
         get_categories, 
         process_ids,
         extra_lepton_veto, 
@@ -204,7 +198,7 @@ def main_FF(
 
     # tau selection + anti Iso tau selec
     # e.g. tau_idx: [ [1], [0,1], [1,2], [], [0,1] ] 
-    events, tau_results, good_tau_indices = self[tau_selection](events,
+    events, tau_results, base_tau_indices, tau_iso_mask = self[tau_selection](events,
                                                                 call_force=True,
                                                                 **kwargs)
     results += tau_results
@@ -249,7 +243,7 @@ def main_FF(
     # e.g. [ [], [e1, tau1], [], [], [e1, tau2] ]
     etau_results, etau_indices_pair = self[etau_selection](events,
                                                            good_ele_indices,
-                                                           good_tau_indices,
+                                                           base_tau_indices,
                                                            call_force=True,
                                                            **kwargs)
     results += etau_results
@@ -266,7 +260,7 @@ def main_FF(
     # e.g. [ [mu1, tau1], [], [mu1, tau2], [], [] ]
     mutau_results, mutau_indices_pair = self[mutau_selection](events,
                                                               good_muon_indices,
-                                                              good_tau_indices,
+                                                              base_tau_indices,
                                                               call_force=True,
                                                               **kwargs)
     results += mutau_results
@@ -284,8 +278,9 @@ def main_FF(
     #embed()
     # tau-tau pair i.e. hcand selection
     # e.g. [ [], [tau1, tau2], [], [], [] ]
-    tautau_results, tautau_indices_pair = self[tautau_selection](events,
-                                                                 good_tau_indices,
+    events, tautau_results, tautau_indices_pair = self[tautau_selection](events,
+                                                                 base_tau_indices,
+                                                                 tau_iso_mask,
                                                                  call_force=True,
                                                                  **kwargs)
     results += tautau_results
@@ -294,38 +289,6 @@ def main_FF(
     tautau_pair = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
                                   events.Tau[tautau_indices_pair[:,1:2]]], 
                                  axis=1)
-
-    ##  DR Fake facotr tau-tau pair
-    # e.g. [ [], [tau1, tau2], [], [], [] ]
-    FFDRIso_tautau_results, FFDRIso_tautau_indices_pair = self[FFDRIso_tautau_selection](events,
-                                                                 good_tau_indices,
-                                                                 call_force=True,
-                                                                 **kwargs)
-    results += FFDRIso_tautau_results
-
-
-    FFDRIso_tautau_pair = ak.concatenate([events.Tau[FFDRIso_tautau_indices_pair[:,0:1]], 
-                                  events.Tau[FFDRIso_tautau_indices_pair[:,1:2]]], 
-                                 axis=1)
-
-    #### DR2 Fake facotr tau-tau pair -> good_antiIsotau_indices -> VVLoose  but !Medium
-    #  e.g. [ [], [tau1, tau2], [], [], [] ]
-    FFDRantiIso_tautau_results, FFDRantiIso_tautau_indices_pair = self[FFDRantiIso_tautau_selection](events,
-                                                                 good_tau_indices,
-                                                                 call_force=True,
-                                                                 **kwargs)
-    results += FFDRantiIso_tautau_results
-
-
-    FFDRantiIso_tautau_pair = ak.concatenate([events.Tau[FFDRantiIso_tautau_indices_pair[:,0:1]], 
-                                events.Tau[FFDRantiIso_tautau_indices_pair[:,1:2]]], 
-                                 axis=1)
-
-    #tautau_pair_matched_triggerID = ak.concatenate([matched_triggerID_tau[tautau_indices_pair[:,0:1]],
-    #                                                matched_triggerID_tau[tautau_indices_pair[:,1:2]]],
-    #                                               axis=1)
-
-    #from IPython import embed; embed()
     
     # channel selection
     # channel_id is now in columns
@@ -333,47 +296,9 @@ def main_FF(
                                                    trigger_results,
                                                    etau_indices_pair,
                                                    mutau_indices_pair,
-                                                   tautau_indices_pair,
-                                                   FFDRIso_tautau_indices_pair,
-                                                   FFDRantiIso_tautau_indices_pair)
+                                                   tautau_indices_pair)
     results += channel_results
-
-    print("get_categories in selection" )
-    # make sure events have at least one lepton pair
-    # # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
-    # hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
-
-    # # extra lepton veto
-    # # it is only applied on the events with one higgs candidate only
-    # events, extra_lepton_veto_results = self[extra_lepton_veto](events,
-    #                                                             veto_ele_indices,
-    #                                                             veto_muon_indices,
-    #                                                             hcand_pairs)
-    # results += extra_lepton_veto_results
-    
-    # # hcand results
-    # events, hcand_array, hcand_results = self[higgscand](events, hcand_pairs)
-    # results += hcand_results
-
-    # # hcand prod results
-    # events, hcandprod_results = self[higgscandprod](events, hcand_array)
-    # results += hcandprod_results
-
-    # # gen particles info
-    # # hcand-gentau match = True/False
-    # """
-    # if "is_signal" in list(self.dataset_inst.aux.keys()):
-    #     if self.dataset_inst.aux["is_signal"]:
-    #         #print("hcand-gentau matching")
-    #         events, gentau_results = self[gentau_selection](events, True)
-    #         results += gentau_results
-    # """
-    #from IPython import embed; embed()
-    #1/0
-
-    # create process ids
-    #events = self[process_ids](events, **kwargs)
-
+   
     # combined event selection after all steps
     event_sel = reduce(and_, results.steps.values())
     results.event = event_sel
@@ -397,8 +322,9 @@ def main_FF(
         stats,
     )
 
-    print("main_FF selection")
-    print("events.channel_id: ", events.channel_id)
+    # print("main_FF selection")
+    # print("events.channel_id: ", events.channel_id)
 
-    #from IPython import embed; embed()
+    # from IPython import embed; embed()
+
     return events, results
