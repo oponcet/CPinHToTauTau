@@ -13,6 +13,7 @@ import scinum as sn
 import hist
 from hist import Hist
 import matplotlib.cm as cm  # Importing color maps
+import copy
 
 
 
@@ -45,7 +46,7 @@ def load_histogram_data(pickle_file_path):
     try:
         with open(pickle_file_path, 'rb') as f:
             hist_data = pickle.load(f)
-            print("Histogram data loaded successfully!")
+            # print("Histogram data loaded successfully!")
             return hist_data
     except FileNotFoundError:
         print(f"Error: The file '{pickle_file_path}' was not found.")
@@ -103,7 +104,7 @@ def get_hist_by_category_var(hists_data, hists_mc, category):
     for dataset in hists_data.keys():
         category_axis = hists_data[dataset].axes['category']
         if category not in category_axis:
-            print(f"Error: Category {category} not found in the histogram data for dataset {dataset}")
+            print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
         hists_data_cat[dataset] = hists_data[dataset][category_index, :, :, :].project('tau_1_pt')
@@ -112,7 +113,7 @@ def get_hist_by_category_var(hists_data, hists_mc, category):
     for dataset in hists_mc.keys():
         category_axis = hists_mc[dataset].axes['category']
         if category not in category_axis:
-            print(f"Error: Category {category} not found in the histogram data for dataset {dataset}")
+            print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
         hists_mc_cat[dataset]  = hists_mc[dataset][category_index, :, :, :].project('tau_1_pt')
@@ -136,7 +137,7 @@ def convert_all_hist_tonumpy(hists_data, hists_mc, variable,category):
     for dataset in hists_data.keys():
         category_axis = hists_data[dataset].axes['category']
         if category not in category_axis:
-            print(f"Error: Category {category} not found in the histogram data for dataset {dataset}")
+            print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
         hists_data_np[dataset] = hists_data[dataset][category_index, :, :, :].project('tau_1_pt').values()
@@ -146,7 +147,7 @@ def convert_all_hist_tonumpy(hists_data, hists_mc, variable,category):
     for dataset in hists_mc.keys():
         category_axis = hists_mc[dataset].axes['category']
         if category not in category_axis:
-            print(f"Error: Category {category} not found in the histogram data for dataset {dataset}")
+            print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
         hists_mc_np[dataset] = hists_mc[dataset][category_index, :, :, :].project('tau_1_pt').values()
@@ -168,19 +169,28 @@ def convert_all_hist_tonumpy(hists_data, hists_mc, variable,category):
     return hists_data_np, hists_mc_np, hists_data_variance_np, hists_mc_variance_np, variable_bin_edges, variable_centers
 
 
-def plot_hist_cat(hists_data_cat, hists_mc_cat, cat):
+def plot_hist_cat(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
     '''
     Plot histograms for a specific category
     '''
 
     hep.style.use(hep.style.CMS)
 
+    hists_data_cat = copy.deepcopy(hists_data_cat_)
+    hists_mc_cat = copy.deepcopy(hists_mc_cat_)
+
+    hists_mc_data_sub = hists_mc_data_sub_.copy() if hists_mc_data_sub_ is not None else None
+    
+    # print(f">>>>>>>>>>>>>>>>>>>>> Data histograms: \n{hists_data_cat}")
+    # print(f">>>>>>>>>>>>>>>>>>>>> MC histograms: \n{hists_mc_cat}")
+    # print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction histograms: \n{hists_mc_data_sub}")
+
     # Initialize the sum variable as None
     hists_data_cat_sum = None
 
     # Loop over the datasets to sum histograms
     for dataset in hists_data_cat:
-        print(dataset)
+        # print(dataset)
         hist = hists_data_cat[dataset]
 
         # Initialize the sum histogram if it's None
@@ -207,6 +217,7 @@ def plot_hist_cat(hists_data_cat, hists_mc_cat, cat):
     # Plot stacked MC histograms
     mc_total = None  # This will store the total MC histogram
     mc_labels = list(hists_mc_cat.keys())
+    print(f"MC labels: {mc_labels}")
 
     # Prepare a variable to keep track of the cumulative height of the stack
     mc_cumulative = None  
@@ -214,10 +225,13 @@ def plot_hist_cat(hists_data_cat, hists_mc_cat, cat):
     legend_entries = set()
 
     for idx, dataset in enumerate(mc_labels):
+        print(f"Processing dataset: {dataset}")
         mc_hist = hists_mc_cat[dataset]
 
         # Ensure no negative values and only work with non-negative values
         mc_values = np.maximum(mc_hist.values(), 0)  # Ensure MC values are non-negative
+
+        # print(f"MC values: {mc_values}")
 
         # If mc_cumulative is None, start with the first histogram
         if mc_cumulative is None:
@@ -260,6 +274,17 @@ def plot_hist_cat(hists_data_cat, hists_mc_cat, cat):
         if label not in legend_entries:
             legend_entries.add(label)  # Mark this label as added
 
+        
+        if hists_mc_data_sub is not None and dataset == list(hists_mc_cat.keys())[-1]:
+            # Plot the data-MC subtraction histogram as part of the stack
+            color = '#f1b6da'  # Use a custom color for the data-MC subtraction (pink)
+            data_mc_values = hists_mc_data_sub.values()
+            mc_cumulative += data_mc_values
+            # Plot it on top of the cumulative stack
+            ax.bar(hists_mc_data_sub.axes[0].centers, data_mc_values, width=np.diff(hists_mc_data_sub.axes[0].edges),bottom=mc_cumulative - data_mc_values, color=color, alpha=0.9, label='Data - MC', align='center') 
+
+
+
     # Plot the data histogram with error bars (as points with errors)
     data_hist = hists_data_cat_sum
     data_values = data_hist.values()
@@ -280,20 +305,26 @@ def plot_hist_cat(hists_data_cat, hists_mc_cat, cat):
 
     # Show the plot and save it
     plt.tight_layout()
-    plt.savefig(f"script_FF/plots/stacked_plot_cat_{cat}.png", dpi=140)
+    if hists_mc_data_sub is not None:
+        plt.savefig(f"script_FF/plots/stacked_plot_cat_with_sub_{cat}.png", dpi=140)
+    else:
+        plt.savefig(f"script_FF/plots/stacked_plot_cat_{cat}.png", dpi=140)
     # plt.show()
 
 
-def calculate_data_MC_substraction(hists_data_cat, hists_mc_cat, cat):
+def calculate_data_MC_substraction(hists_data_cat_, hists_mc_cat_, cat):
     '''
     Calculate the data-MC subtraction for a specific category and plot the resulting histogram
     Returns: histogram of the data-MC subtraction
     '''
+    # Copy
+    hists_data_cat = copy.deepcopy(hists_data_cat_)
+    hists_mc_cat = copy.deepcopy(hists_mc_cat_)
 
     hists_data_cat_sum = None
     hists_mc_cat_sum = None
 
-    print(hists_data_cat)
+    # print(hists_data_cat)
 
     # from IPython import embed; embed()
 
@@ -311,15 +342,15 @@ def calculate_data_MC_substraction(hists_data_cat, hists_mc_cat, cat):
         else:
             hists_mc_cat_sum += hist
             
-    print(f">>>>>>>>>>>>>>>>>>>>> Data histograms sum: \n{hists_data_cat_sum}")
-    print(f">>>>>>>>>>>>>>>>>>>>> MC histograms sum: \n{hists_mc_cat_sum}")
+    # print(f">>>>>>>>>>>>>>>>>>>>> Data histograms sum: \n{hists_data_cat_sum}")
+    # print(f">>>>>>>>>>>>>>>>>>>>> MC histograms sum: \n{hists_mc_cat_sum}")
 
     # Guarantee non-negative values
     hists_data_cat_sum.view().value = np.maximum(hists_data_cat_sum.values(), 0)
     hists_mc_cat_sum.view().value = np.maximum(hists_mc_cat_sum.values(), 0)
 
-    print(f">>>>>>>>>>>>>>>>>>>>> Data histograms sum after non-0: \n{hists_data_cat_sum}")
-    print(f">>>>>>>>>>>>>>>>>>>>> MC histograms sum after non-0: \n{hists_mc_cat_sum}")
+    # print(f">>>>>>>>>>>>>>>>>>>>> Data histograms sum after non-0: \n{hists_data_cat_sum}")
+    # print(f">>>>>>>>>>>>>>>>>>>>> MC histograms sum after non-0: \n{hists_mc_cat_sum}")
 
 
     hists_data_cat_sum_num = hist_to_num(hists_data_cat_sum)
@@ -334,8 +365,8 @@ def calculate_data_MC_substraction(hists_data_cat, hists_mc_cat, cat):
     hists_data_mc_sub_values = hists_data_mc_sub_num()
     hists_data_mc_sub_variances = hists_data_mc_sub_num(sn.UP, sn.ALL, unc=True)**2
 
-    print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction values: \n{hists_data_mc_sub_values}")
-    print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction variances: \n{hists_data_mc_sub_variances}")    
+    # print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction values: \n{hists_data_mc_sub_values}")
+    # print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction variances: \n{hists_data_mc_sub_variances}")    
 
     # # Create hist from the subtraction
     # hists_data_mc_sub_hist = hist.hist(hists_data_mc_sub_num.axes[0], hists_data_mc_sub_values, hists_data_mc_sub_variances)
@@ -345,7 +376,7 @@ def calculate_data_MC_substraction(hists_data_cat, hists_mc_cat, cat):
     # Create histo copy of the subtraction
     hists_data_mc_sub = hists_mc_cat_sum.copy().reset()
 
-    print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction hist: \n{hists_data_mc_sub}")
+    # print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction hist: \n{hists_data_mc_sub}")
 
     hists_data_mc_sub.view().value[...] = hists_data_mc_sub_values
     hists_data_mc_sub.view().variance[...] = hists_data_mc_sub_variances
@@ -354,7 +385,7 @@ def calculate_data_MC_substraction(hists_data_cat, hists_mc_cat, cat):
     hists_data_mc_sub.view().value = np.maximum(hists_data_mc_sub.values(), 0)
 
 
-    print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction hist: \n{hists_data_mc_sub}")
+    # print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction hist: \n{hists_data_mc_sub}")
     
 
     # Plot the data-MC subtraction
@@ -407,115 +438,6 @@ def calculate_ratio_hist(hist_iso, hist_antiiso):
     return ratio_values, ratio_variances
 
 
-def plot_hist_with_data_mc_subtraction(hists_data_cat, hists_mc_cat, data_mc_sub, cat):
-    '''
-    Plot histograms for a specific category including the data-MC subtraction histogram
-    as a stacked plot.
-    '''
-
-    hep.style.use(hep.style.CMS)
-
-    # Initialize the sum variable for data
-    hists_data_cat_sum = None
-
-    # Loop over the datasets to sum histograms for data
-    for dataset in hists_data_cat:
-        hist = hists_data_cat[dataset]
-        # Initialize the sum histogram if it's None
-        if hists_data_cat_sum is None:
-            hists_data_cat_sum = hist  # Start with the first histogram
-        else:
-            hists_data_cat_sum += hist  # Accumulate the histograms
-
-    # Prepare the figure and axis for plotting
-    fig, ax = plt.subplots()
-
-    # Define colors for specific datasets
-    colors = {
-        'tt': "#9e9ac8",  # Violet
-        'dy': "#feb24c",  # Orange
-        'diboson': "#a96b59",  # Brown for Diboson (WW)
-        'wj': "#d73027",  # Red for W+jets
-    }
-
-    # Use a color map to dynamically generate colors based on the number of MC categories
-    num_mc_categories = len(hists_mc_cat)
-    cmap = cm.get_cmap('tab10', num_mc_categories)  # Use 'tab10', 'viridis', or any other colormap
-
-    # Plot stacked MC histograms
-    mc_cumulative = None  # To track the cumulative height of the stack
-    legend_entries = set()
-
-    for idx, dataset in enumerate(hists_mc_cat.keys()):
-        mc_hist = hists_mc_cat[dataset]
-
-        # Ensure no negative values and only work with non-negative values
-        mc_values = np.maximum(mc_hist.values(), 0)  # Ensure MC values are non-negative
-
-        # If mc_cumulative is None, start with the first histogram
-        if mc_cumulative is None:
-            mc_cumulative = mc_values.copy()  # Copy the first histogram values
-        else:
-            mc_cumulative += mc_values  # Add to the cumulative histogram
-
-        # Assign color from the color map
-        color = cmap(idx / num_mc_categories)
-
-        # Determine the legend label based on dataset name
-        label = dataset
-        if dataset.startswith("st") or dataset.startswith("tt"):
-            label = "t/tbar"
-            color = colors['tt']
-        elif dataset in ["ww", "wz", "zz"]:
-            color = colors["diboson"]
-            label = "Diboson"
-        elif dataset.startswith('dy'):
-            label = "Drell-Yan"
-            color = colors['dy']  # Use the color for Drell-Yan
-        elif dataset.startswith('wj'):
-            label = "W+jets"
-            color = colors['wj']
-
-        # Plot the stacked MC histogram for each dataset
-        ax.bar(mc_hist.axes[0].centers, mc_values, width=np.diff(mc_hist.axes[0].edges),
-               bottom=mc_cumulative - mc_values,  # Adjust the bottom for stacking
-               label=label if label not in legend_entries else "", align='center', 
-               color=color, alpha=0.9)
-
-        # Update legend entries
-        if label not in legend_entries:
-            legend_entries.add(label)  # Mark this label as added
-
-    # Plot the data histogram with error bars (as points with errors)
-    data_hist = hists_data_cat_sum
-    data_values = data_hist.values()
-    data_variances = data_hist.variances()
-
-    # Ensure no negative data values
-    data_values = np.maximum(data_values, 0)  # Ensure data values are non-negative
-
-    # Plot data as points with error bars
-    ax.errorbar(data_hist.axes[0].centers, data_values, yerr=np.sqrt(data_variances), fmt='o', 
-                color='black', label='Data', capsize=3, markersize=5)
-
-    # Plot the data-MC subtraction histogram as part of the stack
-    data_mc_values = data_mc_sub.values()
-    # Plot it on top of the cumulative stack
-    ax.bar(data_mc_sub.axes[0].centers, data_mc_values, width=np.diff(data_mc_sub.axes[0].edges),
-           bottom=mc_cumulative,  # Stacked on top of the MC
-           color='#f1b6da', alpha=0.9, label='Data - MC')
-
-    # Add labels, title, and legend
-    ax.set_xlabel("Tau $p_T$ / GeV")
-    ax.set_ylabel("Events")
-    ax.set_title(f"Stacked MC vs Data - Category {cat}")
-    ax.legend()
-
-    # Show the plot and save it
-    plt.tight_layout()
-    plt.savefig(f"script_FF/plots/stacked_plot_cat_with_sub_{cat}.png", dpi=140)
-    plt.close(fig)  # Close the figure after saving
-
 if __name__ == "__main__":
     '''
     Main function to run the script
@@ -531,10 +453,12 @@ if __name__ == "__main__":
     hists_mc_data_sub = {}
     for cat in category:
         hists_data_cat, hists_mc_cat = get_hist_by_category_var(hists_data, hists_mc, cat)
-        plot_hist_cat(hists_data_cat, hists_mc_cat,cat)
+        plot_hist_cat(hists_data_cat, hists_mc_cat,cat,None)
         hists_mc_data_sub[cat] = calculate_data_MC_substraction(hists_data_cat, hists_mc_cat, cat)
-        plot_hist_with_data_mc_subtraction(hists_data_cat, hists_mc_cat, hists_mc_data_sub[cat], cat)
+        # plot_hist_cat(hists_data_cat, hists_mc_cat,cat,None)
+        plot_hist_cat(hists_data_cat, hists_mc_cat,cat, hists_mc_data_sub[cat])
 
+        
     calculate_ratio_hist(hists_mc_data_sub[500], hists_mc_data_sub[600])
 
 
