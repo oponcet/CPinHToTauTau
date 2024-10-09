@@ -192,6 +192,14 @@ def plot_hist_cat(hists_data_cat, hists_mc_cat, cat):
     # Prepare the figure and axis for plotting
     fig, ax = plt.subplots()
 
+     # Define colors for specific datasets
+    colors = {
+        'tt': "#9e9ac8",  # Violet
+        'dy': "#feb24c",  # Orange
+        'diboson': "#a96b59",   # Brown for Diboson (WW)
+        'wj': "#d73027", # Red for W+jets
+    }
+
     # Use a color map to dynamically generate colors based on the number of MC categories
     num_mc_categories = len(hists_mc_cat)
     cmap = cm.get_cmap('tab10', num_mc_categories)  # Use 'tab10', 'viridis', or any other colormap
@@ -200,23 +208,57 @@ def plot_hist_cat(hists_data_cat, hists_mc_cat, cat):
     mc_total = None  # This will store the total MC histogram
     mc_labels = list(hists_mc_cat.keys())
 
+    # Prepare a variable to keep track of the cumulative height of the stack
+    mc_cumulative = None  
+    # Keep track of legend entries
+    legend_entries = set()
+
     for idx, dataset in enumerate(mc_labels):
         mc_hist = hists_mc_cat[dataset]
 
         # Ensure no negative values and only work with non-negative values
         mc_values = np.maximum(mc_hist.values(), 0)  # Ensure MC values are non-negative
 
-        if mc_total is None:
-            mc_total = mc_values.copy()  # Start with the first histogram
+        # If mc_cumulative is None, start with the first histogram
+        if mc_cumulative is None:
+            mc_cumulative = mc_values.copy()  # Copy the first histogram values
         else:
-            mc_total += mc_values  # Accumulate the histograms
-        
+            mc_cumulative += mc_values  # Add to the cumulative histogram
+
+    
+        # Create a dictionary for legend labels
+        legend_labels = {}
+
         # Assign color from the color map
         color = cmap(idx / num_mc_categories)
 
+        # Determine the legend label based on dataset name
+        if dataset.startswith("st") or dataset.startswith("tt"):
+            label = "t/tbar"
+            color = colors['tt']
+        elif dataset in ["ww", "wz", "zz"]:
+            color = colors["diboson"]
+            label = "Diboson"
+        elif dataset.startswith('dy'):
+            label = "Drell-Yan"
+            color = colors['dy']  # Use the color for Drell-Yan
+        elif dataset.startswith('wj'):
+            label = "W+jets"
+            color = colors['wj']
+        else:
+            label = dataset  # Fallback for any other dataset
+        
+        # Add to legend labels dictionary
+        legend_labels[label] = color
+
         # Plot the stacked MC histogram for each dataset
-        ax.bar(mc_hist.axes[0].centers, mc_values, width=np.diff(mc_hist.axes[0].edges), 
-               label=dataset, align='center', color=color, alpha=0.7, edgecolor='black')
+        ax.bar(mc_hist.axes[0].centers, mc_values, width=np.diff(mc_hist.axes[0].edges),
+               bottom=mc_cumulative - mc_values,  # Adjust the bottom for stacking
+               label=label if label not in legend_entries else "", align='center', color=color, alpha=0.9)
+
+        # Update legend entries
+        if label not in legend_entries:
+            legend_entries.add(label)  # Mark this label as added
 
     # Plot the data histogram with error bars (as points with errors)
     data_hist = hists_data_cat_sum
@@ -317,7 +359,7 @@ def calculate_data_MC_substraction(hists_data_cat, hists_mc_cat, cat):
 
     # Plot the data-MC subtraction
     fig, ax = plt.subplots()
-    ax.bar(hists_data_mc_sub.axes[0].centers, hists_data_mc_sub.values(), width=np.diff(hists_data_mc_sub.axes[0].edges))
+    ax.bar(hists_data_mc_sub.axes[0].centers, hists_data_mc_sub.values(), width=np.diff(hists_data_mc_sub.axes[0].edges), color='#f1b6da')
     ax.set_ylabel("Events")
     ax.set_title(f"Data - MC Subtraction - Category {cat}")
     ax.legend()
@@ -364,6 +406,116 @@ def calculate_ratio_hist(hist_iso, hist_antiiso):
 
     return ratio_values, ratio_variances
 
+
+def plot_hist_with_data_mc_subtraction(hists_data_cat, hists_mc_cat, data_mc_sub, cat):
+    '''
+    Plot histograms for a specific category including the data-MC subtraction histogram
+    as a stacked plot.
+    '''
+
+    hep.style.use(hep.style.CMS)
+
+    # Initialize the sum variable for data
+    hists_data_cat_sum = None
+
+    # Loop over the datasets to sum histograms for data
+    for dataset in hists_data_cat:
+        hist = hists_data_cat[dataset]
+        # Initialize the sum histogram if it's None
+        if hists_data_cat_sum is None:
+            hists_data_cat_sum = hist  # Start with the first histogram
+        else:
+            hists_data_cat_sum += hist  # Accumulate the histograms
+
+    # Prepare the figure and axis for plotting
+    fig, ax = plt.subplots()
+
+    # Define colors for specific datasets
+    colors = {
+        'tt': "#9e9ac8",  # Violet
+        'dy': "#feb24c",  # Orange
+        'diboson': "#a96b59",  # Brown for Diboson (WW)
+        'wj': "#d73027",  # Red for W+jets
+    }
+
+    # Use a color map to dynamically generate colors based on the number of MC categories
+    num_mc_categories = len(hists_mc_cat)
+    cmap = cm.get_cmap('tab10', num_mc_categories)  # Use 'tab10', 'viridis', or any other colormap
+
+    # Plot stacked MC histograms
+    mc_cumulative = None  # To track the cumulative height of the stack
+    legend_entries = set()
+
+    for idx, dataset in enumerate(hists_mc_cat.keys()):
+        mc_hist = hists_mc_cat[dataset]
+
+        # Ensure no negative values and only work with non-negative values
+        mc_values = np.maximum(mc_hist.values(), 0)  # Ensure MC values are non-negative
+
+        # If mc_cumulative is None, start with the first histogram
+        if mc_cumulative is None:
+            mc_cumulative = mc_values.copy()  # Copy the first histogram values
+        else:
+            mc_cumulative += mc_values  # Add to the cumulative histogram
+
+        # Assign color from the color map
+        color = cmap(idx / num_mc_categories)
+
+        # Determine the legend label based on dataset name
+        label = dataset
+        if dataset.startswith("st") or dataset.startswith("tt"):
+            label = "t/tbar"
+            color = colors['tt']
+        elif dataset in ["ww", "wz", "zz"]:
+            color = colors["diboson"]
+            label = "Diboson"
+        elif dataset.startswith('dy'):
+            label = "Drell-Yan"
+            color = colors['dy']  # Use the color for Drell-Yan
+        elif dataset.startswith('wj'):
+            label = "W+jets"
+            color = colors['wj']
+
+        # Plot the stacked MC histogram for each dataset
+        ax.bar(mc_hist.axes[0].centers, mc_values, width=np.diff(mc_hist.axes[0].edges),
+               bottom=mc_cumulative - mc_values,  # Adjust the bottom for stacking
+               label=label if label not in legend_entries else "", align='center', 
+               color=color, alpha=0.9)
+
+        # Update legend entries
+        if label not in legend_entries:
+            legend_entries.add(label)  # Mark this label as added
+
+    # Plot the data histogram with error bars (as points with errors)
+    data_hist = hists_data_cat_sum
+    data_values = data_hist.values()
+    data_variances = data_hist.variances()
+
+    # Ensure no negative data values
+    data_values = np.maximum(data_values, 0)  # Ensure data values are non-negative
+
+    # Plot data as points with error bars
+    ax.errorbar(data_hist.axes[0].centers, data_values, yerr=np.sqrt(data_variances), fmt='o', 
+                color='black', label='Data', capsize=3, markersize=5)
+
+    # Plot the data-MC subtraction histogram as part of the stack
+    data_mc_values = data_mc_sub.values()
+    # Plot it on top of the cumulative stack
+    ax.bar(data_mc_sub.axes[0].centers, data_mc_values, width=np.diff(data_mc_sub.axes[0].edges),
+           bottom=mc_cumulative,  # Stacked on top of the MC
+           color='#f1b6da', alpha=0.9, label='Data - MC')
+
+    # Add labels, title, and legend
+    ax.set_xlabel("Tau $p_T$ / GeV")
+    ax.set_ylabel("Events")
+    ax.set_title(f"Stacked MC vs Data - Category {cat}")
+    ax.legend()
+
+    # Show the plot and save it
+    plt.tight_layout()
+    plt.savefig(f"script_FF/plots/stacked_plot_cat_with_sub_{cat}.png", dpi=140)
+    plt.close(fig)  # Close the figure after saving
+
 if __name__ == "__main__":
     '''
     Main function to run the script
@@ -381,6 +533,7 @@ if __name__ == "__main__":
         hists_data_cat, hists_mc_cat = get_hist_by_category_var(hists_data, hists_mc, cat)
         plot_hist_cat(hists_data_cat, hists_mc_cat,cat)
         hists_mc_data_sub[cat] = calculate_data_MC_substraction(hists_data_cat, hists_mc_cat, cat)
+        plot_hist_with_data_mc_subtraction(hists_data_cat, hists_mc_cat, hists_mc_data_sub[cat], cat)
 
     calculate_ratio_hist(hists_mc_data_sub[500], hists_mc_data_sub[600])
 
