@@ -38,7 +38,7 @@ coffea = maybe_import("coffea")
     },
     produces={
         f"Muon.{var}" for var in [
-            "rawIdx", "decayMode", "IPsig",
+            "rawIdx", "decayMode", "IPsig", "idVsJet",
         ]
     },
     exposed=False,
@@ -61,7 +61,9 @@ def muon_selection(
     # make sure that there is no nan sip3d
     ipsig_dummy = ak.min(ak.flatten(events.Muon.sip3d)) - 10.0 # going to set nan values to (min value - 10)
     events = set_ak_column(events, "Muon.IPsig", ak.nan_to_num(events.Muon.sip3d, ipsig_dummy))
+    events = set_ak_column(events, "Muon.idVsJet", -2.0)
 
+    
     # pt sorted indices for converting masks to indices
     sorted_indices = ak.argsort(events.Muon.pt, axis=-1, ascending=False)
     muons = events.Muon[sorted_indices]
@@ -201,7 +203,7 @@ def muon_selection(
     },
     produces={
         f"Electron.{var}" for var in [
-            "rawIdx", "decayMode", "IPsig",
+            "rawIdx", "decayMode", "IPsig", "idVsJet",
         ]
     },
     exposed=False,
@@ -223,7 +225,8 @@ def electron_selection(
     # make sure that there is no nan sip3d 
     ipsig_dummy = ak.min(ak.flatten(events.Electron.sip3d)) - 10.0 # going to set nan values to (min value - 10)
     events = set_ak_column(events, "Electron.IPsig", ak.nan_to_num(events.Electron.sip3d, ipsig_dummy))
-
+    events = set_ak_column(events, "Electron.idVsJet", -1.0)
+    
     # pt sorted indices for converting masks to indices
     sorted_indices = ak.argsort(events.Electron.pt, axis=-1, ascending=False)
     electrons = events.Electron[sorted_indices]
@@ -366,7 +369,7 @@ def electron_selection(
     } | {optional("Tau.pt"), optional("Tau.pt_etau"), optional("Tau.pt_mutau"), optional("Tau.pt_tautau")},
     produces={
         f"Tau.{var}" for var in [
-            "rawIdx", "decayMode", "decayModeHPS", "IPsig",
+            "rawIdx", "decayMode", "decayModeHPS", "IPsig", "idVsJet",
         ]
     },
     exposed=False,
@@ -390,6 +393,7 @@ def tau_selection(
     events = set_ak_column(events, "Tau.rawIdx", tau_local_indices)
     ipsig_dummy = ak.min(ak.flatten(events.Tau.ipLengthSig)) - 10.0
     events = set_ak_column(events, "Tau.IPsig",  ak.nan_to_num(events.Tau.ipLengthSig, ipsig_dummy))
+    events = set_ak_column(events, "Tau.idVsJet", events.Tau.idDeepTau2018v2p5VSjet)
     
     # https://cms-nanoaod-integration.web.cern.ch/integration/cms-swmaster/data106Xul17v2_v10_doc.html#Tau
     tau_vs_e = DotDict(vvloose=2, vloose=3)
@@ -428,7 +432,8 @@ def tau_selection(
         #   DeepTauVSjet : Tight  Medium  Medium  --> Medium  
         #   DeepTauVSe   : Tight  VVLoose VVLoose --> VVLoose 
         #   DeepTauVSmu  : Loose  Tight   VLoose  --> VLoose  
-        "tau_DeepTauVSjet"  : taus.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium,
+        "tau_DeepTauVSjet"  : taus.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.VVVLoose, # for tautau fake region
+        #"tau_DeepTauVSjet"  : taus.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium,
         "tau_DeepTauVSe"    : taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose,
         "tau_DeepTauVSmu"   : taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose,
         "tau_DecayMode"     : ((taus.decayMode == 0) 
@@ -478,7 +483,7 @@ def tau_selection(
     raw_tau_indices = events.Tau.rawIdx
     sorted_tau_indices = taus.rawIdx
     good_tau_indices = good_taus.rawIdx
-
+    
     
     return events, SelectionResult(
         objects={
@@ -523,7 +528,7 @@ def jet_selection(
         self: Selector,
         events: ak.Array,
         **kwargs
-) -> tuple[ak.Array, SelectionResult]:
+) -> tuple[ak.Array, SelectionResult, ak.Array]:
     """
     This function vetoes b-jets with sufficiently high pt and incide eta region of interest
     """
@@ -575,9 +580,9 @@ def jet_selection(
     bjet_veto = ak.sum(b_jet_mask, axis=1) == 0
     
     results = SelectionResult(
-        steps = {
-            "b_veto": bjet_veto,
-        }, 
+        #steps = {
+        #    "b_veto": bjet_veto,
+        #}, 
         objects = {
             "Jet": {
                 "RawJet": events.Jet.rawIdx,
@@ -598,7 +603,7 @@ def jet_selection(
         results += veto_result
     """
     
-    return events, results
+    return events, results, bjet_veto
 
 
 @jet_selection.init

@@ -64,6 +64,7 @@ def higgscand(
                                           "IPy"           : "float64",
                                           "IPz"           : "float64",
                                           "IPsig"         : "float64",
+                                          "idVsJet"       : "int32",
                                           }
                                          )
     else:
@@ -75,6 +76,7 @@ def higgscand(
                                           "charge"        : "int64",
                                           "decayMode"     : "int64",
                                           "rawIdx"        : "int64",
+                                          "idVsJet"       : "int32",
                                           }
                                          )
         
@@ -167,9 +169,11 @@ def build_hcand_mask(hcand, hcandprods, dummy):
         insert_calibrated_taus,
     },
     produces={
-        "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass", "hcand.charge", "hcand.rawIdx", "hcand.decayMode",
-        IF_RUN3("hcand.IPx", "hcand.IPy", "hcand.IPz"), "hcand.IPsig",
-        "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass", "hcandprod.charge", "hcandprod.pdgId", "hcandprod.tauIdx",
+        "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass",
+        "hcand.charge", "hcand.rawIdx", "hcand.decayMode",
+        IF_RUN3("hcand.IPx", "hcand.IPy", "hcand.IPz"), "hcand.IPsig", "hcand.idVsJet",
+        "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass",
+        "hcandprod.charge", "hcandprod.pdgId", "hcandprod.tauIdx",
         assign_tauprod_mass_charge,
         insert_calibrated_taus,
     },
