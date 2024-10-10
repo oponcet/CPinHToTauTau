@@ -296,3 +296,64 @@ def cat_b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.A
     sel = (events.hcand.rel_charge[:,0] < 0) & (ak.firsts(events.Muon.pfRelIso04_all, axis=1) >= 0.15) \
         & (ak.firsts(events.Muon.pfRelIso04_all, axis=1) <= 0.30)
     return events, sel
+
+
+
+# # ---------------------------------------------------------- #
+#                       Fake Factors                         #
+# ---------------------------------------------------------- #
+
+
+@categorizer(uses={"is_os"})
+def cat_os(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # oppositive sign leptons
+    return events, events.is_os
+
+
+@categorizer(uses={"is_os"})
+def cat_ss(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # same sign leptons
+    return events, ~events.is_os
+
+
+@categorizer(uses={"is_iso_1"})
+def cat_iso_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # isolated tau2
+    return events, events.is_iso_1
+
+@categorizer(uses={"is_iso_1"})
+def cat_noniso_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # isolated tau2
+    return events, ~events.is_iso_1
+
+
+@categorizer(uses={"is_iso_2"})
+def cat_iso_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # noon-isolated tau2
+    return events, events.is_iso_2
+
+@categorizer(uses={"is_iso_2"})
+def cat_noniso_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # noon-isolated tau2
+    return events, ~events.is_iso_2
+
+@categorizer(uses={"is_low_mt"})
+def cat_low_mt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # noon-isolated tau2
+    return events, events.is_low_mt
+
+@categorizer(uses={"is_low_mt"})
+def cat_high_mt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # noon-isolated tau2
+    return events, ~events.is_low_mt
+
+@categorizer(uses={"is_b_veto"})
+def cat_has_no_b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # noon-isolated tau2
+    return events, events.is_b_veto
+
+@categorizer(uses={"is_b_veto"})
+def cat_has_b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    # noon-isolated tau2
+    return events, ~events.is_b_veto
+
