@@ -945,6 +945,8 @@ def add_config (ana: od.Analysis,
             "single_e_triggered", "cross_e_triggered",
             "single_mu_triggered", "cross_mu_triggered",
             "cross_tau_triggered", "cross_tau_jet_triggered",
+            # --- new for categorization --- #
+            "is_os", "is_iso_1", "is_iso_2", "is_low_mt", "is_b_veto",
         } | {
             f"GenPart.{var}" for var in [
                 "pt", "eta", "phi", "mass",
@@ -1063,7 +1065,7 @@ def add_config (ana: od.Analysis,
         } | {
             f"hcand.{var}" for var in [
                 "pt","eta","phi","mass", "charge",
-                "decayMode", "rawIdx",
+                "decayMode", "rawIdx", "idVsJet",
                 "IPx", "IPy", "IPz", "IPsig",
             ]
         } | {

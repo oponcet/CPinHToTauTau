@@ -81,12 +81,8 @@ def trigger_selection(
         
         # get bare decisions
         fired = events.HLT[trigger.hlt_field] == 1
-        #if trigger.run_range:
-        #    fired = fired & (
-        #        ((trigger.run_range[0] is None) | (trigger.run_range[0] <= events.run)) &
-        #        ((trigger.run_range[1] is None) | (trigger.run_range[1] >= events.run))
-        #    )
 
+        # apply the run-range
         if self.dataset_inst.is_data:
             if trigger.run_range:
                 if trigger.run_range[0] is None: 
@@ -182,10 +178,6 @@ def trigger_selection(
     leg_matched_trigobjs     = ak.concatenate([*leg_matched_trigobjs_concat], axis=1)
     
 
-    #from IPython import embed; embed()
-        
-
-
     # applying the main mask: fired_and_all_legs_match_concat
     # comments: considering 3 events
     # names:
@@ -209,8 +201,6 @@ def trigger_selection(
     #  [ 131000, 132000 ]
     # ]
     trigger_ids_filtered   = ak.drop_none(ak.mask(trigger_ids,        fired_and_all_legs_match_concat))
-
-
     # minpt of both legs combined
     # leg_minpt:
     # [
@@ -297,46 +287,15 @@ def trigger_selection(
     #   trigger_names             = [ ['HLT_Ele27_WPTight_Gsf'], [], ['HLT_Ele27_WPTight_Gsf', 'HLT_Ele32_WPTight_Gsf'], ['HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1] ]
     #   trigger_types             = [ [      'single_e'       ], [], [        'single_e'     ,        'single_e'      ], [                          'cross_e_tau'                            ] ]
     #   trigger_ids               = [ [        111000         ], [], [          111000       ,          112000        ], [                              11151                                ] ]
-    #   leg_minpt                 = [ [        [28.0]         ], [], [          [28.0]       ,          [33.0]        ], [                          [25.0, 35.0]                             ] ]
+    ##  leg_minpt                 = [ [        [28.0]         ], [], [          [28.0]       ,          [33.0]        ], [                          [25.0, 35.0]                             ] ]
     #   leg1_minpt                = [ [         28.0          ], [], [           28.0        ,           33.0         ], [                               25.0                                ] ]
     #   leg2_minpt                = [ [         -1.0          ], [], [           -1.0        ,           -1.0         ], [                               35.0                                ] ]
-    #   leg_matched_trigobj_idxs  = [ [         [[0]]         ], [], [           [[0]]       ,           [[0]]        ], [                         [[0], [72, 73]]                           ] ]
-    #   leg1_matched_trigobj_idxs = [ [          [0]          ], [], [            [0]        ,            [0]         ], [                                [0]                                ] ]
-    #   leg2_matched_trigobj_idxs = [ [         None          ], [], [           None        ,           None         ], [                              [72,73]                              ] ]
-    #   leg_matched_trigobjs      = [ [        [[p4]]         ], [], [          [[p4]]       ,          [[p4]]        ], [                         [[p4], [p4, p4]]                          ] ]
+    ##  leg_matched_trigobj_idxs  = [ [         [[0]]         ], [], [           [[0]]       ,           [[0]]        ], [                         [[0], [72, 73]]                           ] ]
+    ##  leg1_matched_trigobj_idxs = [ [          [0]          ], [], [            [0]        ,            [0]         ], [                                [0]                                ] ]
+    ##  leg2_matched_trigobj_idxs = [ [         None          ], [], [           None        ,           None         ], [                              [72,73]                              ] ]
+    ##  leg_matched_trigobjs      = [ [        [[p4]]         ], [], [          [[p4]]       ,          [[p4]]        ], [                         [[p4], [p4, p4]]                          ] ]
     #   leg1_matched_trigobjs     = [ [         [p4]          ], [], [           [p4]        ,           [p4]         ], [                               [p4]                                ] ]
     #   leg2_matched_trigobjs     = [ [         None          ], [], [           None        ,           None         ], [                             [p4, p4]                              ] ]
-    """
-    trigger_dict = {"names"         : trigger_names_filtered,
-                    "types"         : trigger_types_filtered,
-                    "ids"           : trigger_ids_filtered,
-                    "leg_minpt"     : leg_minpt_filtered,
-                    "leg_matched_trigobj_idxs"  : leg_matched_trigobj_idxs_filtered,
-                    "leg_matched_trigobjs"      : leg_matched_trigobjs_filtered}
-    trigger_array = ak.zip(trigger_dict)
-    events = set_ak_column(events, "trigger",  trigger_array)
-    """
-    ##events = set_ak_column(events, "trigger_names", trigger_names_filtered)
-    ##events = set_ak_column(events, "trigger_types", trigger_types_filtered)
-    #events = set_ak_column(events, "trigger_ids"  , trigger_ids_filtered)
-    #events = set_ak_column(events, "leg_minpt"    , leg_minpt_filtered)
-    #events = set_ak_column(events, "leg1_minpt"    , leg1_minpt_filtered,  value_type=np.float64) # leg1
-    ##events = set_ak_column(events, "leg1_minpt"    , leg1_minpt_filtered) # leg1
-    #events = set_ak_column(events, "leg2_minpt"    , leg2_minpt_filtered,  value_type=np.float64) # leg2
-    ##events = set_ak_column(events, "leg2_minpt"    , leg2_minpt_filtered) # leg2
-    #events = set_ak_column(events,
-    #                       "leg_matched_trigobj_idxs",
-    #                       leg_matched_trigobj_idxs_filtered,
-    #                       value_type=np.int32)
-    #events = set_ak_column(events, "leg1_matched_trigobj_idxs", leg1_matched_trigobj_idxs_filtered, value_type=np.int32)
-    #events = set_ak_column(events, "leg2_matched_trigobj_idxs", leg2_matched_trigobj_idxs_filtered, value_type=np.int32)
-    #events = set_ak_column(events,
-    #                       "leg_matched_trigobjs",
-    #                       leg_matched_trigobjs_filtered)
-    #events = set_ak_column(events, "leg1_matched_trigobjs", leg1_matched_trigobjs_filtered)
-    #events = set_ak_column(events, "leg2_matched_trigobjs", leg2_matched_trigobjs_filtered)
-
-    #from IPython import embed; embed()
 
     trigger_data = {
         "trigger_names"  : trigger_names_filtered,

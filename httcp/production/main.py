@@ -55,17 +55,17 @@ set_ak_column_i32 = functools.partial(set_ak_column, value_type=np.int32)
     uses={
         # nano columns
         "hcand.*", optional("GenTau.*"), optional("GenTauProd.*"),
-        reArrangeDecayProducts,
-        reArrangeGenDecayProducts,
-        ProduceGenPhiCP, #ProduceGenCosPsi, 
-        ProduceDetPhiCP, #ProduceDetCosPsi,
+        #reArrangeDecayProducts,
+        #reArrangeGenDecayProducts,
+        #ProduceGenPhiCP, #ProduceGenCosPsi, 
+        #ProduceDetPhiCP, #ProduceDetCosPsi,
     },
     produces={
         # new columns
         "hcand_invm",
         "hcand_dr",
-        ProduceGenPhiCP, #ProduceGenCosPsi,
-        ProduceDetPhiCP, #ProduceDetCosPsi,
+        #ProduceGenPhiCP, #ProduceGenCosPsi,
+        #ProduceDetPhiCP, #ProduceDetCosPsi,
     },
 )
 def hcand_features(
@@ -85,8 +85,8 @@ def hcand_features(
     events = set_ak_column(events, "hcand_invm", mass)
     events = set_ak_column(events, "hcand_dr",   dr)
 
+    """
     events, P4_dict     = self[reArrangeDecayProducts](events)
-    #from IPython import embed; embed()
     events              = self[ProduceDetPhiCP](events, P4_dict)
     #from IPython import embed; embed()
     #events              = self[ProduceDetCosPsi](events, P4_dict)
@@ -97,7 +97,7 @@ def hcand_features(
             events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
             events = self[ProduceGenPhiCP](events, P4_gen_dict)
             #events = self[ProduceGenCosPsi](events, P4_gen_dict)
-            
+    """
     return events
 
 

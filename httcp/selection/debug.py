@@ -116,22 +116,22 @@ def debug_main(events, results, triggers):
     print(f"\n---> ################### Inspecting pair selections ################### <---")
     
     # pairs
-    print(f"\n---> Before trigobj matching <---")
+    #print(f"\n---> Before trigobj matching <---")
     get_object_eff(results, "etau")
     get_object_eff(results, "mutau")
     get_object_eff(results, "tautau")
     
-    print(f"\n---> After trigobj matching <---")
-    pairs = []
-    pairs.append(["etau", ak.sum(ak.num(results.aux["etau"]["pairs"], axis=1) == 2)])
-    pairs.append(["mutau", ak.sum(ak.num(results.aux["mutau"]["pairs"], axis=1) == 2)])
-    pairs.append(["tautau", ak.sum(ak.num(results.aux["tautau"]["pairs"], axis=1) == 2)])
-    #pairs.append(["etau", ak.sum(ak.num(results.aux["etau"]["pair_indices"], axis=1) == 2)])
-    #pairs.append(["mutau", ak.sum(ak.num(results.aux["mutau"]["pair_indices"], axis=1) == 2)])
-    #pairs.append(["tautau", ak.sum(ak.num(results.aux["tautau"]["pair_indices"], axis=1) == 2)])
-    pair_table = tabulate(pairs, ["pair", "nEvents with pair"], tablefmt="pretty")
+    #print(f"\n---> After trigobj matching <---")
+    #pairs = []
+    #pairs.append(["etau", ak.sum(ak.num(results.aux["etau"]["pairs"], axis=1) == 2)])
+    #pairs.append(["mutau", ak.sum(ak.num(results.aux["mutau"]["pairs"], axis=1) == 2)])
+    #pairs.append(["tautau", ak.sum(ak.num(results.aux["tautau"]["pairs"], axis=1) == 2)])
+    ##pairs.append(["etau", ak.sum(ak.num(results.aux["etau"]["pair_indices"], axis=1) == 2)])
+    ##pairs.append(["mutau", ak.sum(ak.num(results.aux["mutau"]["pair_indices"], axis=1) == 2)])
+    ##pairs.append(["tautau", ak.sum(ak.num(results.aux["tautau"]["pair_indices"], axis=1) == 2)])
+    #pair_table = tabulate(pairs, ["pair", "nEvents with pair"], tablefmt="pretty")
     
-    print(pair_table)
+    #print(pair_table)
 
     print(f"\n---> ################### Categorization ################### <---")
     cats = []
@@ -164,8 +164,6 @@ def debug_main(events, results, triggers):
     
     print(channel_table)
     print(f" ---> Total selected events in etau, mutau and tautau chennels : {etau_ev+mtau_ev+ttau_ev}\n\n")
-
-
 
 
 def debug_extra_lepton_veto(nevts, *args):
