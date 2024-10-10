@@ -85,11 +85,32 @@ def transverse_mass(lepton: ak.Array, met: ak.Array) -> ak.Array:
     return mt
 
 
+#def trigger_object_matching(
+#    vectors1: ak.Array,
+#    vectors2: ak.Array,
+#    threshold: float = 0.5,
+#    axis: int = 2,
+#) -> ak.Array:
+#    """
+#    Helper to check per object in *vectors1* if there is at least one object in *vectors2* that
+#    leads to a delta R metric below *threshold*. The final reduction is applied over *axis* of the
+#    resulting metric table containing the full combinatorics. When *return_all_matches* is *True*,
+#    the matrix with all matching decisions is returned as well.
+#    """
+#    # delta_r for all combinations
+#    dr = vectors1.metric_table(vectors2)
+#    # check per element in vectors1 if there is at least one matching element in vectors2
+#    any_match = ak.any(dr < threshold, axis=axis)##
+#
+#    return any_match
+
+
+
 def trigger_object_matching(
     vectors1: ak.Array,
     vectors2: ak.Array,
     threshold: float = 0.5,
-    axis: int = 2,
+    axis: int = -1,
 ) -> ak.Array:
     """
     Helper to check per object in *vectors1* if there is at least one object in *vectors2* that
@@ -100,9 +121,89 @@ def trigger_object_matching(
     # delta_r for all combinations
     dr = vectors1.metric_table(vectors2)
     # check per element in vectors1 if there is at least one matching element in vectors2
-    any_match = ak.any(dr < threshold, axis=axis)
+    any_match = ak.fill_none(ak.any(dr < threshold, axis=axis), False)
+    any_match = ak.enforce_type(ak.values_astype(any_match, "bool"), "var * var * bool")
 
     return any_match
+
+
+
+
+def trigger_matching_extra(
+        objs: ak.Array,
+        legminpt: ak.Array,
+        legmaxeta: ak.Array,
+):
+    # check pt and eta match
+    pt  = objs.pt
+    eta = np.abs(objs.eta)
+
+    pt_brdcst, minpt_brdcst   = ak.broadcast_arrays(pt,  legminpt[:,None], depth_limit=-1)
+    eta_brdcst, maxeta_brdcst = ak.broadcast_arrays(eta, legmaxeta[:,None], depth_limit=-1)        
+    #match_pt = (obj_pt_brdcst - minpt_brdcst) >= 0.0 # 100000 * var * var * ?bool
+    match_pt  = pt_brdcst >= minpt_brdcst   # 100000 * var * var * ?bool
+    match_eta = eta_brdcst <= maxeta_brdcst # 100000 * var * var * ?bool
+
+    any_match = match_pt & match_eta
+    any_match = ak.enforce_type(ak.values_astype(any_match, "bool"), "var * var * bool")
+    
+    return any_match
+
+
+
+
+
+
+#def trigger_object_matching_deep(
+#        vectors1: ak.Array,
+#        vectors2: ak.Array,
+#        legminpt: ak.Array,
+#        legmaxeta: ak.Array,
+#        checkpt: bool = True,
+#        threshold: float = 0.5,
+#        axis: int = 1,
+#) -> ak.Array:
+#    """
+#    trigger object matching with the reconstructed objects
+#    This function is named as deep because it makes sure of both dr and pt matching
+#    vectors1 would always be the p4s of e/mu/tau
+#    vectors2 would always be the p4s of trigger objects
+#    dr is calculated using metric_table which brings all combinatorics.
+#    Finally, if any of the trigger objects matches the e/mu/tau, it will be True
+#    Next, the trigger leg minpt is provided as another argument.
+#    the reco object pt should be greater than the above
+#    Finally, both of these conditions must be satisfied for the selection of the reco object
+#    """
+#    #from IPython import embed; embed()
+#    # delta_r for all combinations
+#    dr  = vectors1.metric_table(vectors2)  # 100000 * var * var * option[var * float32]
+#    match_dr = dr < threshold              # 100000 * var * var * option[var * bool]
+#    match_dr = ak.any(match_dr, axis=-1)   # 100000 * var * var * ?bool
+#
+#    # pt match
+#    if checkpt:
+#        obj_pt = vectors1.pt
+#        obj_eta = np.abs(vectors1.eta)
+#        obj_pt_brdcst, minpt_brdcst = ak.broadcast_arrays(obj_pt, legminpt[:,None], depth_limit=-1)
+#        obj_eta_brdcst, maxeta_brdcst = ak.broadcast_arrays(obj_eta, legmaxeta[:,None], depth_limit=-1)        
+#        #match_pt = (obj_pt_brdcst - minpt_brdcst) >= 0.0 # 100000 * var * var * ?bool
+#        match_pt  = obj_pt_brdcst >= minpt_brdcst   # 100000 * var * var * ?bool
+#        match_eta = obj_eta_brdcst <= maxeta_brdcst # 100000 * var * var * ?bool
+#        match_dr = match_dr & match_pt & match_eta
+#        
+#    match_dr = ak.fill_none(match_dr, False) # 100000 * var * var * bool
+#    match_dr = ak.enforce_type(ak.values_astype(match_dr, "bool"), "var * var * bool") # 100000 * var * var * bool
+#    
+#    #inmatch = match_dr & match_pt           # 100000 * var * var * ?bool
+#    #inmatch = ak.fill_none(inmatch, False)  # 100000 * var * var * bool
+#    #inmatch = ak.enforce_type(ak.values_astype(inmatch, "bool"), "var * var * bool") # 100000 * var * var * bool
+#    
+#    #return inmatch #match_dr
+#
+#    return match_dr
+
+
+
 
 
 def trigger_object_matching_deep(
@@ -110,7 +211,7 @@ def trigger_object_matching_deep(
         vectors2: ak.Array,
         legminpt: ak.Array,
         legmaxeta: ak.Array,
-        checkpt: bool = True,
+        checkdr: bool = True,
         threshold: float = 0.5,
         axis: int = 1,
 ) -> ak.Array:
@@ -125,32 +226,30 @@ def trigger_object_matching_deep(
     the reco object pt should be greater than the above
     Finally, both of these conditions must be satisfied for the selection of the reco object
     """
-    # delta_r for all combinations
-    dr  = vectors1.metric_table(vectors2)  # 100000 * var * var * option[var * float32]
-    match_dr = dr < threshold              # 100000 * var * var * option[var * bool]
-    match_dr = ak.any(match_dr, axis=-1)   # 100000 * var * var * ?bool
 
-    # pt match
-    if checkpt:
-        obj_pt = vectors1.pt
-        obj_eta = np.abs(vectors1.eta)
-        obj_pt_brdcst, minpt_brdcst = ak.broadcast_arrays(obj_pt, legminpt[:,None], depth_limit=-1)
-        obj_eta_brdcst, maxeta_brdcst = ak.broadcast_arrays(obj_eta, legmaxeta[:,None], depth_limit=-1)        
-        #match_pt = (obj_pt_brdcst - minpt_brdcst) >= 0.0 # 100000 * var * var * ?bool
-        match_pt  = obj_pt_brdcst >= minpt_brdcst   # 100000 * var * var * ?bool
-        match_eta = obj_eta_brdcst <= maxeta_brdcst # 100000 * var * var * ?bool
-        match_dr = match_dr & match_pt & match_eta
-        
-    match_dr = ak.fill_none(match_dr, False) # 100000 * var * var * bool
-    match_dr = ak.enforce_type(ak.values_astype(match_dr, "bool"), "var * var * bool") # 100000 * var * var * bool
-    
-    #inmatch = match_dr & match_pt           # 100000 * var * var * ?bool
-    #inmatch = ak.fill_none(inmatch, False)  # 100000 * var * var * bool
-    #inmatch = ak.enforce_type(ak.values_astype(inmatch, "bool"), "var * var * bool") # 100000 * var * var * bool
-    
-    #return inmatch #match_dr
+    # check leg min pt and leg max eta
+    obj_pt = vectors1.pt
+    obj_eta = np.abs(vectors1.eta)
 
-    return match_dr
+    obj_pt_brdcst, minpt_brdcst = ak.broadcast_arrays(obj_pt, legminpt[:,None], depth_limit=-1)
+    obj_eta_brdcst, maxeta_brdcst = ak.broadcast_arrays(obj_eta, legmaxeta[:,None], depth_limit=-1)        
+
+    match_pt  = obj_pt_brdcst >= minpt_brdcst   # 100000 * var * var * ?bool
+    match_eta = obj_eta_brdcst <= maxeta_brdcst # 100000 * var * var * ?bool
+    
+    match = match_pt & match_eta
+
+    if checkdr:
+        # delta_r for all combinations
+        dr  = vectors1.metric_table(vectors2)  # 100000 * var * var * option[var * float32]
+        match_dr = dr < threshold              # 100000 * var * var * option[var * bool]
+        match_dr = ak.any(match_dr, axis=-1)   # 100000 * var * var * ?bool
+
+        match = match & match_dr
+    
+    match = ak.fill_none(match, False) # 100000 * var * var * bool
+
+    return match
 
 
 

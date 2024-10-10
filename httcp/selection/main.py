@@ -28,7 +28,7 @@ from httcp.selection.trigger import trigger_selection
 from httcp.selection.lepton_pair_etau import etau_selection
 from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
-from httcp.selection.event_category import get_categories
+from httcp.selection.event_category import get_categories, build_abcd_masks
 #from httcp.selection.match_trigobj import match_trigobj
 from httcp.selection.trigobject_matching import match_trigobj
 from httcp.selection.lepton_veto import *
@@ -144,6 +144,7 @@ def get_2n_pairs(etau_indices_pair,
         higgscandprod,
         rel_charge,
         category_ids,
+        build_abcd_masks,
     },
     produces={
         # selectors / producers whose newly created columns should be kept
@@ -175,6 +176,7 @@ def get_2n_pairs(etau_indices_pair,
         "cross_mu_triggered",
         "cross_tau_triggered",
         "cross_tau_jet_triggered",
+        build_abcd_masks,
     },
     exposed=True,
 )
@@ -253,63 +255,46 @@ def main(
                                                                         dlveto_muon_indices)
     results += extra_double_lepton_veto_results
 
-    
-    # check if there are at least two leptons with at least one tau
-
-    #_lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    #nlep_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
-    #match_nlep = SelectionResult(
-    #    steps = {
-    #        "has_2_or_more_leps_with_at_least_1_tau"  : nlep_mask,
-    #    },
-    #)
-    #results += match_nlep
-    
-    #from IPython import embed; embed()
-    
+        
     # e-tau pair i.e. hcand selection
-    # e.g. [ [], [e1, tau1], [], [], [e1, tau2] ]
-    etau_results, etau_pair = self[etau_selection](events,
-                                                   good_ele_indices,
-                                                   good_tau_indices_etau if self.dataset_inst.is_mc else good_tau_indices,
-                                                   call_force=True,
-                                                   **kwargs)
+    etau_results, etau_pair, etau_trig_ids, etau_trig_types = self[etau_selection](events,
+                                                                                   good_ele_indices,
+                                                                                   good_tau_indices_etau if self.dataset_inst.is_mc else good_tau_indices,
+                                                                                   trigger_results,
+                                                                                   call_force=True,
+                                                                                   **kwargs)
     results += etau_results
 
     # mu-tau pair i.e. hcand selection
-    # e.g. [ [mu1, tau1], [], [mu1, tau2], [], [] ]
-    mutau_results, mutau_pair = self[mutau_selection](events,
-                                                      good_muon_indices,
-                                                      good_tau_indices_mutau if self.dataset_inst.is_mc else good_tau_indices,
-                                                      call_force=True,
-                                                      **kwargs)
+    mutau_results, mutau_pair, mutau_trig_ids, mutau_trig_types = self[mutau_selection](events,
+                                                                                        good_muon_indices,
+                                                                                        good_tau_indices_mutau if self.dataset_inst.is_mc else good_tau_indices,
+                                                                                        trigger_results,
+                                                                                        call_force=True,
+                                                                                        **kwargs)
     results += mutau_results
 
     # tau-tau pair i.e. hcand selection
-    # e.g. [ [], [tau1, tau2], [], [], [] ]
-    tautau_results, tautau_pair = self[tautau_selection](events,
-                                                         good_tau_indices_tautau if self.dataset_inst.is_mc else good_tau_indices,
-                                                         call_force=True,
-                                                         **kwargs)
+    tautau_results, tautau_pair, tautau_trig_ids,tautau_trig_types = self[tautau_selection](events,
+                                                                                            good_tau_indices_tautau if self.dataset_inst.is_mc else good_tau_indices,
+                                                                                            trigger_results,
+                                                                                            call_force=True,
+                                                                                            **kwargs)
     results += tautau_results
 
-    pre_match_at_least_one_pair = get_2n_pairs(etau_pair.rawIdx,
-                                               mutau_pair.rawIdx,
-                                               tautau_pair.rawIdx)
+    match_at_least_one_pair = get_2n_pairs(etau_pair.rawIdx,
+                                           mutau_pair.rawIdx,
+                                           tautau_pair.rawIdx)
 
 
-    pre_match_pair_result = SelectionResult(
+    match_pair_result = SelectionResult(
         steps = {
-            "has_at_least_1_pair_before_trigobj_matching"  : pre_match_at_least_one_pair,
+            "has_at_least_1_pair"  : match_at_least_one_pair,
         },
     )
-    results += pre_match_pair_result
+    results += match_pair_result
 
-    #from IPython import embed; embed()
-    #for i in range(1000):
-    #  print(etau_indices_pair[i], mutau_indices_pair[i], tautau_indices_pair[i], pre_match_at_least_one_pair[i])
-
-    
+    """
     # Trigger objects matching
     # ################## W A R N I N G ################# #
     # Mind the SWITCH: True  -> TriggerObject matching ON 
@@ -322,13 +307,20 @@ def main(
                                                  mutau_pair,
                                                  tautau_pair,
                                                  True)
+
+    #print("before +")
+    #from IPython import embed; embed()
+
     results += matchedResults
 
-
+    
     etau_pair    = matchedResults.x.etau["pairs"]
     mutau_pair   = matchedResults.x.mutau["pairs"]
     tautau_pair  = matchedResults.x.tautau["pairs"]
-    
+
+    #print("after +")
+    #from IPython import embed; embed()
+
     
     post_match_at_least_one_pair = get_2n_pairs(etau_pair.rawIdx,
                                                 mutau_pair.rawIdx,
@@ -339,17 +331,17 @@ def main(
         },
     )
     results += post_match_pair_result
-
-
+    """
+    
     # channel selection
     # channel_id is now in columns
     events, channel_results = self[get_categories](events,
-                                                   trigger_results,
+                                                   results,
                                                    etau_pair.rawIdx,
                                                    mutau_pair.rawIdx,
                                                    tautau_pair.rawIdx)
     results += channel_results
-
+    """
     etau_trigger_types = matchedResults.x.etau["trigger_types"]
     etau_trigger_ids   = matchedResults.x.etau["trigger_ids"]
 
@@ -358,14 +350,12 @@ def main(
     
     tautau_trigger_types = matchedResults.x.tautau["trigger_types"]
     tautau_trigger_ids   = matchedResults.x.tautau["trigger_ids"]
+    """
+
+    #from IPython import embed; embed()
     
-    trigger_types = ak.concatenate([etau_trigger_types, mutau_trigger_types, tautau_trigger_types], axis=1)
-    trigger_ids   = ak.concatenate([etau_trigger_ids, mutau_trigger_ids, tautau_trigger_ids], axis=1)
-    trigger_ids = ak.values_astype(ak.fill_none(ak.firsts(trigger_ids, axis=1), 999), np.uint64)
-
-    # save the trigger_ids column
-    events = set_ak_column(events, "trigger_ids", trigger_ids)
-
+    
+    trigger_types = ak.concatenate([etau_trig_types, mutau_trig_types, tautau_trig_types], axis=1)
     # save single_triggered and cross_triggered
     single_e_triggered = ak.any(ak.fill_none((trigger_types == 'single_e'), False), axis=1)
     single_mu_triggered = ak.any(ak.fill_none((trigger_types == 'single_mu'), False), axis=1)
@@ -380,9 +370,16 @@ def main(
     events = set_ak_column(events, "cross_mu_triggered", cross_mu_triggered)
     events = set_ak_column(events, "cross_tau_triggered", cross_tau_triggered)
     events = set_ak_column(events, "cross_tau_jet_triggered", cross_tau_jet_triggered)
-
     events = set_ak_column(events, "single_triggered", (single_e_triggered | single_mu_triggered))
     events = set_ak_column(events, "cross_triggered", (cross_e_triggered | cross_mu_triggered | cross_tau_triggered | cross_tau_jet_triggered))
+
+
+
+    trigger_ids   = ak.concatenate([etau_trig_ids, mutau_trig_ids, tautau_trig_ids], axis=1)
+    trigger_ids = ak.values_astype(ak.fill_none(ak.firsts(trigger_ids, axis=1), 999), np.uint64)
+
+    # save the trigger_ids column
+    events = set_ak_column(events, "trigger_ids", trigger_ids)
 
 
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
@@ -416,10 +413,16 @@ def main(
     # this is moved here, because now the jets are
     # cleaned against the tau cadidates of hacnd
     # -------------------------------------------- #
-    events, bjet_veto_result = self[jet_selection](events, 
-                                                   call_force=True, 
-                                                   **kwargs)
+    events, bjet_veto_result, bjet_veto_mask = self[jet_selection](events, 
+                                                                   call_force=True, 
+                                                                   **kwargs)
     results += bjet_veto_result
+    
+
+    events = self[build_abcd_masks](events,
+                                    bjet_veto_mask,
+                                    call_force=True,
+                                    **kwargs)
     
     
     # gen particles info

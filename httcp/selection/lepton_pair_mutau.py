@@ -20,10 +20,134 @@ coffea = maybe_import("coffea")
 maybe_import("coffea.nanoevents.methods.nanoaod")
 
 
+from httcp.util import filter_by_triggers, get_objs_p4, trigger_matching_extra, trigger_object_matching_deep
 
-def get_sorted_pair(
-        dtrpairs: ak.Array,
-)->ak.Array:
+
+def match_trigobjs(
+        leps_pair: ak.Array,
+        trigger_results: SelectionResult,
+        **kwargs,
+) -> tuple[ak.Array, ak.Array]:
+
+    print("match trigger objects")
+    #leps1, leps2 = ak.unzip(leps_pair)
+
+    # extract the trigger names, types & others from trigger_results.x (aux)
+    trigger_ids           = trigger_results.x.trigger_ids
+    trigger_types         = trigger_results.x.trigger_types
+    leg1_minpt            = trigger_results.x.leg1_minpt
+    leg2_minpt            = trigger_results.x.leg2_minpt
+    leg1_maxeta           = trigger_results.x.leg1_maxeta
+    leg2_maxeta           = trigger_results.x.leg2_maxeta
+    leg1_matched_trigobjs = trigger_results.x.leg1_matched_trigobjs
+    leg2_matched_trigobjs = trigger_results.x.leg2_matched_trigobjs
+
+
+    has_single_e_triggers = trigger_types == "single_mu"
+    has_cross_e_triggers  = trigger_types == "cross_mu_tau"
+    has_e_triggers = (has_single_e_triggers | has_cross_e_triggers)
+
+
+    etau_pair  = filter_by_triggers(leps_pair, has_e_triggers)
+    eles, taus = ak.unzip(etau_pair)
+
+    
+    # Event level masks
+    # if events have etau
+    has_etau_pairs = ak.fill_none(ak.num(eles, axis=1) > 0, False)
+
+    mask_has_single_e_triggers_and_has_etau_pairs = has_single_e_triggers & has_etau_pairs
+    mask_has_cross_e_triggers_and_has_etau_pairs  = has_cross_e_triggers & has_etau_pairs
+    mask_has_e_triggers_and_has_etau_pairs = has_e_triggers & has_etau_pairs
+
+    # filtering out the info based on the masks defined just above
+    # for etau and mutau type of events, separate masks are created
+    # for single and cross triggered events
+    # for single e triggers
+    single_etau_trigger_types          = trigger_types[mask_has_single_e_triggers_and_has_etau_pairs]
+    single_etau_trigger_ids            = trigger_ids[mask_has_single_e_triggers_and_has_etau_pairs]
+    single_etau_leg_1_minpt            = leg1_minpt[mask_has_single_e_triggers_and_has_etau_pairs]
+    single_etau_leg_1_maxeta           = leg1_maxeta[mask_has_single_e_triggers_and_has_etau_pairs] 
+    single_etau_leg_1_matched_trigobjs = leg1_matched_trigobjs[mask_has_single_e_triggers_and_has_etau_pairs]
+    # for cross e triggers
+    cross_etau_trigger_types          = trigger_types[mask_has_cross_e_triggers_and_has_etau_pairs]
+    cross_etau_trigger_ids            = trigger_ids[mask_has_cross_e_triggers_and_has_etau_pairs]
+    cross_etau_leg_1_minpt            = leg1_minpt[mask_has_cross_e_triggers_and_has_etau_pairs]
+    cross_etau_leg_2_minpt            = leg2_minpt[mask_has_cross_e_triggers_and_has_etau_pairs] 
+    cross_etau_leg_1_maxeta           = leg1_maxeta[mask_has_cross_e_triggers_and_has_etau_pairs]
+    cross_etau_leg_2_maxeta           = leg2_maxeta[mask_has_cross_e_triggers_and_has_etau_pairs] 
+    cross_etau_leg_1_matched_trigobjs = leg1_matched_trigobjs[mask_has_cross_e_triggers_and_has_etau_pairs]
+    cross_etau_leg_2_matched_trigobjs = leg2_matched_trigobjs[mask_has_cross_e_triggers_and_has_etau_pairs]
+    # concatenating single and cross info, so that it does not remain depend on the trigger hierarchy
+    etau_trigger_types          = ak.concatenate([single_etau_trigger_types, cross_etau_trigger_types], axis=-1)
+    etau_trigger_ids            = ak.concatenate([single_etau_trigger_ids, cross_etau_trigger_ids], axis=-1)
+
+
+    # to convert the masks to event level
+    # e.g. events with etau pair and pass electron triggers
+    mask_has_single_e_triggers_and_has_e_evt_level = ak.any(mask_has_single_e_triggers_and_has_etau_pairs, axis=1)
+    mask_has_cross_e_triggers_and_has_e_evt_level  = ak.any(mask_has_cross_e_triggers_and_has_etau_pairs, axis=1)
+    mask_has_e_triggers_and_has_e_evt_level        = ak.any(mask_has_e_triggers_and_has_etau_pairs, axis=1)
+    
+    # dummy bool array
+    trigobj_matched_mask_dummy = ak.from_regular((trigger_ids > 0)[:,:0][:,None])
+
+    single_el_trigobj_matched_mask = trigger_object_matching_deep(eles,
+                                                                  single_etau_leg_1_matched_trigobjs,
+                                                                  single_etau_leg_1_minpt,
+                                                                  single_etau_leg_1_maxeta,
+                                                                  True)
+
+    #print("ff")
+    cross_el_trigobj_matched_mask_leg1 = trigger_object_matching_deep(eles,
+                                                                      cross_etau_leg_1_matched_trigobjs,
+                                                                      cross_etau_leg_1_minpt,
+                                                                      cross_etau_leg_1_maxeta,
+                                                                      True)
+    #print("gg")
+    cross_el_trigobj_matched_mask_leg2 = trigger_object_matching_deep(taus,
+                                                                      cross_etau_leg_2_matched_trigobjs,
+                                                                      cross_etau_leg_2_minpt,
+                                                                      cross_etau_leg_2_maxeta,
+                                                                      True)
+
+    cross_el_trigobj_matched_mask = (cross_el_trigobj_matched_mask_leg1 & cross_el_trigobj_matched_mask_leg2)
+
+    
+    #from IPython import embed; embed()
+
+    single_el_trigobj_matched_mask_evt_level = ak.fill_none(ak.firsts(ak.any(single_el_trigobj_matched_mask, axis=1), axis=1), False)
+    cross_el_trigobj_matched_mask_evt_level = ak.fill_none(ak.firsts(ak.any(cross_el_trigobj_matched_mask, axis=1), axis=1), False) 
+    
+
+    match_single = mask_has_single_e_triggers_and_has_e_evt_level & single_el_trigobj_matched_mask_evt_level
+    match_cross  = mask_has_cross_e_triggers_and_has_e_evt_level & cross_el_trigobj_matched_mask_evt_level
+
+    
+    el_trigobj_matched_mask = ak.where(match_single, single_el_trigobj_matched_mask, cross_el_trigobj_matched_mask)
+    el_trigobj_matched_mask = ak.fill_none(ak.firsts(el_trigobj_matched_mask, axis=-1), False)
+
+    new_eles = eles[el_trigobj_matched_mask]
+    new_taus = taus[el_trigobj_matched_mask]
+
+    trigIds = ak.where(match_single, single_etau_trigger_ids, cross_etau_trigger_ids)
+    trigTypes = ak.where(match_single, single_etau_trigger_types, cross_etau_trigger_types)
+    ids = ak.values_astype(trigIds, 'int64')
+
+    
+    leps_pair = ak.zip([new_eles, new_taus])
+    
+    #from IPython import embed; embed()
+
+    #ids_dummy = ak.from_regular((trigger_ids > 0)[:,:0])
+    #ids = ak.where(mask_has_tau_triggers_and_has_tau_pairs_evt_level, ids, ids_dummy)
+
+    return leps_pair, ids, trigTypes
+
+
+
+
+def sort_pairs(dtrpairs: ak.Array)->ak.Array:
 
     sorted_idx = ak.argsort(dtrpairs["0"].pfRelIso03_all, ascending=True)
 
@@ -65,14 +189,7 @@ def get_sorted_pair(
     # finally, the pairs are sorted
     dtrpairs = dtrpairs[sorted_idx]
 
-    # Extract the first object in each pair (lep1) and the second object (lep2)
-    lep1 = ak.singletons(ak.firsts(dtrpairs["0"], axis=1))
-    lep2 = ak.singletons(ak.firsts(dtrpairs["1"], axis=1))
-
-    # Concatenate lep1 and lep2 to create the final dtrpair
-    dtrpair    = ak.concatenate([lep1, lep2], axis=1)
-
-    return dtrpair
+    return dtrpairs
 
 
 
@@ -101,8 +218,9 @@ def mutau_selection(
         events: ak.Array,
         lep1_indices: ak.Array,
         lep2_indices: ak.Array,
+        trigger_results: SelectionResult,
         **kwargs,
-) -> tuple[ak.Array, SelectionResult, ak.Array]:
+) -> tuple[SelectionResult, ak.Array, ak.Array]:
 
     # lep1 and lep2 e.g.
     # lep1: [ [m1], [m1],    [m1,m2], [],   [m1,m2] ]
@@ -149,9 +267,9 @@ def mutau_selection(
     lep1, lep2 = ak.unzip(leps_pair)
 
     preselection = {
-        "mutau_is_os"         : (lep1.charge * lep2.charge) < 0,
+        #"mutau_is_os"         : (lep1.charge * lep2.charge) < 0,
         "mutau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  #deltaR(lep1, lep2) > 0.5,
-        "mutau_mT_50"         : transverse_mass(lep1, met) < 50,
+        #"mutau_mT_50"         : transverse_mass(lep1, met) < 50,
         "mutau_invmass_40"    : (1*lep1 + 1*lep2).mass > 40,  # invariant_mass(lep1, lep2) > 40
     }
 
@@ -162,18 +280,40 @@ def mutau_selection(
         good_pair_mask = good_pair_mask & preselection[cut]
         pair_selection_steps[cut] = good_pair_mask
         
-    leps_pair_sel = leps_pair[good_pair_mask]
+    leps_pair = leps_pair[good_pair_mask]
 
-    lep1, lep2 = ak.unzip(leps_pair_sel)
+    # check nPairs
+    npair = ak.num(leps_pair["0"], axis=1)
+    pair_selection_steps["mutau_before_trigger_matching"] = leps_pair["0"].pt >= 0.0
     
-    leps_pair_sel_single = ak.concatenate([lep1,lep2], axis=1)
+    # sort the pairs if many
+    leps_pair = ak.where(npair > 1, sort_pairs(leps_pair), leps_pair)
+    
+    print("mutau")
+    #from IPython import embed; embed()
 
-    where_many   = ak.num(leps_pair_sel_single, axis=1) > 2
+
+    # match trigger objects for all pairs
+    leps_pair, trigIds, trigTypes = match_trigobjs(leps_pair, trigger_results)
+
+
+    #from IPython import embed; embed()
+
+    pair_selection_steps["mutau_after_trigger_matching"] = leps_pair["0"].pt >= 0.0
+
+    lep1, lep2 = ak.unzip(leps_pair)
+
+
+    # take the 1st pair and 1st trigger id
+    lep1 = lep1[:,:1]
+    lep2 = lep2[:,:1]
+    #trigId = trigIds[:,:1]
     
-    pairs = ak.where(where_many,
-                     get_sorted_pair(leps_pair_sel),
-                     leps_pair_sel_single)
+    # rebuild the pair with the 1st one only
+    leps_pair = ak.concatenate([lep1, lep2], axis=1)
+
+    
 
     return SelectionResult(
         aux = pair_selection_steps,
-    ), pairs
+    ), leps_pair, trigIds, trigTypes
