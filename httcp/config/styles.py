@@ -46,7 +46,7 @@ def stylize_processes(config: od.Config) -> None:
         p.color1 = cfg.x.colors.purple
 
     if (p := config.get_process("tt", default=None)):
-        p.color1 = cfg.x.colors.bright_orange
+        p.color1 = cfg.x.colors.light_purple
         p.label = r"$t\bar{t}$"
 
     if (p := config.get_process("st", default=None)):

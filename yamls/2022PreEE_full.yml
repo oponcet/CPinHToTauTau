@@ -14,24 +14,24 @@ args:
   version   : dummy
 
   datasets  :
-    # == data ==
+    ## == data ==
     - data_tau_C
     - data_tau_D
-    - data_mu_C
-    - data_mu_D
-    - data_single_mu_C
-    - data_e_C
-    - data_e_D
-    # == wj ==
+    #- data_mu_C
+    #- data_mu_D
+    #- data_single_mu_C
+    #- data_e_C
+    #- data_e_D
+    ## == wj ==
     - wj_incl_madgraph
-    # == dy ==
+    ## == dy ==
     - dy_lep_m10to50_madgraph
     - dy_lep_m50_madgraph
-    # == tt ==
+    ## == tt ==
     - tt_dl
     - tt_sl
     - tt_fh
-    # == st ==
+    ## == st ==
     - st_tchannel_t
     - st_tchannel_tbar
     - st_tw_t_sl
@@ -40,12 +40,12 @@ args:
     - st_tw_tb_sl
     - st_tw_tb_dl
     - st_tw_tb_fh
-    # == vv ==
+    ## == vv ==
     - ww
     - wz
     - zz
-    # == signal ==
-    - h_ggf_tautau_prod_cp_even_sm
+    ## == signal ==
+    #- h_ggf_tautau_prod_cp_even_sm
 
   processes :
     - data
@@ -57,93 +57,100 @@ args:
     #- st_twchannel
     - st
     - vv
-    - h_ggf_tautau
+    #- h_ggf_tautau
 
   categories:
-    - incl
-    # --- etau --- #
-    - etau
-    - etau_pi
-    - etau_rho
-    - etau_a1_1pr_2pi0
-    - etau_a1_3pr_0pi0
-    # --- mutau --- #
-    - mutau
-    - mutau_pi
-    - mutau_rho
-    - mutau_a1_1pr_2pi0
-    - mutau_a1_3pr_0pi0
-    # --- tautau --- #
-    - tautau
-    - tautau_pi_pi
-    - tautau_pi_rho
-    - tautau_pi_a1_3pr_0pi0
-    - tautau_rho_rho
-    - tautau_rho_a1_3pr_0pi0
-    - tautau_a1_3pr_0pi0_a1_3pr_0pi0
-    #- tautau_a1a1
-    #- tautau_a1pion
-    #- tautau_a1rho
+    #- incl
+    ## --- etau --- #
+    #- etau
+    #- etau_pi
+    #- etau_rho
+    #- etau_a1_1pr_2pi0
+    #- etau_a1_3pr_0pi0
+    ## --- mutau --- #
+    #- mutau
+    #- mutau_pi
+    #- mutau_rho
+    #- mutau_a1_1pr_2pi0
+    #- mutau_a1_3pr_0pi0
+    ## --- tautau --- #
+    #- tautau
+    #- tautau_pi_pi
+    #- tautau_pi_rho
+    #- tautau_pi_a1_3pr_0pi0
+    #- tautau_rho_rho
+    #- tautau_rho_a1_3pr_0pi0
+    #- tautau_a1_3pr_0pi0_a1_3pr_0pi0
+    ## --- new --- #
+    - tautau__os__iso1__iso2__nobjet       # D
+    - tautau__os__noniso1__iso2__nobjet    # C
+    - tautau__os__iso1__noniso2__nobjet    # D0
+    - tautau__os__noniso1__noniso2__nobjet # C0    
+    - tautau__ss__iso1__noniso2__nobjet    # A0
+    - tautau__ss__noniso1__noniso2__nobjet # B0    
+    - tautau__ss__iso1__iso2__nobjet       # A
+    - tautau__ss__noniso1__iso2__nobjet    # B
+
 
   variables:
-    # -- electron -- #
-    - electron_1_pt
-    - electron_1_eta
-    - electron_1_phi
-    - electron_1_IPsig
-    # -- muon -- #    
-    - muon_1_pt
-    - muon_1_eta
-    - muon_1_phi
-    - muon_1_IPsig
-    # -- tau1 -- #
+    ## -- electron -- #
+    #- electron_1_pt
+    #- electron_1_eta
+    #- electron_1_phi
+    #- electron_1_IPsig
+    ## -- muon -- #    
+    #- muon_1_pt
+    #- muon_1_eta
+    #- muon_1_phi
+    #- muon_1_IPsig
+    ## -- tau1 -- #
     - tau_1_pt
     - tau_1_eta
-    - tau_1_phi
-    - tau_1_IPsig
-    # -- tau1 -- #
+    #- tau_1_phi
+    #- tau_1_IPsig
+    ## -- tau1 -- #
     - tau_2_pt
     - tau_2_eta
-    - tau_2_phi
-    - tau_2_IPsig
-    # -- hcand -- #
+    #- tau_2_phi
+    #- tau_2_IPsig
+    ## -- hcand -- #
     - hcand_1_pt
     - hcand_1_eta
-    - hcand_1_phi
-    - hcand_1_IPx
-    - hcand_1_IPy
-    - hcand_1_IPz
-    - hcand_1_IPsig
+    #- hcand_1_phi
+    #- hcand_1_IPx
+    #- hcand_1_IPy
+    #- hcand_1_IPz
+    #- hcand_1_IPsig
     - hcand_2_pt
     - hcand_2_eta
-    - hcand_2_phi
-    - hcand_2_IPx
-    - hcand_2_IPy
-    - hcand_2_IPz
-    - hcand_2_IPsig
+    #- hcand_2_phi
+    #- hcand_2_IPx
+    #- hcand_2_IPy
+    #- hcand_2_IPz
+    #- hcand_2_IPsig
     - hcand_dr
     - hcand_invm
-    # -- jet -- #
-    - jet_1_pt
-    - jet_1_eta
-    - jet_1_phi
-    - jet_2_pt
-    - jet_2_eta
-    - jet_2_phi
-    # -- met -- #
+    ## -- jet -- #
+    #- jet_1_pt
+    #- jet_1_eta
+    #- jet_1_phi
+    #- jet_2_pt
+    #- jet_2_eta
+    #- jet_2_phi
+    ## -- met -- #
     - puppi_met_pt
     - puppi_met_phi
-    # -- angular variables -- #
-    - Alpha
-    - PhiCP_IPIP
-    - PhiCP_IPIP_alpha_lt_piby4
-    - PhiCP_IPIP_alpha_gt_piby4
-    - PhiCP_DPDP
+    ## -- angular variables -- #
+    #- Alpha
+    #- PhiCP_IPIP
+    #- PhiCP_IPIP_alpha_lt_piby4
+    #- PhiCP_IPIP_alpha_gt_piby4
+    #- PhiCP_DPDP
     #- PhiCP_PVPV
     #- PhiCP_IPPV
-    - PhiCP_IPDP
-    - PhiCP_IPDP_alpha_lt_piby4
-    - PhiCP_IPDP_alpha_gt_piby4
+    #- PhiCP_IPDP
+    #- PhiCP_IPDP_alpha_lt_piby4
+    #- PhiCP_IPDP_alpha_gt_piby4
 
-  extras:
-    - process-settings "h_ggf_tautau,unstack,50000"
+  #extras:
+  #  - process-settings "h_ggf_tautau,unstack,50000"
