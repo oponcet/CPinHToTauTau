@@ -1,7 +1,10 @@
 
 # coding: utf-8
 
-# Look at the end of the code to get the different categories for different channels
+# To handle many categories:
+# https://github.com/columnflow/columnflow/commit/3a104d633fa47a8efc789f7aba054ed967017347#diff-01da7ecfbc4b8bb83460821147201da604f9825e32cbd51e365bdfcbc7cb0912R61
+# https://github.com/columnflow/columnflow/issues/547
+
 
 import law
 import order as od
@@ -77,7 +80,7 @@ def add_etau_mutau_categories(config: od.Config) -> None:
                  label=r"$\mu\tau_{h}$")
 
     add_leptauh_ABCD_categories(config)
-    #add_lept_cp_categories(config)
+    add_lept_cp_categories(config)
 
     categories = {
         "channel": [config.get_category("etau"),
@@ -86,11 +89,12 @@ def add_etau_mutau_categories(config: od.Config) -> None:
                     config.get_category("lepA0"), config.get_category("lepB0"),
                     config.get_category("lepA1"), config.get_category("lepB1"),
                     config.get_category("lepC"),  config.get_category("lepD")],
-        #"cp"     : [config.get_category("pi"),
-        #            config.get_category("rho"),
-        #            config.get_category("a1dm2"),
-        #            config.get_category("a1dm10"),
-        #            config.get_category("a1dm11")],
+        #"abcd"   : [config.get_category("lepC"),  config.get_category("lepD")],
+        "cp"     : [config.get_category("pi"),
+                    config.get_category("rho"),
+                    config.get_category("a1dm2"),
+                    config.get_category("a1dm10"),
+                    config.get_category("a1dm11")],
     }
     
     def name_fn(categories):
@@ -128,7 +132,7 @@ def add_tautau_categories(config: od.Config) -> None:
                  label=r"$\tau_{h}\tau_{h}$")
 
     add_hadtauh_ABCD_categories(config)
-    #add_hadr_cp_categories(config)
+    add_hadr_cp_categories(config)
     
     categories = {
         "channel": [config.get_category("tautau")],
@@ -136,20 +140,21 @@ def add_tautau_categories(config: od.Config) -> None:
                     config.get_category("hadA0"), config.get_category("hadB0"),
                     config.get_category("hadC0"), config.get_category("hadD0"),
                     config.get_category("hadC"),  config.get_category("hadD")],
-        #"cp"     : [config.get_category("pi_pi"),
-        #            config.get_category("pi_rho"),
-        #            config.get_category("pi_a1dm2"),
-        #            config.get_category("pi_a1dm10"),
-        #            config.get_category("pi_a1dm11"),
-        #            config.get_category("rho_rho"),
-        #            config.get_category("rho_a1dm2"),
-        #            config.get_category("rho_a1dm10"),
-        #            config.get_category("rho_a1dm11"),
-        #            config.get_category("a1dm2_a1dm10"),
-        #            config.get_category("a1dm2_a1dm11"),
-        #            config.get_category("a1dm10_a1dm10"),
-        #            config.get_category("a1dm10_a1dm11"),
-        #            config.get_category("a1dm11_a1dm11")],
+        #"abcd"   : [config.get_category("hadC"),  config.get_category("hadD")],
+        "cp"     : [config.get_category("pi_pi"),
+                    config.get_category("pi_rho"),
+                    config.get_category("pi_a1dm2"),
+                    config.get_category("pi_a1dm10"),
+                    config.get_category("pi_a1dm11"),
+                    config.get_category("rho_rho"),
+                    config.get_category("rho_a1dm2"),
+                    config.get_category("rho_a1dm10"),
+                    config.get_category("rho_a1dm11"),
+                    config.get_category("a1dm2_a1dm10"),
+                    config.get_category("a1dm2_a1dm11"),
+                    config.get_category("a1dm10_a1dm10"),
+                    config.get_category("a1dm10_a1dm11"),
+                    config.get_category("a1dm11_a1dm11")],
     }
     
     def name_fn(categories):
