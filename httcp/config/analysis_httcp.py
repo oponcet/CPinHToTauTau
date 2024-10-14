@@ -42,7 +42,7 @@ ana.x.config_groups = {}
 # ------------------------------------------------------------- #
 #                               Run2                            #
 # ------------------------------------------------------------- #
-
+"""
 # ===>>> 2018
 from httcp.config.config_run2 import add_config as add_config_run2_2018
 from cmsdb.campaigns.run2_UL2018_nano_cp_tau_v09 import campaign_run2_UL2018_nano_cp_tau_v09
@@ -59,12 +59,13 @@ add_config_run2_2018(
     config_id=int(f"{campaign_run2_UL2018_nano_cp_tau_v09.id}{2}"),
     limit_dataset_files=1
 )
-
+"""
 # ------------------------------------------------------------- #
 #                               Run3                            #
 # ------------------------------------------------------------- #
 
 # ===>>> 2022 PreEE
+print("2022")
 from httcp.config.config_run3 import add_config as add_config_run3_2022_preEE
 from cmsdb.campaigns.run3_2022_preEE_nano_cp_tau_v12 import campaign_run3_2022_preEE_nano_cp_tau_v12
 add_config_run3_2022_preEE(

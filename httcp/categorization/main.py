@@ -10,350 +10,282 @@ from columnflow.util import maybe_import
 ak = maybe_import("awkward")
 
 
-#
-# categorizer functions used by categories definitions
-#
+# ---------------------------------------------------------- #
+#                          Channels                          #
+# ---------------------------------------------------------- #
 
+# inclusive
 @categorizer(uses={"event"})
 def cat_incl(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # fully inclusive selection
     return events, ak.ones_like(events.event) == 1
 
-# ---------------------------------------------------------- #
-#                            e-tau                           #
-# ---------------------------------------------------------- #
+# etau
 @categorizer(uses={"channel_id"})
-def sel_etau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+def cat_etau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     ch = self.config_inst.get_channel("etau")
     return events, events["channel_id"] == ch.id
 
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_etau_pi(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("etau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 0), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_etau_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("etau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 1), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_etau_a1_1pr_2pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("etau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 2), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_etau_a1_3pr_0pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("etau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 10), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_etau_a1_3pr_1pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("etau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 11), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-# ---------------------------------------------------------- #
-#                             mu-tau                         #
-# ---------------------------------------------------------- #
-
+# mutau
 @categorizer(uses={"channel_id"})
-def sel_mutau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+def cat_mutau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     ch = self.config_inst.get_channel("mutau")
     return events, events["channel_id"] == ch.id
 
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_mutau_pi(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("mutau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 0), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_mutau_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("mutau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 1), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_mutau_a1_1pr_2pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("mutau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 2), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_mutau_a1_3pr_0pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("mutau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 10), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_mutau_a1_3pr_1pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("mutau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode[:,1:2] == 11), axis=1) == 1
-    return events, ch_mask & dm_mask
-
-# ---------------------------------------------------------- #
-#                            tau-tau                         #
-# ---------------------------------------------------------- #
-
+# tautau
 @categorizer(uses={"channel_id"})
-def sel_tautau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+def cat_tautau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     ch = self.config_inst.get_channel("tautau")
     return events, events["channel_id"] == ch.id
 
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_pi_pi(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode == 0), axis=1) == 2
-    return events, ch_mask & dm_mask
 
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_rho_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum((events.hcand.decayMode == 1), axis=1) == 2
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_a1_1pr_2pi0_a1_1pr_2pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm = events.hcand.decayMode == 2
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(dm, axis=1) == 2
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_a1_3pr_0pi0_a1_3pr_0pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm = events.hcand.decayMode == 10
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(dm, axis=1) == 2
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_a1_3pr_1pi0_a1_3pr_1pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm = events.hcand.decayMode == 11
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(dm, axis=1) == 2
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_pi_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 0) & (dm_hcand2 == 1))
-                     | ((dm_hcand1 == 1) & (dm_hcand2 == 0)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_pi_a1_1pr_2pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 0) & (dm_hcand2 == 2))
-                     | ((dm_hcand1 == 2) & (dm_hcand2 == 0)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_pi_a1_3pr_0pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 0) & (dm_hcand2 == 10))
-                     | ((dm_hcand1 == 10) & (dm_hcand2 == 0)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_pi_a1_3pr_1pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 0) & (dm_hcand2 == 11))
-                     | ((dm_hcand1 == 11) & (dm_hcand2 == 0)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_rho_a1_1pr_2pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 1) & (dm_hcand2 == 2))
-                     | ((dm_hcand1 == 2) & (dm_hcand2 == 1)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_rho_a1_3pr_0pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 1) & (dm_hcand2 == 10))
-                     | ((dm_hcand1 == 10) & (dm_hcand2 == 1)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_rho_a1_3pr_1pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 1) & (dm_hcand2 == 11))
-                     | ((dm_hcand1 == 11) & (dm_hcand2 == 1)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_a1_1pr_2pi0_a1_3pr_0pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 2) & (dm_hcand2 == 10))
-                     | ((dm_hcand1 == 10) & (dm_hcand2 == 2)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_a1_1pr_2pi0_a1_3pr_1pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 2) & (dm_hcand2 == 11))
-                     | ((dm_hcand1 == 11) & (dm_hcand2 == 2)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-@categorizer(uses={"channel_id", "hcand.decayMode"})
-def sel_tautau_a1_3pr_0pi0_a1_3pr_1pi0(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    ch = self.config_inst.get_channel("tautau")
-    dm_hcand1 = events.hcand.decayMode[:,0:1]
-    dm_hcand2 = events.hcand.decayMode[:,1:2]    
-    ch_mask = events["channel_id"] == ch.id
-    dm_mask = ak.sum(((dm_hcand1 == 10) & (dm_hcand2 == 11))
-                     | ((dm_hcand1 == 11) & (dm_hcand2 == 10)),
-                     axis=1) == 1
-    return events, ch_mask & dm_mask
-
-
-
-##################################
-### Cathegories for ABCD method### 
-##################################
-
-
-@categorizer(uses={"hcand.rel_charge", "Muon.pfRelIso04_all"})
-def cat_c(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    #Control region ( iso < 0.15, same sign pair)
-    sel = (events.hcand.rel_charge[:,0] > 0) & (ak.firsts(events.Muon.pfRelIso04_all, axis=1) < 0.15)
-    return events, sel
-
-@categorizer(uses={"rel_charge", "Muon.pfRelIso04_all"})
-def cat_d(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    #Signal region ( iso < 0.15, opposite sign pair)
-    sel = (events.hcand.rel_charge[:,0] < 0) & (ak.firsts(events.Muon.pfRelIso04_all, axis=1) < 0.15)
-    return events, sel
-
-@categorizer(uses={"rel_charge", "Muon.pfRelIso04_all"})
-def cat_a(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    #Region for transfer factor calculation( iso > 0.15, same sign pair)
-    sel = (events.hcand.rel_charge[:,0] > 0) & (ak.firsts(events.Muon.pfRelIso04_all, axis=1) >= 0.15)  \
-        & (ak.firsts(events.Muon.pfRelIso04_all, axis=1) <= 0.30)
-    return events, sel
-
-@categorizer(uses={"rel_charge", "Muon.pfRelIso04_all"})
-def cat_b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    #Region for transfer factor calculation( iso > 0.15, opposite sign pair)
-    sel = (events.hcand.rel_charge[:,0] < 0) & (ak.firsts(events.Muon.pfRelIso04_all, axis=1) >= 0.15) \
-        & (ak.firsts(events.Muon.pfRelIso04_all, axis=1) <= 0.30)
-    return events, sel
-
-
-
-# # ---------------------------------------------------------- #
-#                       Fake Factors                         #
+# ---------------------------------------------------------- #
+#                          For PhiCP                         #
 # ---------------------------------------------------------- #
 
 
-@categorizer(uses={"is_os"})
-def cat_os(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # oppositive sign leptons
-    return events, events.is_os
+# ---------- >>> for e/mu-tauh
+# tau -> pi
+@categorizer(uses={"is_lep_1", "is_pi_2"})
+def cat_pi(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_lep_1 & events.is_pi_2
+# tau -> rho
+@categorizer(uses={"is_lep_1", "is_rho_2"})
+def cat_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_lep_1 & events.is_rho_2
+# tau -> a1 (DM2)
+@categorizer(uses={"is_lep_1", "is_a1_1pr_2pi0_2"})
+def cat_a1dm2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_lep_1 & events.is_a1_1pr_2pi0_2
+# tau -> a1 (DM10)
+@categorizer(uses={"is_lep_1", "is_a1_3pr_0pi0_2"})
+def cat_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_lep_1 & events.is_a1_3pr_0pi0_2
+# tau -> a1 (DM11)
+@categorizer(uses={"is_lep_1", "is_a1_3pr_1pi0_2"})
+def cat_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_lep_1 & events.is_a1_3pr_1pi0_2
 
 
-@categorizer(uses={"is_os"})
-def cat_ss(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # same sign leptons
-    return events, ~events.is_os
+# for tau-tau
+# tau -> pi, tau -> pi
+@categorizer(uses={"is_lep_1", "is_pi_1", "is_pi_2"})
+def cat_pi_pi(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & events.is_pi_1 & events.is_pi_2
+# tau -> pi, tau -> rho, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_pi_1", "is_rho_2",
+                   "is_pi_2", "is_rho_1"})
+def cat_pi_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_pi_1 & events.is_rho_2) | (events.is_pi_2 & events.is_rho_1))
+# tau -> pi, tau -> a1 DM2, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_pi_1", "is_a1_1pr_2pi0_2",
+                   "is_pi_2", "is_a1_1pr_2pi0_1"})
+def cat_pi_a1dm2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_pi_1 & events.is_a1_1pr_2pi0_2) | (events.is_pi_2 & events.is_a1_1pr_2pi0_1))
+# tau -> pi, tau -> a1 DM10, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_pi_1", "is_a1_3pr_0pi0_2",
+                   "is_pi_2", "is_a1_3pr_0pi0_1"})
+def cat_pi_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_pi_1 & events.is_a1_3pr_0pi0_2) | (events.is_pi_2 & events.is_a1_3pr_0pi0_1))
+# tau -> pi, tau -> a1 DM11, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_pi_1", "is_a1_3pr_1pi0_2",
+                   "is_pi_2", "is_a1_3pr_1pi0_1"})
+def cat_pi_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_pi_1 & events.is_a1_3pr_1pi0_2) | (events.is_pi_2 & events.is_a1_3pr_1pi0_1))
+# tau -> rho, tau -> rho
+@categorizer(uses={"is_lep_1",
+                   "is_rho_1", "is_rho_2"})
+def cat_rho_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & events.is_rho_1 & events.is_rho_2
+# tau -> rho, tau -> a1 DM2, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_rho_1", "is_a1_1pr_2pi0_2",
+                   "is_rho_2", "is_a1_1pr_2pi0_1"})
+def cat_rho_a1dm2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_rho_1 & events.is_a1_1pr_2pi0_2) | (events.is_rho_2 & events.is_a1_1pr_2pi0_1))
+# tau -> rho, tau -> a1 DM10, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_rho_1", "is_a1_3pr_0pi0_2",
+                   "is_rho_2", "is_a1_3pr_0pi0_1"})
+def cat_rho_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_rho_1 & events.is_a1_3pr_0pi0_2) | (events.is_rho_2 & events.is_a1_3pr_0pi0_1))
+# tau -> rho, tau -> a1 DM11, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_rho_1", "is_a1_3pr_1pi0_2",
+                   "is_rho_2", "is_a1_3pr_1pi0_1"})
+def cat_rho_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_rho_1 & events.is_a1_3pr_1pi0_2) | (events.is_rho_2 & events.is_a1_3pr_1pi0_1))
+# tau -> a1 DM2, tau -> a1 DM2
+@categorizer(uses={"is_lep_1",
+                   "is_a1_1pr_2pi0_1",
+                   "is_a1_1pr_2pi0_2"})
+def cat_a1dm2_a1dm2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & events.is_a1_1pr_2pi0_1 & events.is_a1_1pr_2pi0_2
+# tau -> a1 DM2, tau -> a1 DM10, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_a1_1pr_2pi0_1", "is_a1_3pr_0pi0_2",
+                   "is_a1_1pr_2pi0_2", "is_a1_3pr_0pi0_1"})
+def cat_a1dm2_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_a1_1pr_2pi0_1 & events.is_a1_3pr_0pi0_2) | (events.is_a1_1pr_2pi0_2 & events.is_a1_3pr_0pi0_1))
+# tau -> a1 DM2, tau -> a1 DM11, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_a1_1pr_2pi0_1", "is_a1_3pr_1pi0_2",
+                   "is_a1_1pr_2pi0_2", "is_a1_3pr_1pi0_1"})
+def cat_a1dm2_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_a1_1pr_2pi0_1 & events.is_a1_3pr_1pi0_2) | (events.is_a1_1pr_2pi0_2 & events.is_a1_3pr_1pi0_1))
+# tau -> a1 DM10, tau -> a1 DM10
+@categorizer(uses={"is_lep_1",
+                   "is_a1_3pr_0pi0_1",
+                   "is_a1_3pr_0pi0_2"})
+def cat_a1dm10_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & events.is_a1_3pr_0pi0_1 & events.is_a1_3pr_0pi0_2
+# tau -> a1 DM10, tau -> a1 DM11, vice versa
+@categorizer(uses={"is_lep_1",
+                   "is_a1_3pr_0pi0_1", "is_a1_3pr_1pi0_2",
+                   "is_a1_3pr_0pi0_2", "is_a1_3pr_1pi0_1"})
+def cat_a1dm10_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & ((events.is_a1_3pr_0pi0_1 & events.is_a1_3pr_1pi0_2) | (events.is_a1_3pr_0pi0_2 & events.is_a1_3pr_1pi0_1))
+# tau -> a1 DM11, tau -> a1 DM11
+@categorizer(uses={"is_lep_1",
+                   "is_a1_3pr_1pi0_1", 
+                   "is_a1_3pr_1pi0_2"})
+def cat_a1dm11_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_lep_1 & events.is_a1_3pr_1pi0_1 & events.is_a1_3pr_1pi0_2
 
 
-@categorizer(uses={"is_iso_1"})
-def cat_iso_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # isolated tau2
-    return events, events.is_iso_1
 
-@categorizer(uses={"is_iso_1"})
-def cat_noniso_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # isolated tau2
-    return events, ~events.is_iso_1
+# ---------------------------------------------------------- #
+#                          For ABCD                          #
+# ---------------------------------------------------------- #
 
 
-@categorizer(uses={"is_iso_2"})
-def cat_iso_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # noon-isolated tau2
-    return events, events.is_iso_2
+## --- tautau --->>>
 
-@categorizer(uses={"is_iso_2"})
-def cat_noniso_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # noon-isolated tau2
-    return events, ~events.is_iso_2
+#      tau2-iso          tau2-noniso            tau2-iso      
+# << ------------ | --------------------- | -------------- >> 
+# |------------------------------------------------------- | ^
+# |               |           |           |                | ^
+# |               |           |           |                | | tau-1
+# |       A       |    A0     |     D0    |       D        | |  iso
+# |               |           |           |                | |
+# |               |           |           |                | |
+# |------------------------------------------------------- | -
+# |               |           |           |                | |
+# |               |           |           |                | |
+# |       B       |    B0     |     C0    |       C        | |  tau-1
+# |               |           |           |                | | antiIso
+# |               |           |           |                | |
+# |------------------------------------------------------- | v
+# << ------------------------ | ------------------------- >> v
+#               SS                           OS                 
+#
+# A   : tautau [ss__iso1__iso2__nobjet]
+# B   : tautau [ss__noniso1__iso2__nobjet]
+# A0  : tautau [ss__iso1__noniso2__nobjet]
+# B0  : tautau [ss__noniso1__noniso2__nobjet]
+# D0  : tautau [os__iso1__noniso2__nobjet]
+# C0  : tautau [os__noniso1__noniso2__nobjet]
+# D   : tautau [os__iso1__iso2__nobjet]
+# C   : tautau [os__noniso1__iso2__nobjet]
 
-@categorizer(uses={"is_low_mt"})
-def cat_low_mt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # noon-isolated tau2
-    return events, events.is_low_mt
 
-@categorizer(uses={"is_low_mt"})
-def cat_high_mt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # noon-isolated tau2
-    return events, ~events.is_low_mt
+# A
+@categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
+def cat_ss_iso1_iso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_os & events.is_iso_1 & events.is_iso_2 & events.is_b_veto
+# B
+@categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
+def cat_ss_noniso1_iso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_os & ~events.is_iso_1 & events.is_iso_2 & events.is_b_veto
+# A0
+@categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
+def cat_ss_iso1_noniso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_os & events.is_iso_1 & ~events.is_iso_2 & events.is_b_veto
+# B0
+@categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
+def cat_ss_noniso1_noniso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_os & ~events.is_iso_1 & ~events.is_iso_2 & events.is_b_veto
+# D0
+@categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
+def cat_os_iso1_noniso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & events.is_iso_1 & ~events.is_iso_2 & events.is_b_veto
+# C0
+@categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
+def cat_os_noniso1_noniso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & ~events.is_iso_1 & ~events.is_iso_2 & events.is_b_veto
+# D
+@categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
+def cat_os_iso1_iso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & events.is_iso_1 & events.is_iso_2 & events.is_b_veto
+# C
+@categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
+def cat_os_noniso1_iso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & ~events.is_iso_1 & events.is_iso_2 & events.is_b_veto
 
-@categorizer(uses={"is_b_veto"})
-def cat_has_no_b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # noon-isolated tau2
-    return events, events.is_b_veto
 
-@categorizer(uses={"is_b_veto"})
-def cat_has_b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    # noon-isolated tau2
-    return events, ~events.is_b_veto
+## --- e/mutau --->>>
 
+#        bveto      no-bveto                 bveto                 
+# << ------------ | --------- | -------------------------------- >>
+# |-------------------------------------------------------------- | ^
+# |               |           |           |                       | ^
+# |               |           |           |                       | | tau-2
+# |      QCD      |     T     |     SR    |          W            | |  iso
+# |       A       |    A0     |     D     |          A1           | |
+# |               |           |           |                       | |
+# |-------------------------------------------------------------- | -
+# |               |           |           |                       | |
+# |               |           |           |                       | |
+# |      QCD      |     T     |     SR    |          W            | |  tau-2
+# |       B       |    B0     |     C     |          B1           | | antiIso
+# |               |           |           |                       | |
+# |-------------------------------------------------------------- | v
+# << ------------ | -------------------------------------------- >> v
+#        SS                           OS                           
+# << ------------------------------------ | -------------------- >>
+#                  mT < 50                          mT > 50        
+#
+# A   : e/mutau [ss__iso2__nobjet__lowmt]
+# B   : e/mutau [ss__noniso2__nobjet__lowmt]
+# A0  : e/mutau [os__iso2__bjet__lowmt]
+# B0  : e/mutau [os__noniso2__bjet__lowmt]
+# A1  : e/mutau [os__iso2__nobjet__highmt]
+# B1  : e/mutau [os__noniso2__nobjet__highmt]
+# D   : e/mutau [os__iso2__nobjet__lowmt]
+# C   : e/mutau [os__noniso2__nobjet__lowmt]
+
+# A
+@categorizer(uses={"is_os", "is_iso_2", "is_b_veto", "is_low_mt"})
+def cat_ss_iso2_bveto_lowmt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_os & events.is_iso_2 & events.is_b_veto & events.is_low_mt 
+# B
+@categorizer(uses={"is_os", "is_iso_2", "is_b_veto", "is_low_mt"})
+def cat_ss_noniso2_bveto_lowmt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_os & ~events.is_iso_2 & events.is_b_veto & events.is_low_mt 
+# A0
+@categorizer(uses={"is_os", "is_iso_2", "is_b_veto", "is_low_mt"})
+def cat_os_iso2_nobveto_lowmt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & events.is_iso_2 & ~events.is_b_veto & events.is_low_mt 
+# B0
+@categorizer(uses={"is_os", "is_iso_2", "is_b_veto", "is_low_mt"})
+def cat_os_noniso2_nobveto_lowmt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & ~events.is_iso_2 & ~events.is_b_veto & events.is_low_mt 
+# A1
+@categorizer(uses={"is_os", "is_iso_2", "is_b_veto", "is_low_mt"})
+def cat_os_iso2_bveto_highmt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & events.is_iso_2 & events.is_b_veto & ~events.is_low_mt 
+# B1
+@categorizer(uses={"is_os", "is_iso_2", "is_b_veto", "is_low_mt"})
+def cat_os_noniso2_bveto_highmt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & ~events.is_iso_2 & events.is_b_veto & ~events.is_low_mt 
+# D
+@categorizer(uses={"is_os", "is_iso_2", "is_b_veto", "is_low_mt"})
+def cat_os_iso2_bveto_lowmt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & events.is_iso_2 & events.is_b_veto & events.is_low_mt 
+# C
+@categorizer(uses={"is_os", "is_iso_2", "is_b_veto", "is_low_mt"})
+def cat_os_noniso2_bveto_lowmt(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_os & ~events.is_iso_2 & events.is_b_veto & events.is_low_mt

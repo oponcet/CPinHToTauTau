@@ -24,6 +24,8 @@ from columnflow.config_util import (
     get_shifts_from_sources,
     verify_config_processes,
 )
+logger = law.logger.get_logger(__name__)
+
 
 ak = maybe_import("awkward")
 
@@ -40,8 +42,10 @@ def add_config (ana: od.Analysis,
                 limit_dataset_files   = None
 ) -> od.Config :
 
-    print(f"\ncampaign: {campaign.name}")
-    print(f"config name: {config_name}, id: {config_id}")
+    logger.info(f"campaign    : {campaign.name}")
+    logger.info(f"config name : {config_name}")
+    logger.info(f"config id   : {config_id}")
+
     # gather campaign data
     year = campaign.x.year
     postfix = campaign.x.postfix
@@ -91,7 +95,7 @@ def add_config (ana: od.Analysis,
     for process_name in process_names:
         # development switch in case datasets are not _yet_ there
         if process_name not in procs:
-            print(f"WARNING: {process_name} not in cmsdb processes")
+            logger.warning(f"WARNING: {process_name} not in cmsdb processes")
             continue
         # add the process
         #if process_name == "h_ggf_tautau":
@@ -104,7 +108,7 @@ def add_config (ana: od.Analysis,
     from httcp.config.styles import stylize_processes
     stylize_processes(cfg)    
 
-
+    
     # --------------------------------------------------------------------------------------------- #
     # add datasets we need to study
     # --------------------------------------------------------------------------------------------- #
@@ -179,7 +183,7 @@ def add_config (ana: od.Analysis,
     for dataset_name in dataset_names:
         # development switch in case datasets are not _yet_ there
         if dataset_name not in campaign.datasets:
-            print(f"WARNING: {dataset_name} not in cmsdb campaign")
+            logger.warning(f"WARNING: {dataset_name} not in cmsdb campaign")
             continue
         
         # add the dataset
@@ -267,7 +271,6 @@ def add_config (ana: od.Analysis,
     # whether to validate the number of obtained LFNs in GetDatasetLFNs
     # (currently set to false because the number of files per dataset is truncated to 2)
     cfg.x.validate_dataset_lfns = False
-
 
     # --------------------------------------------------------------------------------------------- #
     # Luminosity and Normalization
@@ -435,7 +438,7 @@ def add_config (ana: od.Analysis,
         "HLT_SF_Ele24_TightID",
     )
     
-
+    
     # --------------------------------------------------------------------------------------------- #
     # muon settings
     # names of muon correction sets and working points
@@ -847,7 +850,7 @@ def add_config (ana: od.Analysis,
 
     cfg.x.default_weight_producer = "all_weights"
 
-
+    
     #---------------------------------------------------------------------------------------------#
     # No Idea
     # versions per task family, either referring to strings or to callables receving the invoking
@@ -911,7 +914,6 @@ def add_config (ana: od.Analysis,
         cfg.x.get_dataset_lfns_sandbox = dev_sandbox("bash::$CF_BASE/sandboxes/cf.sh")
         # define custom remote fs's to look at
         cfg.x.get_dataset_lfns_remote_fs =  lambda dataset_inst: "wlcg_fs_eoscms_redirector"
-
         
     #---------------------------------------------------------------------------------------------#
     # Add categories described in categorization.py
@@ -920,7 +922,6 @@ def add_config (ana: od.Analysis,
     from httcp.config.categories import add_categories
     add_categories(cfg)
 
-    
     #---------------------------------------------------------------------------------------------#
     # Add variables described in variables.py
     #---------------------------------------------------------------------------------------------#
@@ -928,7 +929,6 @@ def add_config (ana: od.Analysis,
     from httcp.config.variables import add_variables
     add_variables(cfg)
 
-    
     #---------------------------------------------------------------------------------------------#
     # columns to keep after reduce events, MergeSelectionMasks and UniteColumns tasks
     #---------------------------------------------------------------------------------------------#
@@ -947,6 +947,10 @@ def add_config (ana: od.Analysis,
             "cross_tau_triggered", "cross_tau_jet_triggered",
             # --- new for categorization --- #
             "is_os", "is_iso_1", "is_iso_2", "is_low_mt", "is_b_veto",
+            "is_lep_1", "is_pi_1", "is_pi_2", "is_rho_1", "is_rho_2",
+            "is_a1_1pr_2pi0_1", "is_a1_1pr_2pi0_2",
+            "is_a1_3pr_0pi0_1", "is_a1_3pr_0pi0_2",
+            "is_a1_3pr_1pi0_1", "is_a1_3pr_1pi0_2",
         } | {
             f"GenPart.{var}" for var in [
                 "pt", "eta", "phi", "mass",

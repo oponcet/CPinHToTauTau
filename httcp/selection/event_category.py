@@ -77,41 +77,11 @@ def get_categories(
     channel_id = ak.values_astype(channel_id, np.uint8)
     events = set_ak_column(events, "channel_id", channel_id)
 
-
-    """
-    # categoris for SR, AR and DR
-    cat_tautau_is_OS   = results.x.cat_tautau_is_OS
-    cat_tautau_is_ISO1 = results.x.cat_tautau_is_ISO1
-    cat_tautau_is_ISO2 = results.x.cat_tautau_is_ISO2
-
-    is_OS   = ak.where(events.channel_id == ch_tautau.id, cat_tautau_is_OS, False)
-    is_ISO1 = ak.where(events.channel_id == ch_tautau.id, cat_tautau_is_ISO1, False)
-    is_ISO2 = ak.where(events.channel_id == ch_tautau.id, cat_tautau_is_ISO2, False)
-
-    events = set_ak_column(events, "is_os", is_OS)
-    events = set_ak_column(events, "is_iso1", is_ISO1)
-    events = set_ak_column(events, "is_iso2", is_ISO2)
-
-    if self.dataset_inst.is_mc:
-        cat_tautau_is_REAL1 = results.x.cat_tautau_is_REAL1
-        cat_tautau_is_REAL2 = results.x.cat_tautau_is_REAL2
-
-        is_REAL1 = ak.where(events.channel_id == ch_tautau.id, cat_tautau_is_REAL1, False)
-        is_REAL2 = ak.where(events.channel_id == ch_tautau.id, cat_tautau_is_REAL2, False)
-
-        events = set_ak_column(events, "is_real1", is_REAL1)
-        events = set_ak_column(events, "is_real2", is_REAL2)
-    
-    """
-
     return events, SelectionResult(
         #steps={
         #    "category_et_mt_or_tt": ((channel_id == ch_etau.id) | (channel_id == ch_mutau.id) | (channel_id == ch_tautau.id)),
         #},
         aux=selection_steps)
-
-
-
 
 
 @selector(
@@ -124,8 +94,14 @@ def get_categories(
         "is_os",
         "is_b_veto",
         "is_low_mt",
+        "is_lep_1",
         "is_iso_1", "is_iso_2",
         #"is_real_1", "is_real_2",
+        "is_pi_1", "is_pi_2",
+        "is_rho_1", "is_rho_2",
+        "is_a1_1pr_2pi0_1", "is_a1_1pr_2pi0_2",
+        "is_a1_3pr_0pi0_1", "is_a1_3pr_0pi0_2",
+        "is_a1_3pr_1pi0_1", "is_a1_3pr_1pi0_2",
     },
     exposed=False,
 )
@@ -206,6 +182,54 @@ def build_abcd_masks(
     is_low_mt = ak.fill_none(ak.any(is_low_mt, axis=1), False)
 
 
+    is_lep_1 = h1.decayMode < 0
+    is_lep_1 = ak.fill_none(ak.any(is_lep_1, axis=1), False)
+    
+    # h1 to pion
+    # only for tautau channel
+    is_pi_1 = h1.decayMode == 0
+    is_pi_1 = ak.fill_none(ak.any(is_pi_1, axis=1), False)
+
+    # h2 to pion
+    # valid for all channels
+    is_pi_2 = h2.decayMode == 0
+    is_pi_2 = ak.fill_none(ak.any(is_pi_2, axis=1), False)
+
+    # h1 to rho
+    # only for tautau channel
+    is_rho_1 = h1.decayMode == 1
+    is_rho_1 = ak.fill_none(ak.any(is_rho_1, axis=1), False)
+
+    # h2 to rho
+    # valid for all channels
+    is_rho_2 = h2.decayMode == 1
+    is_rho_2 = ak.fill_none(ak.any(is_rho_2, axis=1), False)
+
+    # h1 to a1 (DM 2)
+    is_a1_1pr_2pi0_1 = h1.decayMode == 2
+    is_a1_1pr_2pi0_1 = ak.fill_none(ak.any(is_a1_1pr_2pi0_1, axis=1), False)
+
+    # h2 to a1 (DM 2)
+    is_a1_1pr_2pi0_2 = h2.decayMode == 2
+    is_a1_1pr_2pi0_2 = ak.fill_none(ak.any(is_a1_1pr_2pi0_2, axis=1), False)
+
+    # h1 to a1 (DM 10)
+    is_a1_3pr_0pi0_1 = h1.decayMode == 10
+    is_a1_3pr_0pi0_1 = ak.fill_none(ak.any(is_a1_3pr_0pi0_1, axis=1), False)
+
+    # h2 to a1 (DM 10)
+    is_a1_3pr_0pi0_2 = h2.decayMode == 10
+    is_a1_3pr_0pi0_2 = ak.fill_none(ak.any(is_a1_3pr_0pi0_2, axis=1), False)
+
+    # h1 to a1 (DM 11)
+    is_a1_3pr_1pi0_1 = h1.decayMode == 11
+    is_a1_3pr_1pi0_1 = ak.fill_none(ak.any(is_a1_3pr_1pi0_1, axis=1), False)
+
+    # h2 to a1 (DM 11)
+    is_a1_3pr_1pi0_2 = h2.decayMode == 11
+    is_a1_3pr_1pi0_2 = ak.fill_none(ak.any(is_a1_3pr_1pi0_2, axis=1), False)
+
+    
     # set columns
     events = set_ak_column(events, "is_os",     is_os)
     events = set_ak_column(events, "is_iso_1",  is_iso_1)
@@ -214,7 +238,20 @@ def build_abcd_masks(
     #events = set_ak_column(events, "is_real_2", is_real_2)
     events = set_ak_column(events, "is_low_mt", is_low_mt)
     events = set_ak_column(events, "is_b_veto", is_b_veto)
+    # for CP categories
+    events = set_ak_column(events, "is_lep_1",   is_lep_1)
+    events = set_ak_column(events, "is_pi_1",   is_pi_1)
+    events = set_ak_column(events, "is_pi_2",   is_pi_2)
+    events = set_ak_column(events, "is_rho_1",  is_rho_1)
+    events = set_ak_column(events, "is_rho_2",  is_rho_2)
+    events = set_ak_column(events, "is_a1_1pr_2pi0_1",  is_a1_1pr_2pi0_1)
+    events = set_ak_column(events, "is_a1_1pr_2pi0_2",  is_a1_1pr_2pi0_2)
+    events = set_ak_column(events, "is_a1_3pr_0pi0_1",  is_a1_3pr_0pi0_1)
+    events = set_ak_column(events, "is_a1_3pr_0pi0_2",  is_a1_3pr_0pi0_2)
+    events = set_ak_column(events, "is_a1_3pr_1pi0_1",  is_a1_3pr_1pi0_1)
+    events = set_ak_column(events, "is_a1_3pr_1pi0_2",  is_a1_3pr_1pi0_2)
 
     #from IPython import embed; embed()
 
+    
     return events
