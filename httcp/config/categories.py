@@ -90,11 +90,11 @@ def add_etau_mutau_categories(config: od.Config) -> None:
                     config.get_category("lepA1"), config.get_category("lepB1"),
                     config.get_category("lepC"),  config.get_category("lepD")],
         #"abcd"   : [config.get_category("lepC"),  config.get_category("lepD")],
-        "cp"     : [config.get_category("pi"),
-                    config.get_category("rho"),
-                    config.get_category("a1dm2"),
-                    config.get_category("a1dm10"),
-                    config.get_category("a1dm11")],
+        #"cp"     : [config.get_category("pi"),
+        #            config.get_category("rho"),
+        #            config.get_category("a1dm2"),
+        #            config.get_category("a1dm10"),
+        #            config.get_category("a1dm11")],
     }
     
     def name_fn(categories):
@@ -141,20 +141,20 @@ def add_tautau_categories(config: od.Config) -> None:
                     config.get_category("hadC0"), config.get_category("hadD0"),
                     config.get_category("hadC"),  config.get_category("hadD")],
         #"abcd"   : [config.get_category("hadC"),  config.get_category("hadD")],
-        "cp"     : [config.get_category("pi_pi"),
-                    config.get_category("pi_rho"),
-                    config.get_category("pi_a1dm2"),
-                    config.get_category("pi_a1dm10"),
-                    config.get_category("pi_a1dm11"),
-                    config.get_category("rho_rho"),
-                    config.get_category("rho_a1dm2"),
-                    config.get_category("rho_a1dm10"),
-                    config.get_category("rho_a1dm11"),
-                    config.get_category("a1dm2_a1dm10"),
-                    config.get_category("a1dm2_a1dm11"),
-                    config.get_category("a1dm10_a1dm10"),
-                    config.get_category("a1dm10_a1dm11"),
-                    config.get_category("a1dm11_a1dm11")],
+        #"cp"     : [config.get_category("pi_pi"),
+        #            config.get_category("pi_rho"),
+        #            config.get_category("pi_a1dm2"),
+        #            config.get_category("pi_a1dm10"),
+        #            config.get_category("pi_a1dm11"),
+        #            config.get_category("rho_rho"),
+        #            config.get_category("rho_a1dm2"),
+        #            config.get_category("rho_a1dm10"),
+        #            config.get_category("rho_a1dm11"),
+        #            config.get_category("a1dm2_a1dm10"),
+        #            config.get_category("a1dm2_a1dm11"),
+        #            config.get_category("a1dm10_a1dm10"),
+        #            config.get_category("a1dm10_a1dm11"),
+        #            config.get_category("a1dm11_a1dm11")],
     }
     
     def name_fn(categories):
@@ -188,7 +188,7 @@ def add_categories(config: od.Config) -> None:
     """
     Adds all categories to a *config*.
     """
-    #add_category(config, name="incl", id=99, selection="cat_incl", label=r"$Inclusive$")
+    add_category(config, name="incl", id=9, selection="cat_incl", label=r"$Inclusive$")
 
     add_etau_mutau_categories(config)
     add_tautau_categories(config)
