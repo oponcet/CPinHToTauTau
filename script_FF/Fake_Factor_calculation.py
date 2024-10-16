@@ -101,7 +101,7 @@ def get_hist_by_category_var(hists_data, hists_mc, category):
             print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
-        hists_data_cat[dataset] = hists_data[dataset][category_index, :, :, :].project('tau_1_pt')
+        hists_data_cat[dataset] = hists_data[dataset][category_index, :, :, :].project('hcand_1_pt')
     
     # Loop over the datasets to get the histograms for the category
     for dataset in hists_mc.keys():
@@ -110,7 +110,7 @@ def get_hist_by_category_var(hists_data, hists_mc, category):
             print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
-        hists_mc_cat[dataset]  = hists_mc[dataset][category_index, :, :, :].project('tau_1_pt')
+        hists_mc_cat[dataset]  = hists_mc[dataset][category_index, :, :, :].project('hcand_1_pt')
 
     return hists_data_cat, hists_mc_cat
 
@@ -134,8 +134,8 @@ def convert_all_hist_tonumpy(hists_data, hists_mc, variable,category):
             print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
-        hists_data_np[dataset] = hists_data[dataset][category_index, :, :, :].project('tau_1_pt').values()
-        hists_data_variance_np[dataset] = hists_data[dataset][category_index, :, :, :].project('tau_1_pt').variances()**0.5
+        hists_data_np[dataset] = hists_data[dataset][category_index, :, :, :].project('hcand_1_pt').values()
+        hists_data_variance_np[dataset] = hists_data[dataset][category_index, :, :, :].project('hcand_1_pt').variances()**0.5
     
     # Loop over the datasets to convert the histograms to numpy arrays
     for dataset in hists_mc.keys():
@@ -144,166 +144,12 @@ def convert_all_hist_tonumpy(hists_data, hists_mc, variable,category):
             print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
-        hists_mc_np[dataset] = hists_mc[dataset][category_index, :, :, :].project('tau_1_pt').values()
-        hists_mc_variance_np[dataset] = hists_mc[dataset][category_index, :, :, :].project('tau_1_pt').variances()**0.5
+        hists_mc_np[dataset] = hists_mc[dataset][category_index, :, :, :].project('hcand_1_pt').values()
+        hists_mc_variance_np[dataset] = hists_mc[dataset][category_index, :, :, :].project('hcand_1_pt').variances()**0.5
 
     # get varaible edges : 
     variable_bin_edges = hists_data['data_tau_C'].axes[variable].edges
     variable_centers = (variable_bin_edges[:-1] + variable_bin_edges[1:]) / 2  # Get the bin centers for plotting
-
-
-    # print(f">>>>>>>>>>>>>>>>>>>>> Data histograms in numpy: \n{hists_data_np}")
-    # print(f">>>>>>>>>>>>>>>>>>>>> Data histograms variance in numpy: \n{hists_data_variance_np}")
-    # print(f">>>>>>>>>>>>>>>>>>>>> MC histograms in numpy: \n{hists_mc_np}")
-    # print(f">>>>>>>>>>>>>>>>>>>>> MC histograms variance in numpy: \n{hists_mc_variance_np}")
-
-    # print(f">>>>>>>>>>>>>>>>>>>>> Variable bin edges: \n{variable_bin_edges}")
-    # print(f">>>>>>>>>>>>>>>>>>>>> Variable centers: \n{variable_centers}")
-
-    return hists_data_np, hists_mc_np, hists_data_variance_np, hists_mc_variance_np, variable_bin_edges, variable_centers
-
-
-# def plot_hist_cat(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
-#     '''
-#     Plot histograms for a specific category
-#     '''
-
-#     hep.style.use(hep.style.CMS)
-
-#     hists_data_cat = copy.deepcopy(hists_data_cat_)
-#     hists_mc_cat = copy.deepcopy(hists_mc_cat_)
-
-#     hists_mc_data_sub = hists_mc_data_sub_.copy() if hists_mc_data_sub_ is not None else None
-    
-#     # print(f">>>>>>>>>>>>>>>>>>>>> Data histograms: \n{hists_data_cat}")
-#     # print(f">>>>>>>>>>>>>>>>>>>>> MC histograms: \n{hists_mc_cat}")
-#     # print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction histograms: \n{hists_mc_data_sub}")
-
-#     # Initialize the sum variable as None
-#     hists_data_cat_sum = None
-
-#     # Loop over the datasets to sum histograms
-#     for dataset in hists_data_cat:
-#         # print(dataset)
-#         hist = hists_data_cat[dataset]
-
-#         # Initialize the sum histogram if it's None
-#         if hists_data_cat_sum is None:
-#             hists_data_cat_sum = hist  # Start with the first histogram
-#         else:
-#             hists_data_cat_sum += hist  # Accumulate the histograms
-
-#     # Prepare the figure and axis for plotting
-#     fig, ax = plt.subplots()
-
-#      # Define colors for specific datasets
-#     colors = {
-#         'tt': "#9e9ac8",  # Violet
-#         'dy': "#feb24c",  # Orange
-#         'diboson': "#a96b59",   # Brown for Diboson (WW)
-#         'wj': "#d73027", # Red for W+jets
-#     }
-
-#     # Use a color map to dynamically generate colors based on the number of MC categories
-#     num_mc_categories = len(hists_mc_cat)
-#     cmap = cm.get_cmap('tab10', num_mc_categories)  # Use 'tab10', 'viridis', or any other colormap
-
-#     # Plot stacked MC histograms
-#     mc_total = None  # This will store the total MC histogram
-#     mc_labels = list(hists_mc_cat.keys())
-#     print(f"MC labels: {mc_labels}")
-
-#     # Prepare a variable to keep track of the cumulative height of the stack
-#     mc_cumulative = None  
-#     # Keep track of legend entries
-#     legend_entries = set()
-
-#     for idx, dataset in enumerate(mc_labels):
-#         print(f"Processing dataset: {dataset}")
-#         mc_hist = hists_mc_cat[dataset]
-
-#         # Ensure no negative values and only work with non-negative values
-#         mc_values = np.maximum(mc_hist.values(), 0)  # Ensure MC values are non-negative
-
-#         # print(f"MC values: {mc_values}")
-
-#         # If mc_cumulative is None, start with the first histogram
-#         if mc_cumulative is None:
-#             mc_cumulative = mc_values.copy()  # Copy the first histogram values
-#         else:
-#             mc_cumulative += mc_values  # Add to the cumulative histogram
-
-    
-#         # Create a dictionary for legend labels
-#         legend_labels = {}
-
-#         # Assign color from the color map
-#         color = cmap(idx / num_mc_categories)
-
-#         # Determine the legend label based on dataset name
-#         if dataset.startswith("st") or dataset.startswith("tt"):
-#             label = "t/tbar"
-#             color = colors['tt']
-#         elif dataset in ["ww", "wz", "zz"]:
-#             color = colors["diboson"]
-#             label = "Diboson"
-#         elif dataset.startswith('dy'):
-#             label = "Drell-Yan"
-#             color = colors['dy']  # Use the color for Drell-Yan
-#         elif dataset.startswith('wj'):
-#             label = "W+jets"
-#             color = colors['wj']
-#         else:
-#             label = dataset  # Fallback for any other dataset
-        
-#         # Add to legend labels dictionary
-#         legend_labels[label] = color
-
-#         # Plot the stacked MC histogram for each dataset
-#         ax.bar(mc_hist.axes[0].centers, mc_values, width=np.diff(mc_hist.axes[0].edges),
-#                bottom=mc_cumulative - mc_values,  # Adjust the bottom for stacking
-#                label=label if label not in legend_entries else "", align='center', color=color, alpha=0.9)
-
-#         # Update legend entries
-#         if label not in legend_entries:
-#             legend_entries.add(label)  # Mark this label as added
-
-        
-#         if hists_mc_data_sub is not None and dataset == list(hists_mc_cat.keys())[-1]:
-#             # Plot the data-MC subtraction histogram as part of the stack
-#             color = '#f1b6da'  # Use a custom color for the data-MC subtraction (pink)
-#             data_mc_values = hists_mc_data_sub.values()
-#             mc_cumulative += data_mc_values
-#             # Plot it on top of the cumulative stack
-#             ax.bar(hists_mc_data_sub.axes[0].centers, data_mc_values, width=np.diff(hists_mc_data_sub.axes[0].edges),bottom=mc_cumulative - data_mc_values, color=color, alpha=0.9, label='Data - MC', align='center') 
-
-
-
-#     # Plot the data histogram with error bars (as points with errors)
-#     data_hist = hists_data_cat_sum
-#     data_values = data_hist.values()
-#     data_variances = data_hist.variances()
-
-#     # Ensure no negative data values
-#     data_values = np.maximum(data_values, 0)  # Ensure data values are non-negative
-
-#     # Plot data as points with error bars
-#     ax.errorbar(data_hist.axes[0].centers, data_values, yerr=np.sqrt(data_variances), fmt='o', 
-#                 color='black', label='Data', capsize=3, markersize=5)
-
-#     # Add labels, title, and legend
-#     ax.set_xlabel("Tau $p_T$ / GeV")
-#     ax.set_ylabel("Events")
-#     ax.set_title(f"Stacked MC vs Data - Category {cat}")
-#     ax.legend()
-
-#     # Show the plot and save it
-#     plt.tight_layout()
-#     if hists_mc_data_sub is not None:
-#         plt.savefig(f"script_FF/plots/stacked_plot_cat_with_sub_{cat}.png", dpi=140)
-#     else:
-#         plt.savefig(f"script_FF/plots/stacked_plot_cat_{cat}.png", dpi=140)
-#     # plt.show()
 
 def plot_hist_cat(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
     '''
@@ -338,6 +184,8 @@ def plot_hist_cat(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
         'dy': "#feb24c",  # Orange
         'diboson': "#a96b59",   # Brown for Diboson (WW)
         'wj': "#d73027", # Red for W+jets
+        'higgs': "#253494", # dark blue
+        'fake': "#a1d99b" # green
     }
 
     # Use a color map to dynamically generate colors based on the number of MC categories
@@ -351,10 +199,10 @@ def plot_hist_cat(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
     legend_entries = set()  # Track legend entries
 
     mc_labels = list(hists_mc_cat.keys())
-    print(f"MC labels: {mc_labels}")
+    # print(f"MC labels: {mc_labels}")
 
     for idx, dataset in enumerate(mc_labels):
-        print(f"Processing dataset: {dataset}")
+        # print(f"Processing dataset: {dataset}")
         mc_hist = hists_mc_cat[dataset]
 
         mc_values = np.maximum(mc_hist.values(), 0)  # Ensure MC values are non-negative
@@ -394,12 +242,17 @@ def plot_hist_cat(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
 
         # If data-MC subtraction histograms are available, plot them
         if hists_mc_data_sub is not None and dataset == list(hists_mc_cat.keys())[-1]:
-            color = '#f1b6da'  # Custom color for data-MC subtraction (pink)
+            if category == 4307 or category == 4305: # D or D0
+                color = colors['fake']
+                label = "Fake jets"
+            else:
+                color = '#f1b6da'
+                label = 'Data - MC'
             data_mc_values = hists_mc_data_sub.values()
             mc_cumulative += data_mc_values
             ax.bar(hists_mc_data_sub.axes[0].centers, data_mc_values,
                    width=np.diff(hists_mc_data_sub.axes[0].edges),
-                   bottom=mc_cumulative - data_mc_values, color=color, alpha=0.9, label='Data - MC', align='center')
+                   bottom=mc_cumulative - data_mc_values, color=color, alpha=0.9, label=label, align='center')
 
     # Plot MC uncertainty as a shaded band
     mc_uncertainty = np.sqrt(mc_uncertainty_squared)  # Take square root to get standard deviation
@@ -507,18 +360,37 @@ def calculate_data_MC_substraction(hists_data_cat_, hists_mc_cat_, cat):
     
 
     # Plot the data-MC subtraction
+    if cat == 4303: 
+        cat_title = "A0"
+    elif cat == 4304:
+        cat_title = "B0"
+    elif cat == 4306:
+        cat_title = "C0"
+    elif cat == 4305:
+        cat_title = "D0"
+    elif cat == 4301:
+        cat_title = "A"
+    elif cat == 4302:
+        cat_title = "B"
+    elif cat == 4307:
+        cat_title = "D"
+    elif cat == 4308:
+        cat_title = "C"
+    else:
+        cat_title = str(cat)
+
     fig, ax = plt.subplots()
     ax.bar(hists_data_mc_sub.axes[0].centers, hists_data_mc_sub.values(), width=np.diff(hists_data_mc_sub.axes[0].edges), color='#f1b6da')
     ax.set_ylabel("Events")
-    ax.set_title(f"Data - MC Subtraction - Category {cat}")
+    ax.set_title(f"Data - MC Subtraction - Category {cat_title}")
     ax.legend()
     plt.tight_layout()
-    plt.savefig(f"script_FF/plots/data_mc_subtraction_cat_{cat}.png", dpi=140)
+    plt.savefig(f"script_FF/plots/data_mc_subtraction_cat_{cat_title}.png", dpi=140)
     # plt.show()
     return hists_data_mc_sub
 
 
-def calculate_ratio_hist(hist_iso, hist_antiiso):
+def calculate_ratio_hist(hist_iso, hist_antiiso,title=""):
     '''
     Calculate the ratio of two histograms and plot the resulting histogram
     Returns: ratio values and variances
@@ -550,69 +422,261 @@ def calculate_ratio_hist(hist_iso, hist_antiiso):
     ax.set_ylabel("Ratio")
     ax.set_title("Ratio of Iso / AntiIso")
     ax.legend()
-    plt.savefig("script_FF/plots/ratio_hist.png", dpi=140)
+    plt.savefig(f"script_FF/plots/FakeFactor_{title}.png", dpi=140)
 
 
     return ratio_values, ratio_variances, ratio_hist
+
+def plot_hist_cat_with_ratio(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
+    '''
+    Plot histograms for a specific category, including MC uncertainties and a ratio plot
+    '''
+
+    hep.style.use(hep.style.CMS)
+
+    hists_data_cat = copy.deepcopy(hists_data_cat_)
+    hists_mc_cat = copy.deepcopy(hists_mc_cat_)
+
+    hists_mc_data_sub = hists_mc_data_sub_.copy() if hists_mc_data_sub_ is not None else None
+
+    # Initialize the sum variable for the data histogram
+    hists_data_cat_sum = None
+
+    # Loop over the datasets to sum data histograms
+    for dataset in hists_data_cat:
+        hist = hists_data_cat[dataset]
+
+        if hists_data_cat_sum is None:
+            hists_data_cat_sum = hist  # Start with the first histogram
+        else:
+            hists_data_cat_sum += hist  # Accumulate the histograms
+
+    # Prepare the figure with ratio subplot
+    fig, (ax_main, ax_ratio) = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
+
+    if cat == 4303: 
+        cat_title = "A0"
+    elif cat == 4304:
+        cat_title = "B0"
+    elif cat == 4306:
+        cat_title = "C0"
+    elif cat == 4305:
+        cat_title = "D0"
+    elif cat == 4301:
+        cat_title = "A"
+    elif cat == 4302:
+        cat_title = "B"
+    elif cat == 4307:
+        cat_title = "D"
+    elif cat == 4308:
+        cat_title = "C"
+    else:
+        cat_title = str(cat)
+
+    # Define colors for specific datasets
+    colors = {
+        'tt': "#9e9ac8",  # Violet
+        'dy': "#feb24c",  # Orange
+        'diboson': "#a96b59",   # Brown for Diboson (WW)
+        'wj': "#d73027", # Red for W+jets
+        'higgs': "#253494", # dark blue 
+        'fake': "#addd8e" # green
+    }
+
+    # Use a color map to dynamically generate colors based on the number of MC categories
+    num_mc_categories = len(hists_mc_cat)
+    cmap = cm.get_cmap('tab10', num_mc_categories)
+
+    # Plot stacked MC histograms
+    mc_total = None  # This will store the total MC histogram
+    mc_uncertainty_squared = None  # To accumulate uncertainties squared
+    mc_cumulative = None  # This will keep track of the cumulative height of the stack
+    legend_entries = set()  # Track legend entries
+
+    mc_labels = list(hists_mc_cat.keys())
+    # print(f"MC labels: {mc_labels}")
+
+    for idx, dataset in enumerate(mc_labels):
+        # print(f"Processing dataset: {dataset}")
+        mc_hist = hists_mc_cat[dataset]
+
+        mc_values = np.maximum(mc_hist.values(), 0)  # Ensure MC values are non-negative
+        mc_variances = mc_hist.variances()
+
+        # Initialize cumulative and uncertainty sum
+        if mc_cumulative is None:
+            mc_cumulative = mc_values.copy()
+            mc_uncertainty_squared = mc_variances.copy()
+        else:
+            mc_cumulative += mc_values
+            mc_uncertainty_squared += mc_variances  # Sum uncertainties in quadrature
+
+        # Assign color from the color map
+        color = cmap(idx / num_mc_categories)
+        if dataset.startswith("st") or dataset.startswith("tt"):
+            label = "t/tbar"
+            color = colors['tt']
+        elif dataset in ["ww", "wz", "zz"]:
+            label = "Diboson"
+            color = colors["diboson"]
+        elif dataset.startswith('dy'):
+            label = "Drell-Yan"
+            color = colors['dy']
+        elif dataset.startswith('wj'):
+            label = "W+jets"
+            color = colors['wj']
+        elif dataset.startswith('h_gg'):
+            label = "Higgs"
+            color = colors['higgs']
+        else:
+            label = dataset  # Fallback for any other dataset
+
+        # Plot the stacked MC histogram
+        ax_main.bar(mc_hist.axes[0].centers, mc_values, width=np.diff(mc_hist.axes[0].edges),
+                    bottom=mc_cumulative - mc_values, label=label if label not in legend_entries else "",
+                    align='center', color=color, alpha=0.9)
+
+        legend_entries.add(label)
+
+      # If data-MC subtraction histograms are available, plot them
+    if hists_mc_data_sub is not None and dataset == list(hists_mc_cat.keys())[-1]:
+        if category == 4307 or category == 4305: # D or D0
+            color = colors['fake']
+            label = "Fake jets"
+        else:
+            color = '#f1b6da'
+            label = 'Data - MC'
+        data_mc_values = hists_mc_data_sub.values()
+        mc_cumulative += data_mc_values
+        ax_main.bar(hists_mc_data_sub.axes[0].centers, data_mc_values,
+                width=np.diff(hists_mc_data_sub.axes[0].edges),
+                bottom=mc_cumulative - data_mc_values, color=color, alpha=0.9, label=label, align='center')
+
+
+
+    # Plot the data histogram with error bars
+    data_hist = hists_data_cat_sum
+    data_values = np.maximum(data_hist.values(), 0)  # Ensure data values are non-negative
+    data_variances = data_hist.variances()
+
+    ax_main.errorbar(data_hist.axes[0].centers, data_values, yerr=np.sqrt(data_variances),
+                     fmt='o', color='black', label='Data', capsize=3, markersize=5)
+
+    # Plot the MC uncertainty as a shaded band
+    mc_uncertainty = np.sqrt(mc_uncertainty_squared)  # Take square root to get standard deviation
+    ax_main.fill_between(mc_hist.axes[0].centers,
+                         mc_cumulative - mc_uncertainty,
+                         mc_cumulative + mc_uncertainty,
+                         step='mid', hatch='///', label='MC Uncertainty', facecolor='none', linewidth=0)
+
+    # Add labels, title, and legend to the main plot
+    ax_main.set_ylabel("Events")
+    ax_main.set_title(f"Stacked MC vs Data - Category {cat_title}")
+    ax_main.legend()
+
+    # Plot the ratio (data/MC) on the ratio subplot
+    ratio_values = data_values / mc_cumulative
+    ratio_errors = np.sqrt(data_variances) / mc_cumulative
+
+    ax_ratio.errorbar(data_hist.axes[0].centers, ratio_values, yerr=ratio_errors,
+                      fmt='o', color='black', label='Data/MC', capsize=3, markersize=5)
+    ax_ratio.axhline(1, color='red', linestyle='--')  # Reference line at ratio = 1
+    ax_ratio.set_ylabel("Data/MC")
+    ax_ratio.set_xlabel("Tau $p_T$ / GeV")
+
+    # Show the plot and save it
+    plt.tight_layout()
+
+
+    if hists_mc_data_sub is not None:
+        plt.savefig(f"script_FF/plots/stacked_plot_cat_with_sub_{cat_title}_ratio.png", dpi=140)
+    else:
+        plt.savefig(f"script_FF/plots/stacked_plot_cat_{cat_title}_ratio.png", dpi=140)
+
 
 
 if __name__ == "__main__":
     '''
     Main function to run the script
     '''
+    ########################################
+    ### ABCD method for the fake factor
+    # A = 4301
+    # B = 4302
+    # C = 4308
+    # D = 4307
+    ########################################
 
 
     # Derivative region
 
     ## Define the paths to the pickle files
-    eos_path_DR = "/eos/user/o/oponcet2/analysis/FakeFactor/analysis_httcp/"
+    eos_path_DR = "/eos/user/g/gsaha/cf_store/analysis_httcp/"
     task_DR = "cf.MergeHistograms/run3_2022_preEE_nano_cp_tau_v12/"
-    dataset_data_DR = ["data_tau_C", "data_tau_D"]
-    dataset_mc_DR = ["dy_lep_m50", "h_ggf_tautau_prod_cp_even_sm", "st_tchannel_t", "st_tchannel_tbar", "st_tw_tb_dl", "st_tw_tb_fh", "st_tw_tb_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_t_sl", "tt_dl", "tt_fh", "tt_sl", "wj_incl", "ww", "wz", "zz"]
-    hist_path_DR = "nominal/calib__main/sel__main_FF/prod__main_FF/weight__all_weights/htcondor2/hist__tau_1_pt.pickle"
+    dataset_data_DR = ["data_tau_C", "data_tau_D", "data_mu_C", "data_mu_D", "data_e_C", "data_e_D", "data_single_mu_C"]
+    # dataset_mc_DR = ["dy_lep_m50", "h_ggf_tautau_prod_cp_even_sm", "st_tchannel_t", "st_tchannel_tbar", "st_tw_tb_dl", "st_tw_tb_fh", "st_tw_tb_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_t_sl", "tt_dl", "tt_fh", "tt_sl", "wj_incl", "ww", "wz", "zz"]
+    dataset_mc_DR = [
+    "wj_incl_madgraph", "dy_lep_m10to50_madgraph", "dy_lep_m50_madgraph", "tt_dl", "tt_sl", "tt_fh",
+    "st_tchannel_t", "st_tchannel_tbar", "st_tw_t_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_tb_sl",
+    "st_tw_tb_dl", "st_tw_tb_fh", "ww", "wz", "zz", "h_ggf_tautau_prod_cp_even_sm"
+    ]
+
+
+
+    hist_path_DR = "nominal/calib__main/sel__main/prod__main/Run3_2022PreEE_full_20241014_153211/hist__hcand_1_pt.pickle"
 
     hists_data_DR, hists_mc_DR =  get_all_hist(eos_path_DR, task_DR, dataset_data_DR, dataset_mc_DR, hist_path_DR)
 
 
     ## plot all histograms by category
-    category = [600,500] # FFDRantiIso_tautau = 600, FFDRIso_tautau = 500, category that i want 
+    # category = [600,500] # FFDRantiIso_tautau = 600, FFDRIso_tautau = 500, category that i want 
+    category = [4301,4302] # A = 4301; B = 4302; C = 4308; D = 4307
+
 
     hists_mc_data_sub_DR = {}
     for cat in category:
         hists_data_cat_DR, hists_mc_cat_DR = get_hist_by_category_var(hists_data_DR, hists_mc_DR, cat)
-        plot_hist_cat(hists_data_cat_DR, hists_mc_cat_DR,cat,None)
+        plot_hist_cat_with_ratio(hists_data_cat_DR, hists_mc_cat_DR,cat,None)
         hists_mc_data_sub_DR[cat] = calculate_data_MC_substraction(hists_data_cat_DR, hists_mc_cat_DR, cat)
-        # plot_hist_cat(hists_data_cat, hists_mc_cat,cat,None)
-        plot_hist_cat(hists_data_cat_DR, hists_mc_cat_DR, cat, hists_mc_data_sub_DR[cat])
+        # plot_hist_cat_with_ratio(hists_data_cat, hists_mc_cat,cat,None)
+        plot_hist_cat_with_ratio(hists_data_cat_DR, hists_mc_cat_DR, cat, hists_mc_data_sub_DR[cat])
 
         
-    fakefator_values, fakefator_variance, fakefator_hist = calculate_ratio_hist(hists_mc_data_sub_DR[500], hists_mc_data_sub_DR[600])
+    fakefator_values, fakefator_variance, fakefator_hist = calculate_ratio_hist(hists_mc_data_sub_DR[4301], hists_mc_data_sub_DR[4302],"ABCD")
 
 
     ## AR region
     ## Define the paths to the pickle files
-    eos_path_AR = "/eos/user/o/oponcet2/analysis/FakeFactor/analysis_httcp/"
-    task_AR = "cf.MergeHistograms/run3_2022_preEE_nano_cp_tau_v12/"
-    dataset_data_AR = ["data_tau_C", "data_tau_D"]
-    dataset_mc_AR = ["dy_lep_m50", "h_ggf_tautau_prod_cp_even_sm", "st_tchannel_t", "st_tchannel_tbar", "st_tw_tb_dl", "st_tw_tb_fh", "st_tw_tb_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_t_sl", "tt_dl", "tt_fh", "tt_sl", "wj_incl", "ww", "wz", "zz"]
-    hist_path_AR = "nominal/calib__main/sel__main_FF/prod__main_FF/weight__all_weights/htcondor4/hist__tau_1_pt.pickle"
+    # eos_path_AR = "/eos/user/o/oponcet2/analysis/FakeFactor/analysis_httcp/"
+    # task_AR = "cf.MergeHistograms/run3_2022_preEE_nano_cp_tau_v12/"
+    # dataset_data_AR = ["data_tau_C", "data_tau_D"]
+    # dataset_mc_AR = ["dy_lep_m50", "h_ggf_tautau_prod_cp_even_sm", "st_tchannel_t", "st_tchannel_tbar", "st_tw_tb_dl", "st_tw_tb_fh", "st_tw_tb_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_t_sl", "tt_dl", "tt_fh", "tt_sl", "wj_incl", "ww", "wz", "zz"]
+    # hist_path_AR = "nominal/calib__main/sel__main_FF/prod__main_FF/weight__all_weights/htcondor4/hist__tau_1_pt.pickle"
+    eos_path_AR = eos_path_DR
+    task_AR = task_DR
+    dataset_data_AR = dataset_data_DR
+    dataset_mc_AR = dataset_mc_DR
+    hist_path_AR = hist_path_DR    
+
 
     hists_data_AR, hists_mc_AR =  get_all_hist(eos_path_AR, task_AR, dataset_data_AR, dataset_mc_AR, hist_path_AR)
-    category = 700 # tautau_antiIso = 700, category that i want 
+    # category = 700 # tautau_antiIso = 700, category that i want
+    category = 4308 #  C = 105 
 
     hists_data_cat_AR, hists_mc_cat_AR = get_hist_by_category_var(hists_data_AR, hists_mc_AR, category)
-    plot_hist_cat(hists_data_cat_AR, hists_mc_cat_AR,category,None)
+    plot_hist_cat_with_ratio(hists_data_cat_AR, hists_mc_cat_AR,category,None)
     hists_mc_data_sub_AR = calculate_data_MC_substraction(hists_data_cat_AR, hists_mc_cat_AR, category)
-    plot_hist_cat(hists_data_cat_AR, hists_mc_cat_AR, category, hists_mc_data_sub_AR)
+    plot_hist_cat_with_ratio(hists_data_cat_AR, hists_mc_cat_AR, category, hists_mc_data_sub_AR)
 
     ## SR 
     ## Define the paths to the pickle files
     hists_data_SR, hists_mc_SR =  hists_data_DR, hists_mc_DR
-    category = 301 # tautau
+    # category = 301 # tautau
+    category = 4307 # D = 101 
     hists_data_cat_SR, hists_mc_cat_SR = get_hist_by_category_var(hists_data_SR, hists_mc_SR, category)
-    plot_hist_cat(hists_data_cat_SR, hists_mc_cat_SR,category,None)
+    plot_hist_cat_with_ratio(hists_data_cat_SR, hists_mc_cat_SR,category,None)
 
-    from IPython import embed; embed()
+    # from IPython import embed; embed()
 
     ## Calculate the fake factor
     hists_mc_data_sub_SR = hists_mc_data_sub_AR.copy().reset()
@@ -637,4 +701,119 @@ if __name__ == "__main__":
     hists_mc_data_sub_SR.view().variance[...] = hists_mc_data_sub_SR_num_variances
 
     # Plot
-    plot_hist_cat(hists_data_cat_SR, hists_mc_cat_SR,category, hists_mc_data_sub_SR)
+    plot_hist_cat_with_ratio(hists_data_cat_SR, hists_mc_cat_SR,category, hists_mc_data_sub_SR)
+
+
+    ########################################
+    ### A0B0C0D0 method for the fake factor non closure correction
+    # A0  = 4303
+    # B0 =  4304
+    # C0 = 4306
+    # D0 = 4305
+    ########################################
+
+    # Derivative region
+
+    ## Define the paths to the pickle files
+    eos_path_DR = "/eos/user/g/gsaha/cf_store/analysis_httcp/"
+    task_DR = "cf.MergeHistograms/run3_2022_preEE_nano_cp_tau_v12/"
+    dataset_data_DR = ["data_tau_C", "data_tau_D", "data_mu_C", "data_mu_D", "data_e_C", "data_e_D", "data_single_mu_C"]
+    # dataset_mc_DR = ["dy_lep_m50", "h_ggf_tautau_prod_cp_even_sm", "st_tchannel_t", "st_tchannel_tbar", "st_tw_tb_dl", "st_tw_tb_fh", "st_tw_tb_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_t_sl", "tt_dl", "tt_fh", "tt_sl", "wj_incl", "ww", "wz", "zz"]
+    dataset_mc_DR = [
+    "wj_incl_madgraph", "dy_lep_m10to50_madgraph", "dy_lep_m50_madgraph", "tt_dl", "tt_sl", "tt_fh",
+    "st_tchannel_t", "st_tchannel_tbar", "st_tw_t_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_tb_sl",
+    "st_tw_tb_dl", "st_tw_tb_fh", "ww", "wz", "zz", "h_ggf_tautau_prod_cp_even_sm"
+    ]
+
+
+
+    hist_path_DR = "nominal/calib__main/sel__main/prod__main/Run3_2022PreEE_full_20241014_153211/hist__hcand_1_pt.pickle"
+
+    hists_data_DR, hists_mc_DR =  get_all_hist(eos_path_DR, task_DR, dataset_data_DR, dataset_mc_DR, hist_path_DR)
+
+
+    ## plot all histograms by category
+    # category = [600,500] # FFDRantiIso_tautau = 600, FFDRIso_tautau = 500, category that i want 
+    category = [4303,4304] # A = 4303; B = 4304; C = 4306; D = 4305
+
+
+    hists_mc_data_sub_DR = {}
+    for cat in category:
+        hists_data_cat_DR, hists_mc_cat_DR = get_hist_by_category_var(hists_data_DR, hists_mc_DR, cat)
+        plot_hist_cat_with_ratio(hists_data_cat_DR, hists_mc_cat_DR,cat,None)
+        hists_mc_data_sub_DR[cat] = calculate_data_MC_substraction(hists_data_cat_DR, hists_mc_cat_DR, cat)
+        # plot_hist_cat(hists_data_cat, hists_mc_cat,cat,None)
+        plot_hist_cat_with_ratio(hists_data_cat_DR, hists_mc_cat_DR, cat, hists_mc_data_sub_DR[cat])
+
+        
+    fakefator_values_0, fakefator_variance_0, fakefator_hist_0 = calculate_ratio_hist(hists_mc_data_sub_DR[4303], hists_mc_data_sub_DR[4304],"A0B0C0D0")
+
+
+    ## AR region
+    ## Define the paths to the pickle files
+    # eos_path_AR = "/eos/user/o/oponcet2/analysis/FakeFactor/analysis_httcp/"
+    # task_AR = "cf.MergeHistograms/run3_2022_preEE_nano_cp_tau_v12/"
+    # dataset_data_AR = ["data_tau_C", "data_tau_D"]
+    # dataset_mc_AR = ["dy_lep_m50", "h_ggf_tautau_prod_cp_even_sm", "st_tchannel_t", "st_tchannel_tbar", "st_tw_tb_dl", "st_tw_tb_fh", "st_tw_tb_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_t_sl", "tt_dl", "tt_fh", "tt_sl", "wj_incl", "ww", "wz", "zz"]
+    # hist_path_AR = "nominal/calib__main/sel__main_FF/prod__main_FF/weight__all_weights/htcondor4/hist__tau_1_pt.pickle"
+    eos_path_AR = eos_path_DR
+    task_AR = task_DR
+    dataset_data_AR = dataset_data_DR
+    dataset_mc_AR = dataset_mc_DR
+    hist_path_AR = hist_path_DR    
+
+
+    hists_data_AR, hists_mc_AR =  get_all_hist(eos_path_AR, task_AR, dataset_data_AR, dataset_mc_AR, hist_path_AR)
+    # category = 700 # tautau_antiIso = 700, category that i want
+    category = 4306 #  C = 105 
+
+    hists_data_cat_AR, hists_mc_cat_AR = get_hist_by_category_var(hists_data_AR, hists_mc_AR, category)
+    plot_hist_cat_with_ratio(hists_data_cat_AR, hists_mc_cat_AR,category,None)
+    hists_mc_data_sub_AR = calculate_data_MC_substraction(hists_data_cat_AR, hists_mc_cat_AR, category)
+    plot_hist_cat_with_ratio(hists_data_cat_AR, hists_mc_cat_AR, category, hists_mc_data_sub_AR)
+
+    ## SR 
+    ## Define the paths to the pickle files
+    hists_data_SR, hists_mc_SR =  hists_data_DR, hists_mc_DR
+    # category = 301 # tautau
+    category = 4305 # D = 101 
+    hists_data_cat_SR, hists_mc_cat_SR = get_hist_by_category_var(hists_data_SR, hists_mc_SR, category)
+    plot_hist_cat_with_ratio(hists_data_cat_SR, hists_mc_cat_SR,category,None)
+
+    # from IPython import embed; embed()
+
+    ## Calculate the fake factor
+    hists_mc_data_sub_SR = hists_mc_data_sub_AR.copy().reset()
+
+    hists_mc_data_sub_SR_num = hist_to_num(hists_mc_data_sub_SR)
+    hists_mc_data_sub_AR_num = hist_to_num(hists_mc_data_sub_AR)
+    fakefator_hist_num = hist_to_num(fakefator_hist_0)
+
+    # ABCD method for the fake factor
+    # shape: (SHIFT, VAR) 
+    hists_mc_data_sub_SR_num = hists_mc_data_sub_AR_num *  fakefator_hist_num # SR = AR * FF = AR * (ss_iso/ss_noniso)
+
+    # combine uncertainties and store values in bare arrays
+    hists_mc_data_sub_SR_num_values = hists_mc_data_sub_SR_num()
+    hists_mc_data_sub_SR_num_variances = hists_mc_data_sub_SR_num(sn.UP, sn.ALL, unc=True)**2
+
+    print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction values: \n{hists_mc_data_sub_SR_num_values}")
+    print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction variances: \n{hists_mc_data_sub_SR_num_variances}") 
+
+    # Create hist from the subtraction
+    hists_mc_data_sub_SR.view().value[...] = hists_mc_data_sub_SR_num_values
+    hists_mc_data_sub_SR.view().variance[...] = hists_mc_data_sub_SR_num_variances
+
+    # Plot
+    plot_hist_cat_with_ratio(hists_data_cat_SR, hists_mc_cat_SR,category, hists_mc_data_sub_SR)
+
+
+    #### Plot of the fake factors on the same plot
+    fig, ax = plt.subplots()
+    ax.errorbar(fakefator_hist.axes[0].centers, fakefator_values, yerr=np.sqrt(fakefator_variance), fmt='o', label='Fake Factor A/B', color='#d73027')
+    ax.errorbar(fakefator_hist_0.axes[0].centers, fakefator_values_0, yerr=np.sqrt(fakefator_variance_0), fmt='o', label='Fake Factor A0/BO', color='#c994c7')
+    ax.set_ylabel("Fake Factor")
+    ax.set_xlabel("Tau $p_T$ / GeV")
+    ax.set_title("Fake Factor")
+    ax.legend()
+    plt.savefig("script_FF/plots/FakeFactor_comparaison.png", dpi=140)
