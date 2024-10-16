@@ -173,7 +173,14 @@ def build_abcd_masks(
                                                ((h1.genPartFlav > 0) & (h1.genPartFlav < 6)), # true tau
                                                is_iso_1_dummy)))
         is_real_1 = ak.fill_none(ak.any(is_real_1, axis=1), False)
-        is_fake_1 = ~is_real_1
+        is_fake_1 = ak.where(events.channel_id == ch_etau.id,
+                             ((h1.genPartFlav == 0) | (h1.genPartFlav == 3) | (h1.genPartFlav == 4) | (h1.genPartFlav == 5)), # true ele
+                             ak.where(events.channel_id == ch_mutau.id,
+                                      ((h1.genPartFlav == 0) | (h1.genPartFlav == 3) | (h1.genPartFlav == 4) | (h1.genPartFlav == 5)), # true mu
+                                      ak.where(events.channel_id == ch_tautau.id,
+                                               ((h1.genPartFlav == 0) | (h1.genPartFlav == 6)), # true tau
+                                               is_iso_1_dummy)))
+        is_fake_1 = ak.fill_none(ak.any(is_fake_1, axis=1), False)
         
     # REAL2 --> the same for the sub-leading tau
     # valid for all channels
@@ -182,7 +189,9 @@ def build_abcd_masks(
     if self.dataset_inst.is_mc:
         is_real_2 = (h2.genPartFlav > 0) & (h2.genPartFlav < 6)
         is_real_2 = ak.fill_none(ak.any(is_real_2, axis=1), False)
-        is_fake_2 = ~is_real_2
+        
+        is_fake_2 = ((h2.genPartFlav == 0) | (h2.genPartFlav == 6))
+        is_fake_2 = ak.fill_none(ak.any(is_fake_2, axis=1), False)
         
     # BVETO --> events with / without bjets
     is_b_veto = bjet_veto_mask
@@ -264,8 +273,6 @@ def build_abcd_masks(
     events = set_ak_column(events, "is_a1_3pr_0pi0_2",  is_a1_3pr_0pi0_2)
     events = set_ak_column(events, "is_a1_3pr_1pi0_1",  is_a1_3pr_1pi0_1)
     events = set_ak_column(events, "is_a1_3pr_1pi0_2",  is_a1_3pr_1pi0_2)
-
-    from IPython import embed; embed()
 
     
     return events

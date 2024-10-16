@@ -401,6 +401,7 @@ def add_config (ana: od.Analysis,
         "tau_sf"            : (f"{json_mirror}/POG/TAU/{year}_{postfix}/tau_DeepTau2018v2p5_{year}_{postfix}.json.gz", "v1"), # TEC and ID SF
         "jet_veto_map"      : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz",        "v1"), # JetVeto
         "zpt_rewt_sf"       : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
+        "tautau_ff"         : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # DUMMY !!!
         #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz",                "v1"),
         #"met_phi_corr": (f"{json_mirror}/POG/JME/2018_UL/met.json.gz",                                                "v1"), #met phi, unavailable Run3
     })
@@ -805,10 +806,25 @@ def add_config (ana: od.Analysis,
         cfg,
         "zpt",
         {
-            "zpt_weight": "zpt_reweight_{direction}",
+            "zpt_reweight": "zpt_reweight_{direction}",
+        },
+    )
+
+
+    # --- >>> fake factor weight <<< --- # D U M M Y !!!!!!!!   
+    cfg.add_shift(name="ff_up", id=170, type="shape")
+    cfg.add_shift(name="ff_down", id=171, type="shape")
+    add_shift_aliases(
+        cfg,
+        "ff",
+        {
+            "ff_weight": "ff_weight_{direction}",
             #"normalized_pdf_weight": "normalized_pdf_weight_{direction}",
         },
     )
+
+
+
     # target file size after MergeReducedEvents in MB
     cfg.x.reduced_file_size = 512.0
     
@@ -833,6 +849,7 @@ def add_config (ana: od.Analysis,
         "muon_IsoMu24_trigger_weight"           : [], #get_shifts("mu_trig"),
         "muon_xtrig_weight"                     : [], #get_shifts("mu_xtrig"),
         "tau_weight"                            : [], #get_shifts("tau"),
+        "ff_weight"                             : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
         #"tauspinner_weight"                    : get_shifts("tauspinner"),
     })
@@ -856,7 +873,7 @@ def add_config (ana: od.Analysis,
     # versions per task family, either referring to strings or to callables receving the invoking
     # task instance and parameters to be passed to the task family
     #---------------------------------------------------------------------------------------------#
-        
+    
     def set_version(cls, inst, params):
         # per default, use the version set on the command line
         version = inst.version 
@@ -922,6 +939,15 @@ def add_config (ana: od.Analysis,
     from httcp.config.categories import add_categories
     add_categories(cfg)
 
+    cfg.x.ff_apply_id_map = DotDict.wrap({
+        #"etau"  : {},
+        #"mutau" : {},
+        "tautau" : {
+            "id"  : cfg.get_category("tautau__hadC").id,  # category_id for AR C 
+            "id0" : cfg.get_category("tautau__hadC0").id, # category_id for AR C0
+        },
+    })
+    
     #---------------------------------------------------------------------------------------------#
     # Add variables described in variables.py
     #---------------------------------------------------------------------------------------------#

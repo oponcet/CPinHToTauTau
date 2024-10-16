@@ -26,7 +26,7 @@ from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArran
 from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 #from httcp.production.weights import tauspinner_weight
 #from IPython import embed
-from httcp.production.extra_weights import zpt_reweight
+from httcp.production.extra_weights import zpt_reweight, ff_weight # ff_weight : dummy
 from httcp.production.muon_weights import muon_id_weights, muon_iso_weights, muon_trigger_weights, muon_xtrigger_weights
 from httcp.production.electron_weights import electron_idiso_weights, electron_trigger_weights, electron_xtrigger_weights
 from httcp.production.tau_weights import tau_weights, tauspinner_weights
@@ -124,6 +124,7 @@ def hcand_features(
         hcand_features,
         hcand_mass,
         category_ids,
+        ff_weight,
     },
     produces={
         ##deterministic_seeds,
@@ -149,6 +150,7 @@ def hcand_features(
         "channel_id",
         "trigger_ids",
         category_ids,
+        ff_weight,
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
@@ -156,6 +158,7 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     # deterministic seeds
     #events = self[deterministic_seeds](events, **kwargs)
     #events = self[category_ids](events, **kwargs)
+    events = self[ff_weight](events, **kwargs)
     if self.dataset_inst.is_mc:
         events = self[normalization_weights](events, **kwargs)
         events = self[pu_weight](events, **kwargs)
