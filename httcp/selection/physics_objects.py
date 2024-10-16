@@ -35,7 +35,7 @@ coffea = maybe_import("coffea")
             "IPx", "IPy", "IPz", "sip3d",
             "isTracker",
         ]
-    },
+    } | {optional("genPartFlav")},
     produces={
         f"Muon.{var}" for var in [
             "rawIdx", "decayMode", "IPsig", "idVsJet",
@@ -200,6 +200,7 @@ def muon_selection(
         IF_NANO_V11("Electron.mvaIso_WP80", "Electron.mvaIso_WP90", "Electron.mvaNoIso_WP90"),
         "Electron.cutBased",
         "Electron.IPx", "Electron.IPy", "Electron.IPz", "Electron.sip3d",
+        optional("Electron.genPartFlav"),
     },
     produces={
         f"Electron.{var}" for var in [
@@ -366,7 +367,7 @@ def electron_selection(
             "decayMode", "decayModePNet",
             "IPx","IPy","IPz", "ipLengthSig",
         ]
-    } | {optional("Tau.pt"), optional("Tau.pt_etau"), optional("Tau.pt_mutau"), optional("Tau.pt_tautau")},
+    } | {optional("Tau.pt"), optional("Tau.pt_etau"), optional("Tau.pt_mutau"), optional("Tau.pt_tautau"), optional("genPartFlav")},
     produces={
         f"Tau.{var}" for var in [
             "rawIdx", "decayMode", "decayModeHPS", "IPsig", "idVsJet",

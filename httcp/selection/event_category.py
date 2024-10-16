@@ -14,13 +14,8 @@ ak = maybe_import("awkward")
 
 
 @selector(
-    #uses={#
-    #
-    #   },
     produces={
         "channel_id",
-        #"is_os", "is_iso1", "is_iso2",
-        #"is_real1", "is_real2",
     },
     exposed=False,
 )
@@ -96,7 +91,8 @@ def get_categories(
         "is_low_mt",
         "is_lep_1",
         "is_iso_1", "is_iso_2",
-        #"is_real_1", "is_real_2",
+        "is_real_1", "is_real_2",
+        "is_fake_1", "is_fake_2",
         "is_pi_1", "is_pi_2",
         "is_rho_1", "is_rho_2",
         "is_a1_1pr_2pi0_1", "is_a1_1pr_2pi0_2",
@@ -165,14 +161,29 @@ def build_abcd_masks(
 
     # REAL1 --> to get the contribution of real MC taus only with genPartFlav > 0
     # only required for tau-tau channel
-    #is_real_1 = ak.where(events.channel_id == ch_tautau.id, h1.genPartFlav > 0, is_iso_1_dummy)
-    #is_real_1 = ak.fill_none(ak.any(is_real_1, axis=1), False)
-
+    # maybe redundant: true info for e and mu. Probably not used
+    is_real_1 = events.event >= 0
+    is_fake_1 = is_real_1 # lets keep real and fake the same for data
+    if self.dataset_inst.is_mc:
+        is_real_1 = ak.where(events.channel_id == ch_etau.id,
+                             ((h1.genPartFlav == 1) | (h1.genPartFlav == 15) | (h1.genPartFlav == 22)), # true ele
+                             ak.where(events.channel_id == ch_mutau.id,
+                                      ((h1.genPartFlav == 1) | (h1.genPartFlav == 15)), # true mu
+                                      ak.where(events.channel_id == ch_tautau.id,
+                                               ((h1.genPartFlav > 0) & (h1.genPartFlav < 6)), # true tau
+                                               is_iso_1_dummy)))
+        is_real_1 = ak.fill_none(ak.any(is_real_1, axis=1), False)
+        is_fake_1 = ~is_real_1
+        
     # REAL2 --> the same for the sub-leading tau
     # valid for all channels
-    #is_real_2 = h2.genPartFlav > 0
-    #is_real_2 = ak.fill_none(ak.any(is_real_2, axis=1), False)
-
+    is_real_2 = is_real_1
+    is_fake_2 = is_real_2 # lets keep real and fake the same for data 
+    if self.dataset_inst.is_mc:
+        is_real_2 = (h2.genPartFlav > 0) & (h2.genPartFlav < 6)
+        is_real_2 = ak.fill_none(ak.any(is_real_2, axis=1), False)
+        is_fake_2 = ~is_real_2
+        
     # BVETO --> events with / without bjets
     is_b_veto = bjet_veto_mask
 
@@ -234,8 +245,11 @@ def build_abcd_masks(
     events = set_ak_column(events, "is_os",     is_os)
     events = set_ak_column(events, "is_iso_1",  is_iso_1)
     events = set_ak_column(events, "is_iso_2",  is_iso_2)
-    #events = set_ak_column(events, "is_real_1", is_real_1)
-    #events = set_ak_column(events, "is_real_2", is_real_2)
+    events = set_ak_column(events, "is_real_1", is_real_1)
+    events = set_ak_column(events, "is_real_2", is_real_2)
+    # real and fake are the same for the data
+    events = set_ak_column(events, "is_fake_1", is_fake_1)
+    events = set_ak_column(events, "is_fake_2", is_fake_2)
     events = set_ak_column(events, "is_low_mt", is_low_mt)
     events = set_ak_column(events, "is_b_veto", is_b_veto)
     # for CP categories
@@ -251,7 +265,7 @@ def build_abcd_masks(
     events = set_ak_column(events, "is_a1_3pr_1pi0_1",  is_a1_3pr_1pi0_1)
     events = set_ak_column(events, "is_a1_3pr_1pi0_2",  is_a1_3pr_1pi0_2)
 
-    #from IPython import embed; embed()
+    from IPython import embed; embed()
 
     
     return events

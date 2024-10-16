@@ -23,6 +23,8 @@ ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 maybe_import("coffea.nanoevents.methods.nanoaod")
 
+logger = law.logger.get_logger(__name__)
+
 
 def get_objs_p4(collobj):
     return ak.zip(
@@ -309,11 +311,14 @@ def enforce_hcand_type(hcand_pair_concat, field_type_dict):
         # 2022PreEE tt_dl --branch=8 has one single nan value for the tau in hcand. So, applying ak.nan_to_num for safety !!!
         # But, why nan?? Babushcha knows
         # event : 6784092 hcand_IPx: [[-0.000813, nan]]
-        temp[field] = ak.enforce_type(
-            ak.values_astype(
-                ak.nan_to_num(hcand_pair_concat[field], 0.0),
-                typename),
-            f"var * var * {typename}")
+        if field not in hcand_pair_concat.fields:
+            logger.warning(f"{field} not found in enforce_hcand_type: 1 is used instead")
+            field_in = ak.ones_like(hcand_pair_concat["pt"])
+        else:
+            field_in = hcand_pair_concat[field]
+
+        temp[field] = ak.enforce_type(ak.values_astype(ak.nan_to_num(field_in, 0.0),typename),
+                                      f"var * var * {typename}")
         
     hcand_array = ak.zip(temp)
     return hcand_array

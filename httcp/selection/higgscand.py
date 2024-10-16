@@ -22,6 +22,7 @@ coffea = maybe_import("coffea")
 @selector(
     uses={
         "channel_id",
+        "Muon.*", "Electron.*", "Tau.*",
     },
     exposed=False,
 )
@@ -65,6 +66,7 @@ def higgscand(
                                           "IPz"           : "float64",
                                           "IPsig"         : "float64",
                                           "idVsJet"       : "int32",
+                                          "genPartFlav"   : "int32",
                                           }
                                          )
     else:
@@ -77,6 +79,7 @@ def higgscand(
                                           "decayMode"     : "int64",
                                           "rawIdx"        : "int64",
                                           "idVsJet"       : "int32",
+                                          "genPartFlav"   : "int32",
                                           }
                                          )
         
@@ -163,15 +166,16 @@ def build_hcand_mask(hcand, hcandprods, dummy):
 
 @selector(
     uses={
-        "Tau.*",
-        "channel_id", "TauProd.*",
+        "channel_id",
+        "Electron.*","Muon.*","Tau.*","TauProd.*",
         assign_tauprod_mass_charge,
         insert_calibrated_taus,
     },
     produces={
         "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass",
         "hcand.charge", "hcand.rawIdx", "hcand.decayMode",
-        IF_RUN3("hcand.IPx", "hcand.IPy", "hcand.IPz"), "hcand.IPsig", "hcand.idVsJet",
+        IF_RUN3("hcand.IPx", "hcand.IPy", "hcand.IPz"), "hcand.IPsig",
+        "hcand.idVsJet", "hcand.genPartFlav",
         "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass",
         "hcandprod.charge", "hcandprod.pdgId", "hcandprod.tauIdx",
         assign_tauprod_mass_charge,

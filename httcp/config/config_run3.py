@@ -947,6 +947,7 @@ def add_config (ana: od.Analysis,
             "cross_tau_triggered", "cross_tau_jet_triggered",
             # --- new for categorization --- #
             "is_os", "is_iso_1", "is_iso_2", "is_low_mt", "is_b_veto",
+            "is_real_1", "is_real_2", "is_fake_1", "is_fake_2",
             "is_lep_1", "is_pi_1", "is_pi_2", "is_rho_1", "is_rho_2",
             "is_a1_1pr_2pi0_1", "is_a1_1pr_2pi0_2",
             "is_a1_3pr_0pi0_1", "is_a1_3pr_0pi0_2",

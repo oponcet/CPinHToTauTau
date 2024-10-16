@@ -17,11 +17,11 @@ args:
     ## == data ==
     - data_tau_C
     - data_tau_D
-    #- data_mu_C
-    #- data_mu_D
-    #- data_single_mu_C
-    #- data_e_C
-    #- data_e_D
+    - data_mu_C
+    - data_mu_D
+    - data_single_mu_C
+    - data_e_C
+    - data_e_D
     ## == wj ==
     - wj_incl_madgraph
     ## == dy ==
@@ -45,7 +45,7 @@ args:
     - wz
     - zz
     ## == signal ==
-    #- h_ggf_tautau_prod_cp_even_sm
+    - h_ggf_tautau_prod_cp_even_sm
 
   processes :
     - data
@@ -57,7 +57,7 @@ args:
     #- st_twchannel
     - st
     - vv
-    #- h_ggf_tautau
+    - h_ggf_tautau
 
   categories:
     #- incl
@@ -82,15 +82,17 @@ args:
     #- tautau_rho_a1_3pr_0pi0
     #- tautau_a1_3pr_0pi0_a1_3pr_0pi0
     ## --- new --- #
-    - tautau__os__iso1__iso2__nobjet       # D
-    - tautau__os__noniso1__iso2__nobjet    # C
-    - tautau__os__iso1__noniso2__nobjet    # D0
-    - tautau__os__noniso1__noniso2__nobjet # C0    
-    - tautau__ss__iso1__noniso2__nobjet    # A0
-    - tautau__ss__noniso1__noniso2__nobjet # B0    
-    - tautau__ss__iso1__iso2__nobjet       # A
-    - tautau__ss__noniso1__iso2__nobjet    # B
-
+    #- tautau__os__iso1__iso2__nobjet       # D
+    #- tautau__os__noniso1__iso2__nobjet    # C
+    #- tautau__os__iso1__noniso2__nobjet    # D0
+    #- tautau__os__noniso1__noniso2__nobjet # C0    
+    #- tautau__ss__iso1__noniso2__nobjet    # A0
+    #- tautau__ss__noniso1__noniso2__nobjet # B0    
+    #- tautau__ss__iso1__iso2__nobjet       # A
+    #- tautau__ss__noniso1__iso2__nobjet    # B
+    - etau*
+    - mutau*
+    - tautau*
 
   variables:
     ## -- electron -- #
@@ -104,26 +106,26 @@ args:
     #- muon_1_phi
     #- muon_1_IPsig
     ## -- tau1 -- #
-    - tau_1_pt
-    - tau_1_eta
+    #- tau_1_pt
+    #- tau_1_eta
     #- tau_1_phi
     #- tau_1_IPsig
     ## -- tau1 -- #
-    - tau_2_pt
-    - tau_2_eta
+    #- tau_2_pt
+    #- tau_2_eta
     #- tau_2_phi
     #- tau_2_IPsig
     ## -- hcand -- #
     - hcand_1_pt
     - hcand_1_eta
-    #- hcand_1_phi
+    - hcand_1_phi
     #- hcand_1_IPx
     #- hcand_1_IPy
     #- hcand_1_IPz
     #- hcand_1_IPsig
     - hcand_2_pt
     - hcand_2_eta
-    #- hcand_2_phi
+    - hcand_2_phi
     #- hcand_2_IPx
     #- hcand_2_IPy
     #- hcand_2_IPz
@@ -152,5 +154,5 @@ args:
     #- PhiCP_IPDP_alpha_lt_piby4
     #- PhiCP_IPDP_alpha_gt_piby4
 
-  #extras:
-  #  - process-settings "h_ggf_tautau,unstack,50000"
+  extras:
+    - process-settings "h_ggf_tautau,unstack,500000"

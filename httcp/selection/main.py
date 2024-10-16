@@ -406,7 +406,6 @@ def main(
     events, hcandprod_results = self[higgscandprod](events, hcand_array)
     results += hcandprod_results
 
-    
     # -------- Sel : b-veto -------- #
     # jet selection
     # -------------------------------------------- #
