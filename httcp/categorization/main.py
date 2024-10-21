@@ -42,118 +42,142 @@ def cat_tautau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array,
 #                          For PhiCP                         #
 # ---------------------------------------------------------- #
 
+# for tau-tau
+# tau -> pi
+@categorizer(uses={"is_pi_1"})
+def cat_pi_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_pi_1
+# tau -> rho
+@categorizer(uses={"is_rho_1"})
+def cat_rho_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_rho_1
+# tau -> a1 (DM2)
+@categorizer(uses={"is_a1_1pr_2pi0_1"})
+def cat_a1dm2_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_a1_1pr_2pi0_1
+# tau -> a1 (DM10)
+@categorizer(uses={"is_a1_3pr_0pi0_1"})
+def cat_a1dm10_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_a1_3pr_0pi0_1
+# tau -> a1 (DM11)
+@categorizer(uses={"is_a1_3pr_1pi0_1"})
+def cat_a1dm11_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_a1_3pr_1pi0_1
+
 
 # ---------- >>> for e/mu-tauh
 # tau -> pi
-@categorizer(uses={"is_lep_1", "is_pi_2"})
-def cat_pi(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, events.is_lep_1 & events.is_pi_2
+@categorizer(uses={"is_pi_2"})
+def cat_pi_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_pi_2
 # tau -> rho
-@categorizer(uses={"is_lep_1", "is_rho_2"})
-def cat_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, events.is_lep_1 & events.is_rho_2
+@categorizer(uses={"is_rho_2"})
+def cat_rho_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_rho_2
 # tau -> a1 (DM2)
-@categorizer(uses={"is_lep_1", "is_a1_1pr_2pi0_2"})
-def cat_a1dm2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, events.is_lep_1 & events.is_a1_1pr_2pi0_2
+@categorizer(uses={"is_a1_1pr_2pi0_2"})
+def cat_a1dm2_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_a1_1pr_2pi0_2
 # tau -> a1 (DM10)
-@categorizer(uses={"is_lep_1", "is_a1_3pr_0pi0_2"})
-def cat_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, events.is_lep_1 & events.is_a1_3pr_0pi0_2
+@categorizer(uses={"is_a1_3pr_0pi0_2"})
+def cat_a1dm10_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_a1_3pr_0pi0_2
 # tau -> a1 (DM11)
-@categorizer(uses={"is_lep_1", "is_a1_3pr_1pi0_2"})
-def cat_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, events.is_lep_1 & events.is_a1_3pr_1pi0_2
+@categorizer(uses={"is_a1_3pr_1pi0_2"})
+def cat_a1dm11_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_a1_3pr_1pi0_2
 
 
-# for tau-tau
-# tau -> pi, tau -> pi
-@categorizer(uses={"is_lep_1", "is_pi_1", "is_pi_2"})
+
+# ----- >>>> to make less combinatorics for tautau
+@categorizer(uses={"is_pi_1", "is_pi_2"})
 def cat_pi_pi(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & events.is_pi_1 & events.is_pi_2
+    return events, events.is_pi_1 & events.is_pi_2
 # tau -> pi, tau -> rho, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_pi_1", "is_rho_2",
+@categorizer(uses={"is_pi_1", "is_rho_2",
                    "is_pi_2", "is_rho_1"})
 def cat_pi_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_pi_1 & events.is_rho_2) | (events.is_pi_2 & events.is_rho_1))
+    return events, ((events.is_pi_1 & events.is_rho_2) | (events.is_pi_2 & events.is_rho_1))
 # tau -> pi, tau -> a1 DM2, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_pi_1", "is_a1_1pr_2pi0_2",
+@categorizer(uses={"is_pi_1", "is_a1_1pr_2pi0_2",
                    "is_pi_2", "is_a1_1pr_2pi0_1"})
 def cat_pi_a1dm2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_pi_1 & events.is_a1_1pr_2pi0_2) | (events.is_pi_2 & events.is_a1_1pr_2pi0_1))
+    return events, ((events.is_pi_1 & events.is_a1_1pr_2pi0_2) | (events.is_pi_2 & events.is_a1_1pr_2pi0_1))
 # tau -> pi, tau -> a1 DM10, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_pi_1", "is_a1_3pr_0pi0_2",
+@categorizer(uses={"is_pi_1", "is_a1_3pr_0pi0_2",
                    "is_pi_2", "is_a1_3pr_0pi0_1"})
 def cat_pi_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_pi_1 & events.is_a1_3pr_0pi0_2) | (events.is_pi_2 & events.is_a1_3pr_0pi0_1))
+    return events, ((events.is_pi_1 & events.is_a1_3pr_0pi0_2) | (events.is_pi_2 & events.is_a1_3pr_0pi0_1))
 # tau -> pi, tau -> a1 DM11, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_pi_1", "is_a1_3pr_1pi0_2",
+@categorizer(uses={"is_pi_1", "is_a1_3pr_1pi0_2",
                    "is_pi_2", "is_a1_3pr_1pi0_1"})
 def cat_pi_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_pi_1 & events.is_a1_3pr_1pi0_2) | (events.is_pi_2 & events.is_a1_3pr_1pi0_1))
+    return events, ((events.is_pi_1 & events.is_a1_3pr_1pi0_2) | (events.is_pi_2 & events.is_a1_3pr_1pi0_1))
 # tau -> rho, tau -> rho
-@categorizer(uses={"is_lep_1",
-                   "is_rho_1", "is_rho_2"})
+@categorizer(uses={"is_rho_1", "is_rho_2"})
 def cat_rho_rho(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & events.is_rho_1 & events.is_rho_2
+    return events, events.is_rho_1 & events.is_rho_2
 # tau -> rho, tau -> a1 DM2, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_rho_1", "is_a1_1pr_2pi0_2",
+@categorizer(uses={"is_rho_1", "is_a1_1pr_2pi0_2",
                    "is_rho_2", "is_a1_1pr_2pi0_1"})
 def cat_rho_a1dm2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_rho_1 & events.is_a1_1pr_2pi0_2) | (events.is_rho_2 & events.is_a1_1pr_2pi0_1))
+    return events, ((events.is_rho_1 & events.is_a1_1pr_2pi0_2) | (events.is_rho_2 & events.is_a1_1pr_2pi0_1))
 # tau -> rho, tau -> a1 DM10, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_rho_1", "is_a1_3pr_0pi0_2",
+@categorizer(uses={"is_rho_1", "is_a1_3pr_0pi0_2",
                    "is_rho_2", "is_a1_3pr_0pi0_1"})
 def cat_rho_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_rho_1 & events.is_a1_3pr_0pi0_2) | (events.is_rho_2 & events.is_a1_3pr_0pi0_1))
+    return events, ((events.is_rho_1 & events.is_a1_3pr_0pi0_2) | (events.is_rho_2 & events.is_a1_3pr_0pi0_1))
 # tau -> rho, tau -> a1 DM11, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_rho_1", "is_a1_3pr_1pi0_2",
+@categorizer(uses={"is_rho_1", "is_a1_3pr_1pi0_2",
                    "is_rho_2", "is_a1_3pr_1pi0_1"})
 def cat_rho_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_rho_1 & events.is_a1_3pr_1pi0_2) | (events.is_rho_2 & events.is_a1_3pr_1pi0_1))
+    return events, ((events.is_rho_1 & events.is_a1_3pr_1pi0_2) | (events.is_rho_2 & events.is_a1_3pr_1pi0_1))
 # tau -> a1 DM2, tau -> a1 DM2
-@categorizer(uses={"is_lep_1",
-                   "is_a1_1pr_2pi0_1",
+@categorizer(uses={"is_a1_1pr_2pi0_1",
                    "is_a1_1pr_2pi0_2"})
 def cat_a1dm2_a1dm2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & events.is_a1_1pr_2pi0_1 & events.is_a1_1pr_2pi0_2
+    return events, events.is_a1_1pr_2pi0_1 & events.is_a1_1pr_2pi0_2
 # tau -> a1 DM2, tau -> a1 DM10, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_a1_1pr_2pi0_1", "is_a1_3pr_0pi0_2",
+@categorizer(uses={"is_a1_1pr_2pi0_1", "is_a1_3pr_0pi0_2",
                    "is_a1_1pr_2pi0_2", "is_a1_3pr_0pi0_1"})
 def cat_a1dm2_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_a1_1pr_2pi0_1 & events.is_a1_3pr_0pi0_2) | (events.is_a1_1pr_2pi0_2 & events.is_a1_3pr_0pi0_1))
+    return events, ((events.is_a1_1pr_2pi0_1 & events.is_a1_3pr_0pi0_2) | (events.is_a1_1pr_2pi0_2 & events.is_a1_3pr_0pi0_1))
 # tau -> a1 DM2, tau -> a1 DM11, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_a1_1pr_2pi0_1", "is_a1_3pr_1pi0_2",
+@categorizer(uses={"is_a1_1pr_2pi0_1", "is_a1_3pr_1pi0_2",
                    "is_a1_1pr_2pi0_2", "is_a1_3pr_1pi0_1"})
 def cat_a1dm2_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_a1_1pr_2pi0_1 & events.is_a1_3pr_1pi0_2) | (events.is_a1_1pr_2pi0_2 & events.is_a1_3pr_1pi0_1))
+    return events, ((events.is_a1_1pr_2pi0_1 & events.is_a1_3pr_1pi0_2) | (events.is_a1_1pr_2pi0_2 & events.is_a1_3pr_1pi0_1))
 # tau -> a1 DM10, tau -> a1 DM10
-@categorizer(uses={"is_lep_1",
-                   "is_a1_3pr_0pi0_1",
+@categorizer(uses={"is_a1_3pr_0pi0_1",
                    "is_a1_3pr_0pi0_2"})
 def cat_a1dm10_a1dm10(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & events.is_a1_3pr_0pi0_1 & events.is_a1_3pr_0pi0_2
+    return events, events.is_a1_3pr_0pi0_1 & events.is_a1_3pr_0pi0_2
 # tau -> a1 DM10, tau -> a1 DM11, vice versa
-@categorizer(uses={"is_lep_1",
-                   "is_a1_3pr_0pi0_1", "is_a1_3pr_1pi0_2",
+@categorizer(uses={"is_a1_3pr_0pi0_1", "is_a1_3pr_1pi0_2",
                    "is_a1_3pr_0pi0_2", "is_a1_3pr_1pi0_1"})
 def cat_a1dm10_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & ((events.is_a1_3pr_0pi0_1 & events.is_a1_3pr_1pi0_2) | (events.is_a1_3pr_0pi0_2 & events.is_a1_3pr_1pi0_1))
+    return events, ((events.is_a1_3pr_0pi0_1 & events.is_a1_3pr_1pi0_2) | (events.is_a1_3pr_0pi0_2 & events.is_a1_3pr_1pi0_1))
 # tau -> a1 DM11, tau -> a1 DM11
-@categorizer(uses={"is_lep_1",
-                   "is_a1_3pr_1pi0_1", 
+@categorizer(uses={"is_a1_3pr_1pi0_1", 
                    "is_a1_3pr_1pi0_2"})
 def cat_a1dm11_a1dm11(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_lep_1 & events.is_a1_3pr_1pi0_1 & events.is_a1_3pr_1pi0_2
+    return events, events.is_a1_3pr_1pi0_1 & events.is_a1_3pr_1pi0_2
+
+
+# to know true or fake tau
+@categorizer(uses={"is_real_1"})
+def cat_real_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_real_1
+@categorizer(uses={"is_fake_1"})
+def cat_fake_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_fake_1
+@categorizer(uses={"is_real_2"})
+def cat_real_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_real_2
+@categorizer(uses={"is_fake_2"})
+def cat_fake_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_fake_2
+
 
 
 
