@@ -849,7 +849,7 @@ def add_config (ana: od.Analysis,
         "muon_IsoMu24_trigger_weight"           : [], #get_shifts("mu_trig"),
         "muon_xtrig_weight"                     : [], #get_shifts("mu_xtrig"),
         "tau_weight"                            : [], #get_shifts("tau"),
-        "ff_weight"                             : [],
+        #"ff_weight"                             : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
         #"tauspinner_weight"                    : get_shifts("tauspinner"),
     })

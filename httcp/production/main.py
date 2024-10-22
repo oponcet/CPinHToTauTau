@@ -124,7 +124,7 @@ def hcand_features(
         hcand_features,
         hcand_mass,
         category_ids,
-        ff_weight,
+        #ff_weight,
     },
     produces={
         ##deterministic_seeds,
@@ -150,15 +150,15 @@ def hcand_features(
         "channel_id",
         "trigger_ids",
         category_ids,
-        ff_weight,
+        #ff_weight,
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
     # deterministic seeds
-    #events = self[deterministic_seeds](events, **kwargs)
-    #events = self[category_ids](events, **kwargs)
-    events = self[ff_weight](events, **kwargs)
+    ##events = self[deterministic_seeds](events, **kwargs)
+    ##events = self[category_ids](events, **kwargs)
+    #events = self[ff_weight](events, **kwargs)
     if self.dataset_inst.is_mc:
         events = self[normalization_weights](events, **kwargs)
         events = self[pu_weight](events, **kwargs)
