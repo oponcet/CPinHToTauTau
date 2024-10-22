@@ -76,8 +76,8 @@ def add_config (ana: od.Analysis,
         ## W + jets
         "w_lnu",
         ## Drell-Yan
-        "dy_lep_m10to50",
-        "dy_lep_m50",
+        "dy_m10to50",
+        "dy_m50toinf",
         "dy_z2ll",
         "dy_z2tautau",
         ## TTJets
@@ -89,7 +89,7 @@ def add_config (ana: od.Analysis,
         ## VV [diboson inclusive]
         "vv",
         ## Signal
-        "h_ggf_tautau",
+        "h_ggf_htt",
     ]
 
     for process_name in process_names:
@@ -214,18 +214,19 @@ def add_config (ana: od.Analysis,
     cfg.x.default_categories      = ("incl",)
     #cfg.x.default_variables = ("n_jet", "jet1_pt")
     cfg.x.default_variables       = ("event","channel_id")
-
+    cfg.x.default_weight_producer = "main"
+    
     # process groups for conveniently looping over certain processs
     # (used in wrapper_factory and during plotting)
     cfg.x.process_groups = {
         "backgrounds": (backgrounds := [
             "w_lnu",
             "tt",
-            "dy_lep_m50",
+            "dy_m50toinf",
             "st",
             "vv",
         ]),
-        "bkg_sig"       : (bkg_sig       := [*backgrounds, "h_ggf_tautau"]),
+        "bkg_sig"       : (bkg_sig       := [*backgrounds, "h_ggf_htt"]),
         "data_bkg"      : (data_bkg      := [*backgrounds, "data"]),
         "data_bkg_sig"  : (data_bkg_sig  := [*backgrounds, "data", "h_ggf_tautau"]),
     }
