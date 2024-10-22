@@ -65,15 +65,14 @@ add_config_run2_2018(
 # ------------------------------------------------------------- #
 
 # ===>>> 2022 PreEE
-print("2022")
 from httcp.config.config_run3 import add_config as add_config_run3_2022_preEE
 from cmsdb.campaigns.run3_2022_preEE_nano_cp_tau_v12 import campaign_run3_2022_preEE_nano_cp_tau_v12
-add_config_run3_2022_preEE(
-    analysis_httcp,
-    campaign_run3_2022_preEE_nano_cp_tau_v12.copy(),
-    config_name=campaign_run3_2022_preEE_nano_cp_tau_v12.name,
-    config_id=int(f"{campaign_run3_2022_preEE_nano_cp_tau_v12.id}{1}")
-)
+#add_config_run3_2022_preEE(
+#    analysis_httcp,
+#    campaign_run3_2022_preEE_nano_cp_tau_v12.copy(),
+#    config_name=campaign_run3_2022_preEE_nano_cp_tau_v12.name,
+#    config_id=int(f"{campaign_run3_2022_preEE_nano_cp_tau_v12.id}{1}")
+#)
 add_config_run3_2022_preEE(
     analysis_httcp,
     campaign_run3_2022_preEE_nano_cp_tau_v12.copy(),
