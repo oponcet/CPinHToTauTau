@@ -28,21 +28,26 @@ from httcp.selection.trigger import trigger_selection
 from httcp.selection.lepton_pair_etau import etau_selection
 from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
-from httcp.selection.event_category import get_categories
-from httcp.selection.match_trigobj import match_trigobj
+from httcp.selection.event_category import get_categories, build_abcd_masks
+#from httcp.selection.match_trigobj import match_trigobj
+from httcp.selection.trigobject_matching import match_trigobj
 from httcp.selection.lepton_veto import *
 from httcp.selection.higgscand import higgscand, higgscandprod
 
 #from httcp.production.main import cutflow_features
-from httcp.production.weights import scale_mc_weight
+#from httcp.production.weights import scale_mc_weight
+from httcp.production.extra_weights import scale_mc_weight
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
 
-#from IPython import embed
+from httcp.util import filter_by_triggers, get_objs_p4, trigger_object_matching_deep, IF_DATASET_IS_DY_LO
+
+from httcp.selection.debug import debug_main
+
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
-
+maybe_import("coffea.nanoevents.methods.nanoaod")
 
 @selector(uses={"process_id", optional("mc_weight")}) #TODO: Move it to utils
 def custom_increment_stats(
@@ -95,6 +100,19 @@ def custom_increment_stats(
     return events, results
 
 
+def get_2n_pairs(etau_indices_pair,
+                 mutau_indices_pair,
+                 tautau_indices_pair):
+
+    has_one_etau_pair   = ak.num(etau_indices_pair, axis=1) == 2
+    has_one_mutau_pair  = ak.num(mutau_indices_pair, axis=1) == 2
+    has_one_tautau_pair = ak.num(tautau_indices_pair, axis=1) == 2
+
+    has_at_least_one_pair = (has_one_etau_pair | has_one_mutau_pair | has_one_tautau_pair)
+
+    return has_at_least_one_pair    
+
+    
 # exposed selectors
 # (those that can be invoked from the command line)
 @selector(
@@ -106,7 +124,8 @@ def custom_increment_stats(
         met_filters, 
         scale_mc_weight, 
         process_ids,
-        trigger_selection, 
+        trigger_selection,
+        IF_DATASET_IS_DY_LO(genZ_selection),
         muon_selection, 
         electron_selection, 
         tau_selection, 
@@ -125,11 +144,13 @@ def custom_increment_stats(
         higgscandprod,
         rel_charge,
         category_ids,
+        build_abcd_masks,
     },
     produces={
         # selectors / producers whose newly created columns should be kept
         scale_mc_weight, 
-        trigger_selection, 
+        trigger_selection,
+        IF_DATASET_IS_DY_LO(genZ_selection),
         muon_selection, 
         electron_selection, 
         tau_selection, 
@@ -146,6 +167,16 @@ def custom_increment_stats(
         gentau_selection,
         rel_charge,
         category_ids,
+        "trigger_ids",
+        "single_triggered",
+        "cross_triggered",
+        "single_e_triggered",
+        "single_mu_triggered",
+        "cross_e_triggered",
+        "cross_mu_triggered",
+        "cross_tau_triggered",
+        "cross_tau_jet_triggered",
+        build_abcd_masks,
     },
     exposed=True,
 )
@@ -156,80 +187,67 @@ def main(
     **kwargs,
 ) -> tuple[ak.Array, SelectionResult]:
     
-    # ensure coffea behaviors are loaded
+    # ################### ensure coffea behaviors are loaded ################### #
     events = self[attach_coffea_behavior](events, **kwargs)
 
     # prepare the selection results that are updated at every step
     results = SelectionResult()
 
+    # ############# Sel : Good Lumi JSON for DATA only ############# #
     # filter bad data events according to golden lumi mask
     if self.dataset_inst.is_data:
         events, json_filter_results = self[json_filter](events, **kwargs)
         results += json_filter_results
+    else:
+        results += SelectionResult(steps={"json": np.ones(len(events), dtype=bool)})
 
+
+    # -------- Sel : Met Filters -------- #
+    # met filter selection
+    events, met_filter_results = self[met_filters](events, **kwargs)
+    results += met_filter_results
+
+
+    # --------- Sel : Trigger Selection -------- #
     # trigger selection
     events, trigger_results = self[trigger_selection](events, **kwargs)
     results += trigger_results
 
-    # met filter selection
-    events, met_filter_results = self[met_filters](events, **kwargs)
-    results += met_filter_results
-    
-    # jet selection
-    events, bjet_veto_result = self[jet_selection](events, 
-                                                   call_force=True, 
-                                                   **kwargs)
-    results += bjet_veto_result
 
-    # muon selection
-    # e.g. mu_idx: [ [0,1], [], [1], [0], [] ] 
-    events, muon_results, good_muon_indices, veto_muon_indices, dlveto_muon_indices = self[muon_selection](events,
-                                                                                                           call_force=True, 
-                                                                                                           **kwargs)
-    results += muon_results
-
+    # -------- Get genZ collection for Zpt reweight
+    if self.dataset_inst.has_tag("is_dy_LO"):
+        events = self[genZ_selection](events, **kwargs)
+        
     # electron selection
     # e.g. ele_idx: [ [], [0,1], [], [], [1,2] ] 
     events, ele_results, good_ele_indices, veto_ele_indices, dlveto_ele_indices = self[electron_selection](events,
-                                                                                                           call_force=True, 
+                                                                                                           call_force=True,
                                                                                                            **kwargs)
     results += ele_results
 
-    # tau selection
-    # e.g. tau_idx: [ [1], [0,1], [1,2], [], [0,1] ] 
-    events, tau_results, good_tau_indices = self[tau_selection](events,
-                                                                call_force=True,
-                                                                **kwargs)
-    results += tau_results
-
-    #from IPython import embed; embed()
     
-    # check if there are at least two leptons with at least one tau [before trigger obj matching]
-    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    prematch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
+    # muon selection
+    # e.g. mu_idx: [ [0,1], [], [1], [0], [] ] 
+    events, muon_results, good_muon_indices, veto_muon_indices, dlveto_muon_indices = self[muon_selection](events,
+                                                                                                           call_force=True,
+                                                                                                           **kwargs)
+    results += muon_results
 
-    # trigger obj matching
-    # INFO: The end bool is the switch to make it on or off
-    events, \
-        good_ele_indices, good_muon_indices, good_tau_indices, \
-        matched_triggerID_e, matched_triggerID_mu, matched_triggerID_tau = self[match_trigobj](events,
-                                                                                               trigger_results,
-                                                                                               good_ele_indices,
-                                                                                               good_muon_indices,
-                                                                                               good_tau_indices,
-                                                                                               False)
 
-    # check if there are at least two leptons with at least one tau [after trigger obj matching]
-    _lepton_indices = ak.concatenate([good_muon_indices, good_ele_indices, good_tau_indices], axis=1)
-    postmatch_mask = ((ak.num(_lepton_indices, axis=1) >= 2) & (ak.num(good_tau_indices, axis=1) >= 1))
+    # tau selection
+    # e.g. tau_idx: [ [1], [0,1], [1,2], [], [0,1] ]
+    good_tau_indices = None
+    good_tau_indices_mutau = None
+    good_tau_indices_etau  = None
+    good_tau_indices_tautau= None
 
-    match_res = SelectionResult(
-        steps = {
-            "PreTrigObjMatch"  : prematch_mask,
-            "PostTrigObjMatch" : postmatch_mask
-        },
-    )
-    results += match_res
+    if self.dataset_inst.is_mc:
+        events, tau_results, good_tau_indices_mutau = self[tau_selection](events, "mutau",  call_force=True, **kwargs)
+        results += tau_results
+        _, _, good_tau_indices_etau           = self[tau_selection](events, "etau",   call_force=True, **kwargs)
+        _, _, good_tau_indices_tautau         = self[tau_selection](events, "tautau", call_force=True, **kwargs)
+    else:
+        events, tau_results, good_tau_indices = self[tau_selection](events, call_force=True, **kwargs)
     
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
@@ -237,73 +255,133 @@ def main(
                                                                         dlveto_muon_indices)
     results += extra_double_lepton_veto_results
 
-    
+        
     # e-tau pair i.e. hcand selection
-    # e.g. [ [], [e1, tau1], [], [], [e1, tau2] ]
-    etau_results, etau_indices_pair = self[etau_selection](events,
-                                                           good_ele_indices,
-                                                           good_tau_indices,
-                                                           call_force=True,
-                                                           **kwargs)
+    etau_results, etau_pair, etau_trig_ids, etau_trig_types = self[etau_selection](events,
+                                                                                   good_ele_indices,
+                                                                                   good_tau_indices_etau if self.dataset_inst.is_mc else good_tau_indices,
+                                                                                   trigger_results,
+                                                                                   call_force=True,
+                                                                                   **kwargs)
     results += etau_results
-    etau_pair = ak.concatenate([events.Electron[etau_indices_pair[:,0:1]],
-                                events.Tau[etau_indices_pair[:,1:2]]],
-                               axis=1)
 
-    #etau_pair_matched_triggerID = ak.concatenate([matched_triggerID_e[etau_indices_pair[:,0:1]],
-    #                                              matched_triggerID_tau[etau_indices_pair[:,1:2]]],
-    #                                             axis=1)
-    
-    
     # mu-tau pair i.e. hcand selection
-    # e.g. [ [mu1, tau1], [], [mu1, tau2], [], [] ]
-    mutau_results, mutau_indices_pair = self[mutau_selection](events,
-                                                              good_muon_indices,
-                                                              good_tau_indices,
-                                                              call_force=True,
-                                                              **kwargs)
+    mutau_results, mutau_pair, mutau_trig_ids, mutau_trig_types = self[mutau_selection](events,
+                                                                                        good_muon_indices,
+                                                                                        good_tau_indices_mutau if self.dataset_inst.is_mc else good_tau_indices,
+                                                                                        trigger_results,
+                                                                                        call_force=True,
+                                                                                        **kwargs)
     results += mutau_results
-    mutau_pair = ak.concatenate([events.Muon[mutau_indices_pair[:,0:1]], 
-                                 events.Tau[mutau_indices_pair[:,1:2]]],
-                                axis=1)
 
-    #from IPython import embed; embed()
-
-    #mutau_pair_matched_triggerID = ak.concatenate([matched_triggerID_mu[mutau_indices_pair[:,0:1]],
-    #                                               matched_triggerID_tau[mutau_indices_pair[:,1:2]]],
-    #                                              axis=1)
-
-    
-    #embed()
     # tau-tau pair i.e. hcand selection
-    # e.g. [ [], [tau1, tau2], [], [], [] ]
-    tautau_results, tautau_indices_pair = self[tautau_selection](events,
-                                                                 good_tau_indices,
-                                                                 call_force=True,
-                                                                 **kwargs)
+    tautau_results, tautau_pair, tautau_trig_ids,tautau_trig_types = self[tautau_selection](events,
+                                                                                            good_tau_indices_tautau if self.dataset_inst.is_mc else good_tau_indices,
+                                                                                            trigger_results,
+                                                                                            call_force=True,
+                                                                                            **kwargs)
     results += tautau_results
 
+    match_at_least_one_pair = get_2n_pairs(etau_pair.rawIdx,
+                                           mutau_pair.rawIdx,
+                                           tautau_pair.rawIdx)
 
-    tautau_pair = ak.concatenate([events.Tau[tautau_indices_pair[:,0:1]], 
-                                  events.Tau[tautau_indices_pair[:,1:2]]], 
-                                 axis=1)
 
-    #tautau_pair_matched_triggerID = ak.concatenate([matched_triggerID_tau[tautau_indices_pair[:,0:1]],
-    #                                                matched_triggerID_tau[tautau_indices_pair[:,1:2]]],
-    #                                               axis=1)
+    match_pair_result = SelectionResult(
+        steps = {
+            "has_at_least_1_pair"  : match_at_least_one_pair,
+        },
+    )
+    results += match_pair_result
 
+    """
+    # Trigger objects matching
+    # ################## W A R N I N G ################# #
+    # Mind the SWITCH: True  -> TriggerObject matching ON 
+    #                  False -> TriggerObject matching OFF
+    # although, the trigger requirement per channel is automatic
+    # ################################################## #
+    events, matchedResults = self[match_trigobj](events,
+                                                 trigger_results,
+                                                 etau_pair,
+                                                 mutau_pair,
+                                                 tautau_pair,
+                                                 True)
+
+    #print("before +")
     #from IPython import embed; embed()
+
+    results += matchedResults
+
+    
+    etau_pair    = matchedResults.x.etau["pairs"]
+    mutau_pair   = matchedResults.x.mutau["pairs"]
+    tautau_pair  = matchedResults.x.tautau["pairs"]
+
+    #print("after +")
+    #from IPython import embed; embed()
+
+    
+    post_match_at_least_one_pair = get_2n_pairs(etau_pair.rawIdx,
+                                                mutau_pair.rawIdx,
+                                                tautau_pair.rawIdx)
+    post_match_pair_result = SelectionResult(
+        steps = {
+            "has_at_least_1_pair_after_trigobj_matching"  : post_match_at_least_one_pair,
+        },
+    )
+    results += post_match_pair_result
+    """
     
     # channel selection
     # channel_id is now in columns
     events, channel_results = self[get_categories](events,
-                                                   trigger_results,
-                                                   etau_indices_pair,
-                                                   mutau_indices_pair,
-                                                   tautau_indices_pair)
+                                                   results,
+                                                   etau_pair.rawIdx,
+                                                   mutau_pair.rawIdx,
+                                                   tautau_pair.rawIdx)
     results += channel_results
+    """
+    etau_trigger_types = matchedResults.x.etau["trigger_types"]
+    etau_trigger_ids   = matchedResults.x.etau["trigger_ids"]
 
-    # make sure events have at least one lepton pair
+    mutau_trigger_types = matchedResults.x.mutau["trigger_types"]
+    mutau_trigger_ids   = matchedResults.x.mutau["trigger_ids"]
+    
+    tautau_trigger_types = matchedResults.x.tautau["trigger_types"]
+    tautau_trigger_ids   = matchedResults.x.tautau["trigger_ids"]
+    """
+
+    #from IPython import embed; embed()
+    
+    
+    trigger_types = ak.concatenate([etau_trig_types, mutau_trig_types, tautau_trig_types], axis=1)
+    # save single_triggered and cross_triggered
+    single_e_triggered = ak.any(ak.fill_none((trigger_types == 'single_e'), False), axis=1)
+    single_mu_triggered = ak.any(ak.fill_none((trigger_types == 'single_mu'), False), axis=1)
+    cross_e_triggered = ak.any(ak.fill_none((trigger_types == 'cross_e_tau'), False), axis=1)
+    cross_mu_triggered = ak.any(ak.fill_none((trigger_types == 'cross_mu_tau'), False), axis=1)
+    cross_tau_triggered = ak.any(ak.fill_none((trigger_types == 'cross_tau_tau'), False), axis=1)
+    cross_tau_jet_triggered = ak.any(ak.fill_none((trigger_types == 'cross_tau_jet_tau'), False), axis=1)
+
+    events = set_ak_column(events, "single_e_triggered", single_e_triggered)
+    events = set_ak_column(events, "single_mu_triggered", single_mu_triggered)
+    events = set_ak_column(events, "cross_e_triggered", cross_e_triggered)
+    events = set_ak_column(events, "cross_mu_triggered", cross_mu_triggered)
+    events = set_ak_column(events, "cross_tau_triggered", cross_tau_triggered)
+    events = set_ak_column(events, "cross_tau_jet_triggered", cross_tau_jet_triggered)
+    events = set_ak_column(events, "single_triggered", (single_e_triggered | single_mu_triggered))
+    events = set_ak_column(events, "cross_triggered", (cross_e_triggered | cross_mu_triggered | cross_tau_triggered | cross_tau_jet_triggered))
+
+
+
+    trigger_ids   = ak.concatenate([etau_trig_ids, mutau_trig_ids, tautau_trig_ids], axis=1)
+    trigger_ids = ak.values_astype(ak.fill_none(ak.firsts(trigger_ids, axis=1), 999), np.uint64)
+
+    # save the trigger_ids column
+    events = set_ak_column(events, "trigger_ids", trigger_ids)
+
+
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
 
@@ -314,29 +392,51 @@ def main(
                                                                 veto_muon_indices,
                                                                 hcand_pairs)
     results += extra_lepton_veto_results
-    
+
+    #from IPython import embed; embed()
     # hcand results
     events, hcand_array, hcand_results = self[higgscand](events, hcand_pairs)
     results += hcand_results
-
+    
     # hcand prod results
+    # -------------------------------------------- #
+    # Here, inside hcandprod, the replacement of raw
+    # taus by calibrated taus takes place
+    # -------------------------------------------- #
     events, hcandprod_results = self[higgscandprod](events, hcand_array)
     results += hcandprod_results
 
+    # -------- Sel : b-veto -------- #
+    # jet selection
+    # -------------------------------------------- #
+    # this is moved here, because now the jets are
+    # cleaned against the tau cadidates of hacnd
+    # -------------------------------------------- #
+    events, bjet_veto_result, bjet_veto_mask = self[jet_selection](events, 
+                                                                   call_force=True, 
+                                                                   **kwargs)
+    results += bjet_veto_result
+    
+
+    events = self[build_abcd_masks](events,
+                                    bjet_veto_mask,
+                                    call_force=True,
+                                    **kwargs)
+    
+    
     # gen particles info
+    # ############################################ #
+    # After building the higgs candidates, one can
+    # switch on the production of GenTau. Those gentaus
+    # will be selected which get matched to the hcand
     # hcand-gentau match = True/False
-    """
-    if "is_signal" in list(self.dataset_inst.aux.keys()):
-        if self.dataset_inst.aux["is_signal"]:
-            #print("hcand-gentau matching")
+    # ############################################ #
+    if self.config_inst.x.extra_tags.genmatch:
+        if "is_signal" in list(self.dataset_inst.aux.keys()):
+            print(" --->>> hcand-gentau matching")
             events, gentau_results = self[gentau_selection](events, True)
             results += gentau_results
-    """
-    #from IPython import embed; embed()
-    #1/0
 
-    # create process ids
-    #events = self[process_ids](events, **kwargs)
 
     # combined event selection after all steps
     event_sel = reduce(and_, results.steps.values())
@@ -354,6 +454,7 @@ def main(
 
     events = self[process_ids](events, **kwargs)
     events = self[category_ids](events, **kwargs)     
+    #events = set_ak_column(events, 'category_ids', ak.ones_like(events.event, dtype=np.uint8))
     
     events, results = self[custom_increment_stats]( 
         events,
@@ -361,5 +462,8 @@ def main(
         stats,
     )
 
-    #from IPython import embed; embed()
+    # inspect cuts
+    if self.config_inst.x.verbose.selection.main:
+        debug_main(events, results, self.config_inst.x.triggers)
+        
     return events, results
