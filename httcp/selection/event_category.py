@@ -117,9 +117,6 @@ def build_abcd_masks(
     h1 = hcand[:,0:1]
     h2 = hcand[:,1:2]
 
-
-    #from IPython import embed; embed()
-    
     
     # tau tagger wp
     tau_tagger      = self.config_inst.x.deep_tau_tagger
@@ -161,7 +158,7 @@ def build_abcd_masks(
 
     # REAL1 --> to get the contribution of real MC taus only with genPartFlav > 0
     # only required for tau-tau channel
-    # maybe redundant: true info for e and mu. Probably not used
+    # maybe redundant: true info for e and mu. Probably not gonna used
     is_real_1 = events.event >= 0
     is_fake_1 = is_real_1 # lets keep real and fake the same for data
     if self.dataset_inst.is_mc:
@@ -259,7 +256,9 @@ def build_abcd_masks(
     # real and fake are the same for the data
     events = set_ak_column(events, "is_fake_1", is_fake_1)
     events = set_ak_column(events, "is_fake_2", is_fake_2)
+    # mt
     events = set_ak_column(events, "is_low_mt", is_low_mt)
+    # bveto
     events = set_ak_column(events, "is_b_veto", is_b_veto)
     # for CP categories
     events = set_ak_column(events, "is_lep_1",   is_lep_1)
