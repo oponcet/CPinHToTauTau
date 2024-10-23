@@ -78,8 +78,8 @@ def add_config (ana: od.Analysis,
         ## Drell-Yan
         "dy_m10to50",
         "dy_m50toinf",
-        "dy_z2ll",
-        "dy_z2tautau",
+        #"dy_z2ll",
+        #"dy_z2tautau",
         ## TTJets
         "tt",
         ## Single top
