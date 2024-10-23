@@ -20,21 +20,21 @@ A Columnflow based analysis framework from IPHC and DESY
 
 ### Installation
 
-```
-git clone --recursive git@github.com:gsaha009/CPinHToTauTau.git \\
-cd CPinHToTauTau \\
+```sh
+git clone --recursive git@github.com:gsaha009/CPinHToTauTau.git
+cd CPinHToTauTau
 ```
 
 ### Environment setup
 
-```
-cd CPinHToTauTau \\
-source setup.sh hcp \\
+```sh
+cd CPinHToTauTau
+source setup.sh hcp
 ```
 
 Then follow the details:
 
-```
+```sh
 CERN username (CF_CERN_USER, default gsaha):  
 Local data directory (CF_DATA, default ./data):  
 Local directory for installing software (CF_SOFTWARE_BASE, default $CF_DATA/software):  /eos/user/g/gsaha/CPinHToTauTauData                            
@@ -49,6 +49,6 @@ storage element for crab specific job outputs (e.g. T2_DE_DESY) (CF_CRAB_STORAGE
 base directory on storage element for crab specific job outputs (CF_CRAB_BASE_DIRECTORY, default /store/user/$CF_CERN_USER/cf_crab_outputs):
 ```
 
-This will install the `softwares` in `eos`, but the `data` and `jobs` directories are in `afs`.\\
-In the next step, the big output files have to be stored in `eos`.\\
-So, `law.cfg` needs to be set like here
+This will install the `softwares` in `eos`, but the `data` and `jobs` directories are in `afs`.
+In the next step, the big output files have to be stored in `eos`.
+So, `law.cfg` needs to be set like here.
