@@ -543,6 +543,21 @@ def add_test_variables(cfg: od.Config) -> None:
         )
         
 
+#def add_2Ds(cfg: od.Config) -> None:
+#    """
+#    2D histograms
+#    """
+#    cfg.add_variable(
+#        name=f"hcand_{i+1}_pt",
+#        expression=f"hcand.pt[:,{i}]",
+#        null_value=EMPTY_FLOAT,
+#        binning=(40, 0., 200.),
+#        unit="GeV",
+#        x_title=f"hcand[{i+1}]" + r" $p_{T}$",
+#    )
+    
+
+        
 def add_variables(cfg: od.Config) -> None:
     """
     Adds all variables to a *config*.

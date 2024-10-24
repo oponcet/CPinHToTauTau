@@ -55,6 +55,7 @@ set_ak_column_i32 = functools.partial(set_ak_column, value_type=np.int32)
     uses={
         # nano columns
         "hcand.*", optional("GenTau.*"), optional("GenTauProd.*"),
+        "Jet.pt",
         #reArrangeDecayProducts,
         #reArrangeGenDecayProducts,
         #ProduceGenPhiCP, #ProduceGenCosPsi, 
@@ -64,6 +65,7 @@ set_ak_column_i32 = functools.partial(set_ak_column, value_type=np.int32)
         # new columns
         "hcand_invm",
         "hcand_dr",
+        "n_jet",
         #ProduceGenPhiCP, #ProduceGenCosPsi,
         #ProduceDetPhiCP, #ProduceDetCosPsi,
     },
@@ -85,6 +87,8 @@ def hcand_features(
     events = set_ak_column(events, "hcand_invm", mass)
     events = set_ak_column(events, "hcand_dr",   dr)
 
+    events = set_ak_column_i32(events, "n_jet", ak.num(events.Jet.pt, axis=1))
+    
     """
     events, P4_dict     = self[reArrangeDecayProducts](events)
     events              = self[ProduceDetPhiCP](events, P4_dict)
@@ -158,12 +162,14 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     # deterministic seeds
     ##events = self[deterministic_seeds](events, **kwargs)
     ##events = self[category_ids](events, **kwargs)
+
     #events = self[ff_weight](events, **kwargs)
     if self.dataset_inst.is_mc:
         events = self[normalization_weights](events, **kwargs)
         events = self[pu_weight](events, **kwargs)
         #if not self.dataset_inst.has_tag("no_lhe_weights"):
-        #    events = self[pdf_weights](events, **kwargs)
+        if self.has_dep(pdf_weights):
+            events = self[pdf_weights](events, **kwargs)
         # ----------- Muon weights ----------- #
         events = self[muon_id_weights](events, **kwargs)
         events = self[muon_iso_weights](events, **kwargs)
@@ -176,9 +182,11 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         # ----------- Tau weights ----------- #        
         events = self[tau_weights](events, do_syst=True, **kwargs)
         #events = self[tauspinner_weights](events, **kwargs)
-        if self.dataset_inst.has_tag("is_dy_LO"):
+        #if self.dataset_inst.has_tag("is_dy_LO"):
+        if self.has_dep(zpt_reweight):
             events = self[zpt_reweight](events, **kwargs)
-        processes = self.dataset_inst.processes.names()
+
+        #processes = self.dataset_inst.processes.names()
 
         #if ak.any(['dy_' in proc for proc in processes]):
         #    print("Splitting Drell-Yan dataset...")
