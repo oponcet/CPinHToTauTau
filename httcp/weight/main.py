@@ -20,7 +20,7 @@ np = maybe_import("numpy")
     keep_weights=None,
     drop_weights=None,
 )
-def default(self: WeightProducer, events: ak.Array, **kwargs) -> ak.Array:
+def main(self: WeightProducer, events: ak.Array, **kwargs) -> ak.Array:
     # build the full event weight
     weight = ak.Array(np.ones(len(events), dtype=np.float32))
     for column in self.weight_columns:
@@ -29,8 +29,8 @@ def default(self: WeightProducer, events: ak.Array, **kwargs) -> ak.Array:
     return events, weight
 
 
-@default.init
-def default_init(self: WeightProducer) -> None:
+@main.init
+def main_init(self: WeightProducer) -> None:
     # use the config's auxiliary event_weights, drop some of them based on drop_weights, and on this
     # weight producer instance, store weight_columns, used columns, and shifts
     self.weight_columns = []
@@ -46,11 +46,19 @@ def default_init(self: WeightProducer) -> None:
         # manually skip pdf and scale weights for samples that do not have lhe info
         if getattr(self, "dataset_inst", None) is not None:
             is_lhe_weight = any(
-                shift_inst.has_tag("lhe_weight")
+                shift_inst.has_tag("pdf_weights")
                 for shift_inst in self.config_inst.x.event_weights[weight_name]
             )
             if is_lhe_weight and self.dataset_inst.has_tag("no_lhe_weights"):
                 continue
+
+            is_zpt_reweight = any(
+                shift_inst.has_tag("zpt_reweight")
+                for shift_inst in self.config_inst.x.event_weights[weight_name]
+            )
+            if is_zpt_reweight:
+                if not self.dataset_inst.has_tag("is_dy_LO"):
+                    continue
 
         self.weight_columns.append(weight_name)
         self.uses.add(weight_name)
@@ -60,7 +68,7 @@ def default_init(self: WeightProducer) -> None:
         }
 
 
-normalization_only = default.derive(
+normalization_only = main.derive(
     "normalization_only",
     cls_dict={"keep_weights": "normalization_weight"},
 )

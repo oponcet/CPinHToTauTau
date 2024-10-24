@@ -853,6 +853,8 @@ def add_config (ana: od.Analysis,
         #"ff_weight"                             : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
         #"tauspinner_weight"                    : get_shifts("tauspinner"),
+        #"pdf_weight"                            : [],
+        #"zpt_reweight"                          : [],
     })
 
     # define per-dataset event weights
@@ -865,8 +867,7 @@ def add_config (ana: od.Analysis,
             dataset.x.event_weights = {
                 "zpt_reweight": [],
             }
-
-    cfg.x.default_weight_producer = "all_weights"
+    #cfg.x.default_weight_producer = "all_weights"
 
     
     #---------------------------------------------------------------------------------------------#
