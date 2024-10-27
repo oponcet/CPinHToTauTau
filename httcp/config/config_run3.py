@@ -72,17 +72,17 @@ def add_config (ana: od.Analysis,
 
     # add custom processes
     cfg.add_process(
-        name="dy_m50toinf_lep",
+        name="dy_m50toinf_lep", #"dy_leplep",
         id=51099,
         #label=r"$Z \to \ell\ell$",
     )
     cfg.add_process(
-        name="dy_m50toinf_tau",
+        name="dy_m50toinf_tau", #"dy_tautau",
         id=51098,
         #label=r"$Z \to \tau\tau$",
     )
     cfg.add_process(
-        name="dy_m50toinf_mc_fake",
+        name="dy_m50toinf_mc_fake", #"dy_mc_fake",
         id=51097,
         #label=r"$Z \to fake (MC)$",
     )
@@ -93,16 +93,13 @@ def add_config (ana: od.Analysis,
         ## W + jets
         "w_lnu",
         ## Drell-Yan
+        # "dy",
         "dy_m10to50",
         "dy_m50toinf",
-        #"dy_z2ll",
-        #"dy_z2tautau",
         ## TTJets
         "tt",
         ## Single top
         "st",
-        #"st_tchannel",
-        #"st_twchannel",
         ## VV [diboson inclusive]
         "vv",
         ## Signal
