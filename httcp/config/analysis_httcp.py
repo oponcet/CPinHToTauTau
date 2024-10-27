@@ -67,19 +67,19 @@ add_config_run2_2018(
 # ===>>> 2022 PreEE
 from httcp.config.config_run3 import add_config as add_config_run3_2022_preEE
 from cmsdb.campaigns.run3_2022_preEE_nano_cp_tau_v12 import campaign_run3_2022_preEE_nano_cp_tau_v12
-#add_config_run3_2022_preEE(
-#    analysis_httcp,
-#    campaign_run3_2022_preEE_nano_cp_tau_v12.copy(),
-#    config_name=campaign_run3_2022_preEE_nano_cp_tau_v12.name,
-#    config_id=int(f"{campaign_run3_2022_preEE_nano_cp_tau_v12.id}{1}")
-#)
 add_config_run3_2022_preEE(
     analysis_httcp,
     campaign_run3_2022_preEE_nano_cp_tau_v12.copy(),
-    config_name=f"{campaign_run3_2022_preEE_nano_cp_tau_v12.name}_limited",
-    config_id=int(f"{campaign_run3_2022_preEE_nano_cp_tau_v12.id}{2}"),
-    limit_dataset_files=1
+    config_name=campaign_run3_2022_preEE_nano_cp_tau_v12.name,
+    config_id=int(f"{campaign_run3_2022_preEE_nano_cp_tau_v12.id}{1}")
 )
+#add_config_run3_2022_preEE(
+#    analysis_httcp,
+#    campaign_run3_2022_preEE_nano_cp_tau_v12.copy(),
+#    config_name=f"{campaign_run3_2022_preEE_nano_cp_tau_v12.name}_limited",
+#    config_id=int(f"{campaign_run3_2022_preEE_nano_cp_tau_v12.id}{2}"),
+#    limit_dataset_files=1
+#)
 """
 # ===>>> 2022 PostEE
 from httcp.config.config_run3 import add_config as add_config_run3_2022_postEE

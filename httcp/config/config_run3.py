@@ -69,6 +69,23 @@ def add_config (ana: od.Analysis,
     # --------------------------------------------------------------------------------------------- #
     # add processes we are interested in
     # --------------------------------------------------------------------------------------------- #
+
+    # add custom processes
+    cfg.add_process(
+        name="dy_m50toinf_lep",
+        id=51099,
+        #label=r"$Z \to \ell\ell$",
+    )
+    cfg.add_process(
+        name="dy_m50toinf_tau",
+        id=51098,
+        #label=r"$Z \to \tau\tau$",
+    )
+    cfg.add_process(
+        name="dy_m50toinf_mc_fake",
+        id=51097,
+        #label=r"$Z \to fake (MC)$",
+    )
     
     process_names = [
         ## Data
@@ -101,6 +118,7 @@ def add_config (ana: od.Analysis,
         #if process_name == "h_ggf_tautau":
         #    procs.get(process_name).is_signal = True
         proc = cfg.add_process(procs.get(process_name))
+        #print(procs.get(process_name))
         #if proc.name == "h_ggf_tautau":
         #    proc.is_signal = True
 

@@ -36,7 +36,7 @@ def stylize_processes(config: od.Config) -> None:
         black="#000000",
     )
 
-    if (p := config.get_process("h_ggf_tautau", default=None)):
+    if (p := config.get_process("h_ggf_htt", default=None)):
         p.color1 = cfg.x.colors.black
         p.label = (
             r"$H_{ggf} \rightarrow \tau\tau$"
@@ -54,13 +54,13 @@ def stylize_processes(config: od.Config) -> None:
 
     #if (p := config.get_process("dy", default=None)):
     #    p.color1 = cfg.x.colors.brown
-    if (p := config.get_process("dy_lep_m50", default=None)):
+    if (p := config.get_process("dy_m50toinf", default=None)):
         p.color1 = cfg.x.colors.brown
         p.label = r"$Z\to \ell \ell (e/\mu/\tau)$"
-    if (p := config.get_process("dy_z2ll", default=None)):
+    if (p := config.get_process("dy_m50toinf_lep", default=None)):
         p.color1 = cfg.x.colors.light_blue
         p.label = r"$Z\to \ell \ell ~(ee/\mu\mu)$"
-    if (p := config.get_process("dy_z2tautau", default=None)):
+    if (p := config.get_process("dy_m50toinf_tau", default=None)):
         p.color1 = cfg.x.colors.dark_blue
         p.label = r"$Z\to \tau \tau$"
 

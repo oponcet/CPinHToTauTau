@@ -5,6 +5,7 @@ Column production methods related to higher-level features.
 """
 import functools
 
+import law
 from typing import Optional
 from columnflow.production import Producer, producer
 from columnflow.production.categories import category_ids
@@ -50,6 +51,7 @@ maybe_import("coffea.nanoevents.methods.nanoaod")
 set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
 set_ak_column_i32 = functools.partial(set_ak_column, value_type=np.int32)
 
+logger = law.logger.get_logger(__name__)
 
 @producer(
     uses={
@@ -186,11 +188,10 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         if self.has_dep(zpt_reweight):
             events = self[zpt_reweight](events, **kwargs)
 
-        #processes = self.dataset_inst.processes.names()
-
-        #if ak.any(['dy_' in proc for proc in processes]):
-        #    print("Splitting Drell-Yan dataset...")
-        #    events = self[split_dy](events,**kwargs)
+        processes = self.dataset_inst.processes.names()
+        if ak.any(['dy_' in proc for proc in processes]):
+            logger.info("splitting (any) Drell-Yan dataset ... ")
+            events = self[split_dy](events,**kwargs)
             
     events = self[hcand_features](events, **kwargs)       
 

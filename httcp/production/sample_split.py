@@ -25,11 +25,13 @@ def split_dy(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     
 
     tau_part_flav = {
+        "unknown"   : 0,
         "prompt_e"  : 1,
         "prompt_mu" : 2,
         "tau->e"    : 3,
         "tau->mu"   : 4,
-        "tau_had"   : 5
+        "tau_had"   : 5,
+        "fake"      : 6
     }
     hcand_ele_mu_DM = events.hcand.decayMode[:,0]
     # hcand_Tau_idx = events.hcand.rawIdx[:,1:2]
@@ -40,27 +42,31 @@ def split_dy(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     e2tau_fakes_mask = ak.any(((match == tau_part_flav["prompt_e"]) | (match == tau_part_flav["tau->e"])),axis=1)
     genuine_tau_mask = ak.any((match == tau_part_flav["tau_had"]),axis=1)
 
-    z_proc_id = self.dataset_inst.processes.values()[0].id
-    ztoee_proc_id = 51101
-    ztomm_proc_id = 51102
-    ztott_proc_id = 51104
-    ztoll_proc_id = 51103
-
+    unknown_mask = ak.any(((match == tau_part_flav["unknown"]) | (match == tau_part_flav["fake"])),axis=1)
+    
+    z_proc_id     = 51100 #self.dataset_inst.processes.values()[0].id
+    #ztoee_proc_id = 51101
+    #ztomm_proc_id = 51102
+    ztounknown_id = 51097
+    ztott_proc_id = 51098
+    ztoll_proc_id = 51099
+    
     #from IPython import embed; embed()
     
     #process_id = np.array(events.process_id, dtype=np.int64)
 
-    ztoeeormm = (
-        (events.process_id == z_proc_id)
-        & ((mu2tau_fakes_mask & (hcand_ele_mu_DM == -2)) | (e2tau_fakes_mask & (hcand_ele_mu_DM == -1)))
-    )
-    ztotautau = (
-        (events.process_id == z_proc_id)
-        & genuine_tau_mask
-    )
+    #ztoeeormm = (
+    #    (events.process_id == z_proc_id)
+    #    & ((mu2tau_fakes_mask & (hcand_ele_mu_DM == -2)) | (e2tau_fakes_mask & (hcand_ele_mu_DM == -1)))
+    #)
+    #ztotautau = (
+    #    (events.process_id == z_proc_id)
+    #    & genuine_tau_mask
+    #)
     
-    process_id = ak.where(ztoeeormm, ztoll_proc_id, events.process_id)
-    process_id = ak.where(ztotautau, ztott_proc_id, events.process_id)
+    process_id = ak.where((mu2tau_fakes_mask | e2tau_fakes_mask), ztoll_proc_id, events.process_id)
+    process_id = ak.where(genuine_tau_mask, ztott_proc_id, process_id)
+    process_id = ak.where(unknown_mask, ztounknown_id, process_id)
     
     #process_id = ak.where((mu2tau_fakes_mask & (hcand_ele_mu_DM == -2)), 51001, 51004)
     #process_id = ak.where((e2tau_fakes_mask & (hcand_ele_mu_DM == -1)), 51003, process_id)
