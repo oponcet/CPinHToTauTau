@@ -6,12 +6,13 @@ postfix : PreEE
 wrapper : true
 limited : false
 workers : 3
+tasks_per_job  : 3
 
 args:
   config    : run3_2022_preEE_nano_cp_tau_v12
   workflow  : htcondor
   branch    : -1
-  version   : dummy
+  version   : Run3_2022PreEE_full_20241027_020905
 
   datasets  :
     ## == data ==
@@ -50,14 +51,15 @@ args:
   processes :
     - data
     - w_lnu
-    - dy_lep_m10to50
-    - dy_lep_m50
+    - dy_m10to50
+    - dy_m50toinf_lep
+    - dy_m50toinf_tau
     - tt
     #- st_tchannel
     #- st_twchannel
     - st
     - vv
-    - h_ggf_tautau
+    - h_ggf_htt
 
   categories:
     #- incl
@@ -154,5 +156,18 @@ args:
     #- PhiCP_IPDP_alpha_lt_piby4
     #- PhiCP_IPDP_alpha_gt_piby4
 
+  shifts:
+    #- minbias_xs
+    #- tau
+    #- e
+    #- e_trig
+    #- e_xtrig
+    #- mu_id
+    #- mu_iso
+    #- mu_trig
+    #- mu_xtrig
+    #- zpt
+    
+
   extras:
-    - process-settings "h_ggf_tautau,unstack,500000"
+    - process-settings "h_ggf_htt,unstack,100000"

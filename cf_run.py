@@ -62,8 +62,13 @@ def run_command(command, logger):
 
 #from utilities import setup_logger, runShellCmd, run_command
 datetime_tag = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-ListOfMainFuncs = ['CalibrateEvents', 'SelectEvents', 'ReduceEvents', 'PlotCutFlow',
-                   'ProduceColumns', 'PlotVariables1D', 'PlotVariables2D',
+ListOfMainFuncs = ['CalibrateEvents',
+                   'SelectEvents',
+                   'ReduceEvents',
+                   'PlotCutFlow',
+                   'ProduceColumns',
+                   'PlotVariables1D', 'PlotVariables2D',
+                   'PlotShiftedVariables1D', 'PlotShiftedVariables2D',
                    'UniteColumns']
 
 
@@ -104,6 +109,7 @@ postfix       = yml_config.get("postfix")
 islimited     = yml_config.get("limited")
 limit         = "limited" if islimited else "full"
 nworkers      = yml_config.get("workers")
+tasks_per_job = yml_config.get("tasks_per_job")
 
 #cmdfile = os.path.join(os.getcwd(),"cmdlogs",f"cmdlog_selectEvents_{datetime_tag}.sh")
 jobfile = os.path.join(os.getcwd(),"cmdlogs",f"joblog_run{run}_{era}{postfix}_{limit}_{main_func}_{datetime_tag}.log")
@@ -118,6 +124,7 @@ logger.info(f"Run      : {run}")
 logger.info(f"Postfix  : {postfix}")
 logger.info(f"Limited? : {islimited}")
 logger.info(f"nWorkers : {nworkers}")
+logger.info(f"nTasks_per_job : {tasks_per_job}")
 
 wrapper   = yml_config.get("wrapper")
 logger.info(f"Wrapper  : {wrapper}")
@@ -135,6 +142,10 @@ logger.info(f"datasets : {datasets}")
 
 processes = ",".join(main_args.get("processes"))
 logger.info(f"processes: {processes}")
+
+shiftList = main_args.get("shifts")
+shifts = ",".join(shiftList) if shiftList else ""
+logger.info(f"shifts: {shifts}")
 
 workflow  = main_args.get("workflow")
 logger.info(f"worklflow: {workflow}")
@@ -164,15 +175,19 @@ cmd_list = [
     #"&>", jobfile, '&'
 ]
 
-skip_wrapping = main_func == "PlotVariables1D"
+#skip_wrapping = ((main_func == "PlotVariables1D") or (main_func == "PlotVariables2D")
+skip_wrapping = main_func.startswith("PlotVariables")
+shifts_val = "nominal,{"+f"{shifts}"+"}_{up,down}" if shiftList else "nominal"
 if wrapper:
     if not skip_wrapping:
         cmd_list = [
             "law", "run", f"cf.{main_func}Wrapper",
             "--config", config,
             "--datasets", datasets,
+            f"--shifts", shifts_val,
             f"--cf.{main_func}-workflow", workflow,
             f"--cf.{main_func}-branch", branch,
+            f"--cf.{main_func}-tasks-per-job", tasks_per_job,
             "--version", version,
             "--workers", nworkers,
             f"--cf.{main_func}-log-file", jobfile,
