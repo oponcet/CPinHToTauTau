@@ -1,0 +1,78 @@
+{
+    "paths": {
+        "eos_path": "/eos/user/o/oponcet2/analysis/FakeFactor/gourab/",
+        "task": "run3_2022_preEE_nano_cp_tau_v12/",
+        "hist_path": "nominal/calib__main/sel__main/prod__main/weight__main/Run3_2022PreEE_full_20241027_020905/"
+    },
+    "datasets": {
+        "data": ["data_tau_C", "data_tau_D", "data_mu_C", "data_mu_D", "data_e_C", "data_e_D", "data_single_mu_C"],
+        "mc": [
+            "wj_incl_madgraph", "dy_lep_m10to50_madgraph", "dy_lep_m50_madgraph", "tt_dl", "tt_sl", "tt_fh",
+            "st_tchannel_t", "st_tchannel_tbar", "st_tw_t_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_tb_sl",
+            "st_tw_tb_dl", "st_tw_tb_fh", "ww", "wz", "zz", "h_ggf_tautau_prod_cp_even_sm"
+        ]
+    },
+    "categories": {
+        "DM0": {
+            "ABCD":{
+                "A": 410101,  
+                "B": 410301,
+                "C": 411501,
+                "D": 411301
+            },
+            "A0B0C0D0": {
+                "A0": 410501,
+                "B0": 410701,
+                "C0": 411101,
+                "D0": 410901
+            }
+        },
+        "DM1": {
+            "ABCD":{
+                "A": 410103,
+                "B": 410303,
+                "C": 411503,
+                "D": 411303
+            },
+            "A0B0C0D0": {
+                "A0": 410503,
+                "B0": 410703,
+                "C0": 411103,
+                "D0": 410903
+            }
+        },
+        "DM10": {
+            "ABCD":{
+                "A": 410107, 
+                "B": 410307,
+                "C": 411507,
+                "D": 411307
+            },
+            "A0B0C0D0": {
+                "A0": 410507,
+                "B0": 410707,
+                "C0": 411107,
+                "D0": 410907
+            }
+        },
+        "DM11": {
+            "ABCD":{
+                "A": 410109,
+                "B": 410309,
+                "C": 411509,
+                "D": 411309
+            },
+            "A0B0C0D0": {
+                "A0": 410509,
+                "B0": 410709,
+                "C0": 411109,
+                "D0": 410909
+            }
+        }
+    },
+    "variables": [
+        { "var1": "hcand_dr", "var2": "hcand_1_pt" },
+        { "var1": "hcand_invm", "var2": "hcand_1_pt" },
+        { "var1": "puppi_met_pt", "var2": "hcand_1_pt" }
+    ]
+}
