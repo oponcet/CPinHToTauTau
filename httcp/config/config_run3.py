@@ -69,33 +69,18 @@ def add_config (ana: od.Analysis,
     # --------------------------------------------------------------------------------------------- #
     # add processes we are interested in
     # --------------------------------------------------------------------------------------------- #
-
-    # add custom processes
-    cfg.add_process(
-        name="dy_m50toinf_lep", #"dy_leplep",
-        id=51099,
-        #label=r"$Z \to \ell\ell$",
-    )
-    cfg.add_process(
-        name="dy_m50toinf_tau", #"dy_tautau",
-        id=51098,
-        #label=r"$Z \to \tau\tau$",
-    )
-    cfg.add_process(
-        name="dy_m50toinf_mc_fake", #"dy_mc_fake",
-        id=51097,
-        #label=r"$Z \to fake (MC)$",
-    )
-    
     process_names = [
         ## Data
         "data",
         ## W + jets
         "w_lnu",
         ## Drell-Yan
-        # "dy",
-        "dy_m10to50",
-        "dy_m50toinf",
+        "dy",
+        #"dy_m10to50",
+        #"dy_m50toinf",
+        #"dy_m50toinf_lep",
+        #"dy_m50toinf_tau",
+        #"dy_m50toinf_mc_fake",
         ## TTJets
         "tt",
         ## Single top
@@ -104,6 +89,8 @@ def add_config (ana: od.Analysis,
         "vv",
         ## Signal
         "h_ggf_htt",
+        "zh_htt",
+        "wh_htt",
     ]
 
     for process_name in process_names:
@@ -130,10 +117,48 @@ def add_config (ana: od.Analysis,
 
     dataset_names = [
         ##W+jets
-        "wj_incl_madgraph",
-        #Drell-Yan
-        "dy_lep_m10to50_madgraph",
-        "dy_lep_m50_madgraph",
+        # --- LO --- #
+        #"wj_incl_madgraph",
+        #"wj_1j_madgraph",
+        #"wj_2j_madgraph",
+        #"wj_3j_madgraph",
+        #"wj_4j_madgraph",
+        #"wj_ht40to100_madgraph",
+        #"wj_ht100to400_madgraph",
+        #"wj_ht400to800_madgraph",
+        #"wj_ht800to1500_madgraph",
+        #"wj_ht1500to2500_madgraph",
+        # --- NLO --- #
+        "wj_incl_amcatnlo",
+        "wj_0j_amcatnlo",
+        "wj_1j_amcatnlo",
+        "wj_2j_amcatnlo",
+        ##Drell-Yan
+        # --- LO --- #
+        #"dy_lep_m10to50_madgraph",
+        #"dy_lep_m50_madgraph",
+        #"dy_lep_m50_1j_madgraph",
+        #"dy_lep_m50_2j_madgraph",
+        #"dy_lep_m50_3j_madgraph",
+        #"dy_lep_m50_4j_madgraph",
+        # --- NLO --- #
+        "dy_lep_m10to50_amcatnlo",
+        "dy_lep_m50_amcatnlo",
+        "dy_lep_m50_0j_amcatnlo",
+        "dy_lep_m50_1j_amcatnlo",
+        "dy_lep_m50_2j_amcatnlo",
+        #"dy_lep_m50_1j_pt0to40_amcatnlo",
+        #"dy_lep_m50_2j_pt0to40_amcatnlo",
+        "dy_lep_m50_1j_pt40to100_amcatnlo",
+        "dy_lep_m50_2j_pt40to100_amcatnlo",
+        "dy_lep_m50_1j_pt100to200_amcatnlo",
+        "dy_lep_m50_2j_pt100to200_amcatnlo",
+        "dy_lep_m50_1j_pt200to400_amcatnlo",
+        "dy_lep_m50_2j_pt200to400_amcatnlo",
+        "dy_lep_m50_1j_pt400to600_amcatnlo",
+        "dy_lep_m50_2j_pt400to600_amcatnlo",
+        "dy_lep_m50_1j_pt600toInf_amcatnlo",
+        "dy_lep_m50_2j_pt600toInf_amcatnlo",
         ## ttbar
         "tt_sl",
         "tt_dl",
@@ -151,13 +176,22 @@ def add_config (ana: od.Analysis,
         "ww",
         "wz",
         "zz",
-        ## single top tW channel
-        #"st_t_wminus_to_2l2nu",
-        #"st_tbar_wplus_to_lnu2q",
-        #"st_tbar_wplus_to_2l2nu",
-        "h_ggf_tautau_prod_cp_even_sm",
-        #"h_ggf_tautau_flat",
+        # signal
         "h_ggf_tautau_uncorrelated_filter",
+        "h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay",
+        "h_ggf_tautau_uncorrelatedDecay_CPodd_UnFiltered_ProdAndDecay",
+        "h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay",
+        "h_ggf_tautau_uncorrelatedDecay_MM_UnFiltered_ProdAndDecay",
+        "h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay",
+        "h_ggf_tautau_uncorrelatedDecay_SM_UnFiltered_ProdAndDecay",
+        "h_ggf_tautau_M125_amcatnloFXFX",
+        "h_ggf_tautau_prod_cp_even_sm",
+        "zh_tautau_uncorrelatedDecay_Filtered",
+        "zh_tautau_uncorrelatedDecay_UnFiltered",
+        "wph_tautau_uncorrelatedDecay_Filtered",
+        "wph_tautau_uncorrelatedDecay_UnFiltered",
+        "wmh_tautau_uncorrelatedDecay_Filtered",
+        "wmh_tautau_uncorrelatedDecay_UnFiltered",
     ]
     
     datasets_data = []
@@ -205,8 +239,14 @@ def add_config (ana: od.Analysis,
         dataset = cfg.add_dataset(campaign.get_dataset(dataset_name))
         if re.match(r"^(ww|wz|zz)$", dataset.name):
             dataset.add_tag("no_lhe_weights")
-        if re.match(r"^dy_lep_m50_madgraph$", dataset.name):
-            dataset.add_tag("is_dy_LO")
+        elif re.match(r"^dy_lep_m50.*$", dataset.name):
+            dataset.add_tag("is_dy")
+        elif re.match(r"^wj.*$", dataset.name):
+            dataset.add_tag("is_w")
+        elif re.match(r"^h_ggf_tautau.*$", dataset.name):
+            dataset.add_tag("is_ggf_signal")
+        elif re.match(r"^(.*)h_tautau(.*)Filtered$", dataset.name):
+            dataset.add_tag("is_vh_signal")
         
         # for testing purposes, limit the number of files to 1
         for info in dataset.info.values():
@@ -237,7 +277,7 @@ def add_config (ana: od.Analysis,
         "backgrounds": (backgrounds := [
             "w_lnu",
             "tt",
-            "dy_m50toinf",
+            "dy_m50toinf", "dy_m10to50",
             "st",
             "vv",
         ]),
@@ -246,7 +286,7 @@ def add_config (ana: od.Analysis,
         "data_bkg_sig"  : (data_bkg_sig  := [*backgrounds, "data", "h_ggf_tautau"]),
     }
     cfg.x.process_settings_groups = {
-        "unstack_processes": {proc: {"unstack": True, "scale": 10.0} for proc in ("h_ggf_tautau")},
+        "unstack_processes": {proc: {"unstack": True, "scale": 10.0} for proc in ("h_ggf_htt")},
     }
     cfg.x.general_settings_groups = {
         "compare_shapes": {"skip_ratio": False, "shape_norm": False, "yscale": "log"} #"cms_label": "simpw"},
@@ -288,6 +328,40 @@ def add_config (ana: od.Analysis,
     # (currently set to false because the number of files per dataset is truncated to 2)
     cfg.x.validate_dataset_lfns = False
 
+    # define inclusive datasets for the stitched process identification with corresponding leaf processes
+    # drell-yan [NLO]
+    cfg.x.allow_dy_stitching = True
+    cfg.x.dy_stitching = {
+        "dy": {
+            "inclusive_dataset": cfg.datasets.n.dy_lep_m50_amcatnlo,
+            "leaf_processes": [
+                # the following processes cover the full njet and pt phasespace
+                procs.n.dy_m50toinf_0j,
+                *(
+                    procs.get(f"dy_m50toinf_{nj}j_pt{pt}")
+                    for nj in [1, 2]
+                    for pt in ["0to40", "40to100", "100to200", "200to400", "400to600", "600toinf"]
+                ),
+                #procs.n.dy_m50toinf_ge3j,
+            ],
+        },
+    }
+    # w+jets [NLO]
+    cfg.x.allow_w_stitching = True
+    cfg.x.w_stitching = {
+        "wj": {
+            "inclusive_dataset": cfg.datasets.n.wj_incl_amcatnlo,
+            "leaf_processes": [
+                # the following processes cover the full njet and pt phasespace
+                *(
+                    procs.get(f"w_lnu_{nj}j") # njet from NLO samples
+                    for nj in [0,1,2]
+                ),
+            ],
+        },
+    }
+    
+    
     # --------------------------------------------------------------------------------------------- #
     # Luminosity and Normalization
     # lumi values in inverse fb
@@ -553,11 +627,11 @@ def add_config (ana: od.Analysis,
             # "FlavorPureQuark",
             # "FlavorPureCharm",
             # "FlavorPureBottom",
-            "CorrelationGroupMPFInSitu",
-            "CorrelationGroupIntercalibration",
-            "CorrelationGroupbJES",
-            "CorrelationGroupFlavor",
-            "CorrelationGroupUncorrelated",
+            #"CorrelationGroupMPFInSitu",
+            #"CorrelationGroupIntercalibration",
+            #"CorrelationGroupbJES",
+            #"CorrelationGroupFlavor",
+            #"CorrelationGroupUncorrelated",
         ],
     })
 
@@ -878,10 +952,15 @@ def add_config (ana: od.Analysis,
             dataset.x.event_weights = {
                 "pdf_weight": [], #get_shifts("pdf"),
             }
-        if dataset.x("is_dy_LO", True):
+        if dataset.x("is_dy", False):
             dataset.x.event_weights = {
                 "zpt_reweight": [],
             }
+        if dataset.x("is_ggf_signal", False) or dataset.x("is_vh_signal", False):
+            dataset.x.event_weights = {
+                "tauspinner_weight" : get_shifts("tauspinner"),
+            }
+            
     #cfg.x.default_weight_producer = "all_weights"
 
     
@@ -995,6 +1074,8 @@ def add_config (ana: od.Analysis,
             "is_a1_1pr_2pi0_1", "is_a1_1pr_2pi0_2",
             "is_a1_3pr_0pi0_1", "is_a1_3pr_0pi0_2",
             "is_a1_3pr_1pi0_1", "is_a1_3pr_1pi0_2",
+            "is_ipsig_0to1_1",
+            "LHE.NpNLO", "LHE.Vpt",
         } | {
             f"GenPart.{var}" for var in [
                 "pt", "eta", "phi", "mass",
@@ -1006,6 +1087,7 @@ def add_config (ana: od.Analysis,
             ]
         } | {
             f"PuppiMET.{var}" for var in [
+                "pt_no_corr", "phi_no_corr",
                 "pt", "phi", "significance",
                 "covXX", "covXY", "covYY",
             ]
@@ -1016,6 +1098,8 @@ def add_config (ana: od.Analysis,
             ]
         } | {
             f"Jet.{var}" for var in [
+                "pt_no_corr", "eta_no_corr",
+                "phi_no_corr", "mass_no_corr",
                 "pt", "eta", "phi", "mass",
                 "btagDeepFlavB", "hadronFlavour"
             ]
