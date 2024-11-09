@@ -98,6 +98,7 @@ def get_categories(
         "is_a1_1pr_2pi0_1", "is_a1_1pr_2pi0_2",
         "is_a1_3pr_0pi0_1", "is_a1_3pr_0pi0_2",
         "is_a1_3pr_1pi0_1", "is_a1_3pr_1pi0_2",
+        "is_ipsig_0to1_1",
     },
     exposed=False,
 )
@@ -201,6 +202,11 @@ def build_abcd_masks(
 
     is_lep_1 = h1.decayMode < 0
     is_lep_1 = ak.fill_none(ak.any(is_lep_1, axis=1), False)
+
+    # IPSig
+    is_ipsig_0to1_1 = h1.IPsig < 1.0
+    is_ipsig_0to1_1 = ak.fill_none(ak.any(is_ipsig_0to1_1, axis=1), False)
+
     
     # h1 to pion
     # only for tautau channel
@@ -273,5 +279,10 @@ def build_abcd_masks(
     events = set_ak_column(events, "is_a1_3pr_1pi0_1",  is_a1_3pr_1pi0_1)
     events = set_ak_column(events, "is_a1_3pr_1pi0_2",  is_a1_3pr_1pi0_2)
 
+    events = set_ak_column(events, "is_ipsig_0to1_1", is_ipsig_0to1_1)
+
+    # channel wise events in several categories for debugging
+    # -- for tautau
+    
     
     return events

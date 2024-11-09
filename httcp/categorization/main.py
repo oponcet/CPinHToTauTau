@@ -39,6 +39,21 @@ def cat_tautau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array,
 
 
 # ---------------------------------------------------------- #
+#                          For nJets                         #
+# ---------------------------------------------------------- #
+@categorizer(uses={"Jet.pt"})
+def cat_0j(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ak.num(events.Jet.pt, axis=1) == 0
+
+@categorizer(uses={"Jet.pt"})
+def cat_1j(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ak.num(events.Jet.pt, axis=1) == 1
+
+@categorizer(uses={"Jet.pt"})
+def cat_2j(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ak.num(events.Jet.pt, axis=1) >= 2
+
+# ---------------------------------------------------------- #
 #                          For PhiCP                         #
 # ---------------------------------------------------------- #
 
@@ -51,6 +66,9 @@ def cat_pi_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, a
 @categorizer(uses={"is_rho_1"})
 def cat_rho_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     return events, events.is_rho_1
+@categorizer(uses={"is_pi_1", "is_rho_1"})
+def cat_pi_rho_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, (events.is_pi_1 | events.is_rho_1)
 # tau -> a1 (DM2)
 @categorizer(uses={"is_a1_1pr_2pi0_1"})
 def cat_a1dm2_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
@@ -87,6 +105,13 @@ def cat_a1dm10_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Arra
 def cat_a1dm11_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     return events, events.is_a1_3pr_1pi0_2
 
+# IPSig
+@categorizer(uses={"is_ipsig_0to1_1"})
+def cat_ipsig_0to1_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, events.is_ipsig_0to1_1
+@categorizer(uses={"is_ipsig_0to1_1"})
+def cat_ipsig_1toany_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    return events, ~events.is_ipsig_0to1_1
 
 
 # ----- >>>> to make less combinatorics for tautau

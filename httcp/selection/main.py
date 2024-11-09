@@ -36,10 +36,11 @@ from httcp.selection.higgscand import higgscand, higgscandprod
 
 #from httcp.production.main import cutflow_features
 #from httcp.production.weights import scale_mc_weight
+from httcp.production.processes import process_ids_dy, process_ids_w
 from httcp.production.extra_weights import scale_mc_weight
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
 
-from httcp.util import filter_by_triggers, get_objs_p4, trigger_object_matching_deep, IF_DATASET_IS_DY_LO
+from httcp.util import filter_by_triggers, get_objs_p4, trigger_object_matching_deep, IF_DATASET_IS_DY, IF_DATASET_IS_W, IF_DATASET_IS_SIGNAL
 
 from httcp.selection.debug import debug_main
 
@@ -67,36 +68,63 @@ def custom_increment_stats(
     # get a list of unique process ids present in the chunk
     unique_process_ids = np.unique(events.process_id)
     # increment plain counts
-    n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
-    stats["num_events"] = n_evt_per_file
-    stats["num_events_selected"] += float(ak.sum(event_mask, axis=0))
-    #print(f"stats : {stats}")
-    #from IPython import embed; embed()
+    #n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
+    n_evt_per_file = self.dataset_inst.aux['n_events']/self.dataset_inst.n_files # new
+    sumwt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files     # new
+
+    stats["num_events"] = int(n_evt_per_file)
+    #stats["num_events_selected"] += int(ak.sum(event_mask, axis=0))
+    stats.setdefault(f"num_events_per_process", defaultdict(int))
+    for p in unique_process_ids:
+        # for splitting, each process will have the same number of events
+        stats[f"num_events_per_process"][int(p)] = int(n_evt_per_file)
+        
+        
     if self.dataset_inst.is_mc:
-        stats[f"sum_mc_weight"] = n_evt_per_file
+        #stats[f"sum_mc_weight"] = n_evt_per_file
+        stats[f"sum_mc_weight"] = sumwt_per_file
         stats.setdefault(f"sum_mc_weight_per_process", defaultdict(float))
         for p in unique_process_ids:
-            stats[f"sum_mc_weight_per_process"][int(p)] = n_evt_per_file
+            # for splitting, each process will have the same sumwt 
+            stats[f"sum_mc_weight_per_process"][int(p)] = sumwt_per_file
         
     # create a map of entry names to (weight, mask) pairs that will be written to stats
-    weight_map = OrderedDict()
-    if self.dataset_inst.is_mc:
-        # mc weight for selected events
-        weight_map["mc_weight_selected"] = (events.mc_weight, event_mask)
-
+    #weight_map = OrderedDict()
+    #if self.dataset_inst.is_mc:
+    #    # mc weight for selected events
+    #    weight_map["num_events_selected"] = (results.event, event_mask)
+    #    weight_map["sum_mc_weight_selected"]  = (events.mc_weight, event_mask)
+    #
     # get and store the sum of weights in the stats dictionary
-    for name, (weights, mask) in weight_map.items():
-        joinable_mask = True if mask is Ellipsis else mask
-
-        # sum of different weights in weight_map for all processes
-        stats[f"sum_{name}"] += float(ak.sum(weights[mask]))
-        # sums per process id
-        stats.setdefault(f"sum_{name}_per_process", defaultdict(float))
-        for p in unique_process_ids:
-            stats[f"sum_{name}_per_process"][int(p)] += float(ak.sum(
-                weights[(events.process_id == p) & joinable_mask],
-            ))
-
+    #for name, (weights, mask) in weight_map.items():
+    #    joinable_mask = True if mask is Ellipsis else mask
+    #
+    #    # sum of different weights in weight_map for all processes
+    #    #stats[f"sum_{name}"] += float(ak.sum(weights[mask]))
+    #    #stats[f"num_{name}"] += float(ak.sum(weights[mask]))
+    #    if name.startswith('num'):
+    #        stats[name] += int(ak.sum(mask))
+    #        stats.setdefault(f"{name}_per_process", defaultdict(int))
+    #        for p in unique_process_ids:
+    #            stats[f"{name}_per_process"][int(p)] += int(ak.sum(
+    #                mask[(events.process_id == p) & joinable_mask],
+    #            ))
+    #    elif name.startswith('sum'):
+    #        stats[name] += float(ak.sum(weights[mask]))
+    #        stats.setdefault(f"{name}_per_process", defaultdict(float))
+    #        for p in unique_process_ids:
+    #            stats[f"{name}_per_process"][int(p)] += float(ak.sum(
+    #                weights[(events.process_id == p) & joinable_mask],
+    #            ))
+    #    
+    #    # sums per process id
+    #    """
+    #    stats.setdefault(f"sum_{name}_per_process", defaultdict(float))
+    #    for p in unique_process_ids:
+    #        stats[f"sum_{name}_per_process"][int(p)] += float(ak.sum(
+    #            weights[(events.process_id == p) & joinable_mask],
+    #        ))
+    #    """
     return events, results
 
 
@@ -125,7 +153,7 @@ def get_2n_pairs(etau_indices_pair,
         scale_mc_weight, 
         process_ids,
         trigger_selection,
-        IF_DATASET_IS_DY_LO(genZ_selection),
+        IF_DATASET_IS_DY(genZ_selection),
         muon_selection, 
         electron_selection, 
         tau_selection, 
@@ -150,7 +178,7 @@ def get_2n_pairs(etau_indices_pair,
         # selectors / producers whose newly created columns should be kept
         scale_mc_weight, 
         trigger_selection,
-        IF_DATASET_IS_DY_LO(genZ_selection),
+        IF_DATASET_IS_DY(genZ_selection),
         muon_selection, 
         electron_selection, 
         tau_selection, 
@@ -167,6 +195,8 @@ def get_2n_pairs(etau_indices_pair,
         gentau_selection,
         rel_charge,
         category_ids,
+        increment_stats, 
+        custom_increment_stats,
         "trigger_ids",
         "single_triggered",
         "cross_triggered",
@@ -193,6 +223,10 @@ def main(
     # prepare the selection results that are updated at every step
     results = SelectionResult()
 
+    # add the mc weight --> need to move to calibration main?
+    if self.dataset_inst.is_mc:
+        events = self[scale_mc_weight](events, **kwargs)
+    
     # ############# Sel : Good Lumi JSON for DATA only ############# #
     # filter bad data events according to golden lumi mask
     if self.dataset_inst.is_data:
@@ -215,7 +249,7 @@ def main(
 
 
     # -------- Get genZ collection for Zpt reweight
-    if self.dataset_inst.has_tag("is_dy_LO"):
+    if self.dataset_inst.has_tag("is_dy"):
         events = self[genZ_selection](events, **kwargs)
         
     # electron selection
@@ -443,8 +477,8 @@ def main(
     results.event = event_sel
     
     # add the mc weight
-    if self.dataset_inst.is_mc:
-        events = self[scale_mc_weight](events, **kwargs)
+    #if self.dataset_inst.is_mc:
+    #    events = self[scale_mc_weight](events, **kwargs)
 
     # rel-charge
     events = self[rel_charge](events, **kwargs)
@@ -452,18 +486,122 @@ def main(
     # add cutflow features, passing per-object masks
     #events = self[cutflow_features](events, results.objects, **kwargs)
 
-    events = self[process_ids](events, **kwargs)
-    events = self[category_ids](events, **kwargs)     
+    #events = self[process_ids](events, **kwargs)
+    # create process ids
+    if self.process_ids_dy is not None:
+        events = self[self.process_ids_dy](events, **kwargs)
+    elif self.process_ids_w is not None:
+        events = self[self.process_ids_w](events, **kwargs)
+    else:
+        events = self[process_ids](events, **kwargs)
+
+    #events = self[category_ids](events, **kwargs)
+    events, category_ids_debug_dict = self[category_ids](events, debug=True)
     #events = set_ak_column(events, 'category_ids', ak.ones_like(events.event, dtype=np.uint8))
-    
+
+    """
+    events, results = self[custom_increment_stats]( 
+        events,
+        results,
+        stats,
+    )
+    """
+
     events, results = self[custom_increment_stats]( 
         events,
         results,
         stats,
     )
 
+
+    # ---------------------------------------------- #
+    weight_map = {
+        "num_filtered_events": Ellipsis,
+        "num_events_selected": event_sel,
+    }
+    group_map = {}
+    group_combinations = []
+    if self.dataset_inst.is_mc:
+        weight_map["sum_filtered_mc_weight"] = events.mc_weight
+        weight_map["sum_mc_weight_selected"] = (events.mc_weight, event_sel)
+        # groups
+        group_map = {
+            **group_map,
+            # per process
+            "process": {
+                "values": events.process_id,
+                "mask_fn": (lambda v: events.process_id == v),
+            },
+        }
+        # combinations
+        #group_combinations.append(("process"))
+
+    events, results = self[increment_stats](
+        events,
+        results,
+        stats,
+        weight_map=weight_map,
+        group_map=group_map,
+        #group_combinations=group_combinations,
+        **kwargs,
+    )
+    # --------------------------------------------- #
+    
+
     # inspect cuts
     if self.config_inst.x.verbose.selection.main:
-        debug_main(events, results, self.config_inst.x.triggers)
+        debug_main(events,
+                   results,
+                   self.config_inst.x.triggers,
+                   cat_dict=category_ids_debug_dict)
         
     return events, results
+
+
+@main.init
+def main_init(self: Selector) -> None:
+    if getattr(self, "dataset_inst", None) is None:
+        return
+
+    #from IPython import embed; embed()
+    self.process_ids_dy: process_ids_dy | None = None
+    if self.dataset_inst.has_tag("is_dy"):
+        if self.config_inst.x.allow_dy_stitching:
+            #print(f"stitching: {self.config_inst.x.dy_stitching.items()}")
+            # check if this dataset is covered by any dy id producer
+            for name, dy_cfg in self.config_inst.x.dy_stitching.items():
+                #print(f"dataset : {name}, {dy_cfg}")
+                dataset_inst = dy_cfg["inclusive_dataset"]
+                # the dataset is "covered" if its process is a subprocess of that of the dy dataset
+                if dataset_inst.has_process(self.dataset_inst.processes.get_first()):
+                    self.process_ids_dy = process_ids_dy.derive(f"process_ids_dy_{name}", cls_dict={
+                        "dy_inclusive_dataset": dataset_inst,
+                        "dy_leaf_processes": dy_cfg["leaf_processes"],
+                    })
+
+                    # add it as a dependency
+                    self.uses.add(self.process_ids_dy)
+                    self.produces.add(self.process_ids_dy)
+                    
+                    # stop after the first match
+                    break
+            
+    self.process_ids_w: process_ids_w | None = None
+    if self.dataset_inst.has_tag("is_w"):
+        if self.config_inst.x.allow_w_stitching:
+            # check if this dataset is covered by any dy id producer
+            for name, w_cfg in self.config_inst.x.w_stitching.items():
+                dataset_inst = w_cfg["inclusive_dataset"]
+                # the dataset is "covered" if its process is a subprocess of that of the dy dataset
+                if dataset_inst.has_process(self.dataset_inst.processes.get_first()):
+                    self.process_ids_w = process_ids_w.derive(f"process_ids_w_{name}", cls_dict={
+                        "w_inclusive_dataset": dataset_inst,
+                        "w_leaf_processes": w_cfg["leaf_processes"],
+                    })
+
+                    # add it as a dependency
+                    self.uses.add(self.process_ids_w)
+                    self.produces.add(self.process_ids_w)
+
+                    # stop after the first match
+                    break
