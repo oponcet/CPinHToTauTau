@@ -301,6 +301,13 @@ def add_hcand_features(cfg: od.Config) -> None:
             binning=(40, 0.0, 10),
             x_title=f"hcand[{i+1}]" + r" $IP Significance$",
         )
+        cfg.add_variable(
+            name=f"dphi_met_h{i+1}",
+            expression=f"dphi_met_h{i+1}",
+            null_value=EMPTY_FLOAT,
+            binning=(32, -np.pi, np.pi),
+            x_title=f"hcand[{i+1}]" + r" $-MET \Delta_{phi}$",
+        )
 
     cfg.add_variable(
         name="hcand_invm",
@@ -317,6 +324,13 @@ def add_hcand_features(cfg: od.Config) -> None:
         binning=(40, 0, 5),
         x_title=r"$\Delta R(h1,h2)$",
     )
+    cfg.add_variable(
+        name="hcand_met_var_qcd",
+        expression="met_var_qcd_h1",
+        null_value=EMPTY_FLOAT,
+        binning=(20, -5.0, 5.0),
+        x_title=r"$MET QCD var$$",
+    )    
     # PhiCP - Det
     cfg.add_variable(
         name="PhiCP_IPIP",
