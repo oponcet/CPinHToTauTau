@@ -17,6 +17,16 @@ def stylize_processes(config: od.Config) -> None:
 
     # recommended cms colors
     cfg.x.colors = DotDict(
+        col_h_ggf_htt="#690301",
+        col_tt="#998ec3",
+        col_st="#5ab4ac",
+        col_vv="#5a3a1a",
+        col_w="#d78a7e",
+        col_dy="#fec44f",
+        col_dy_lep="#3690c0",
+        col_dy_tau="#fec44f",
+        col_dy_lm="#357591",
+        col_h="#f768a1",
         light_blue="#bbd3f3",
         bright_blue="#0aa4f6",
         dark_blue="#10376c",
@@ -37,52 +47,62 @@ def stylize_processes(config: od.Config) -> None:
     )
 
     if (p := config.get_process("h_ggf_htt", default=None)):
-        p.color1 = cfg.x.colors.black
-        p.label = (
-            r"$H_{ggf} \rightarrow \tau\tau$"
-        )
+        p.color1 = cfg.x.colors.col_h_ggf_htt
+        p.label = r"$H_{ggf} \rightarrow \tau\tau$"
         
     if (p := config.get_process("h", default=None)):
-        p.color1 = cfg.x.colors.purple
+        p.color1 = cfg.x.colors.col_h
+        p.label = r"$Higgs$"
 
     if (p := config.get_process("tt", default=None)):
-        p.color1 = cfg.x.colors.light_purple
+        p.color1 = cfg.x.colors.col_tt
         p.label = r"$t\bar{t}$"
 
     if (p := config.get_process("st", default=None)):
-        p.color1 = cfg.x.colors.aubergine
-
+        p.color1 = cfg.x.colors.col_st
+        p.label = r"$Single ~t(W)$"
+        
     #if (p := config.get_process("dy", default=None)):
     #    p.color1 = cfg.x.colors.brown
-    if (p := config.get_process("dy_m50toinf", default=None)):
-        p.color1 = cfg.x.colors.brown
-        p.label = r"$Z\to \ell \ell (e/\mu/\tau)$"
-    if (p := config.get_process("dy_m50toinf_lep", default=None)):
-        p.color1 = cfg.x.colors.light_blue
-        p.label = r"$Z\to \ell \ell ~(ee/\mu\mu)$"
-    if (p := config.get_process("dy_m50toinf_tau", default=None)):
-        p.color1 = cfg.x.colors.dark_blue
-        p.label = r"$Z\to \tau \tau$"
+    if (p := config.get_process("dy", default=None)):
+        p.color1 = cfg.x.colors.col_dy
+        p.label = r"$Z\to \ell^+ \ell^- (\ell \equiv e/\mu/\tau)$"
 
-    if (p := config.get_process("dy_lep_m10to50", default=None)):
-        p.color1 = cfg.x.colors.grey
-        p.label = r"$Z\to \ell \ell (M < 50)$"
+    if (p := config.get_process("dy_m50toinf", default=None)):
+        p.color1 = cfg.x.colors.col_dy
+        p.label = r"$Z\to \ell^+ \ell^- (\ell \equiv e/\mu/\tau)$"
+        
+    if (p := config.get_process("dy_m50toinf_lep", default=None)):
+        p.color1 = cfg.x.colors.col_dy_lep
+        p.label = r"$Z \to \ell^+ \ell^- (\ell \equiv e/\mu)$"
+        
+    if (p := config.get_process("dy_m50toinf_tau", default=None)):
+        p.color1 = cfg.x.colors.col_dy_tau
+        p.label = r"$Z \to \ell^+ \ell^- (\ell \equiv \tau)$"
+
+    #if (p := config.get_process("dy_m50toinf_mc_fake", default=None)):
+    #    p.color1 = cfg.x.colors.col_dy_mcfake
+    #    p.label = r"$Z\to j(\tau_{h}) \tau_{h}$"
+        
+    if (p := config.get_process("dy_m10to50", default=None)):
+        p.color1 = cfg.x.colors.col_dy_lm
+        p.label = r"$Z\to \ell^+ \ell^- (m < 50)$"
 
     if (p := config.get_process("vv", default=None)):
-        p.color1 = cfg.x.colors.yellow
+        p.color1 = cfg.x.colors.col_vv
 
     if (p := config.get_process("vvv", default=None)):
-        p.color1 = cfg.x.colors.yellow
+        p.color1 = cfg.x.colors.col_vv
 
     if (p := config.get_process("multiboson", default=None)):
         p.color1 = cfg.x.colors.yellow
 
     if (p := config.get_process("w", default=None)):
-        p.color1 = cfg.x.colors.bright_orange
-        p.label = "W"
+        p.color1 = cfg.x.colors.col_w
+        p.label = "W + jets"
     if (p := config.get_process("w_lnu", default=None)):
-        p.color1 = cfg.x.colors.bright_orange
-        p.label = "W"
+        p.color1 = cfg.x.colors.col_w
+        p.label = "W + jets"
 
     if (p := config.get_process("ewk", default=None)):
         p.color1 = cfg.x.colors.brown

@@ -1,5 +1,7 @@
 from typing import Optional
 
+import law
+
 from columnflow.selection import SelectionResult
 from columnflow.util import maybe_import
 
@@ -8,7 +10,7 @@ ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 maybe_import("coffea.nanoevents.methods.nanoaod")
 
-
+logger = law.logger.get_logger(__name__)
 
 
 def get_event_level_eff(events, results):
@@ -30,7 +32,7 @@ def get_event_level_eff(events, results):
     indiv_table_ = tabulate(indiv_selections_,
                             indiv_headers_,
                             tablefmt="pretty")
-    print(f"\n---> Efficiencies of individual selections: \n{indiv_table_}")
+    logger.info(f"---> Efficiencies of individual selections: \n{indiv_table_}")
 
     comb_selections_ = np.array(comb_selections_)
     comb_selections_counts_ = comb_selections_[:,1]
@@ -41,15 +43,15 @@ def get_event_level_eff(events, results):
                            comb_headers_,
                            tablefmt="pretty")
         
-    print(f"\n---> Efficiencies of combined selections: \n{comb_table_}")
+    logger.info(f"---> Efficiencies of combined selections: \n{comb_table_}")
     
 
 def get_object_eff(results, tag, key : Optional[str]=None):
     from tabulate import tabulate
-    print(f"\n{tag}")
+    logger.info(f"{tag}")
     aux = results.aux
     if key:
-        print(f" --- {key} --- ")
+        logger.info(f" --- {key} --- ")
         aux = aux[f"{tag}_{key}"]
     #keys = [key for key in results.aux.keys() if key.startswith(f"{tag}_")]
     keys = [key for key in aux.keys() if key.startswith(f"{tag}_")]
@@ -72,16 +74,29 @@ def get_object_eff(results, tag, key : Optional[str]=None):
     table = tabulate(rows, ["selection", f"n_{tag}", "abseff"], tablefmt="pretty")
     evt_table = tabulate(rows_evt_level, ["selection", f"n_{tag}", "abseff"], tablefmt="pretty")
     
-    print(f"object level : \n{table}")
-    print(f"event level  : \n{evt_table}")    
+    logger.info(f"object level : \n{table}")
+    logger.info(f"event level  : \n{evt_table}")    
 
 
 
-def debug_main(events, results, triggers):
-    print(f"\n---> ################### Inspecting event selections ################### <---\n")
+def debug_main(events, results, triggers, **kwargs):
+    cat_dict = kwargs.get("cat_dict")    
+    cats = list(cat_dict.keys())
+
+    #from IPython import embed; embed()
+
+    _channels = ["etau", "mutau", "tautau"]
+    for ch in _channels:
+        n = 0
+        for key, val in cat_dict.items():
+            if key.startswith(ch): n += val['nevents']
+        logger.info(f"nEvents in all {ch} category : {n}")
+
+    
+    logger.info(f"---> ################### Inspecting event selections ################### <---\n")
     get_event_level_eff(events, results)
     
-    print(f"\n---> ################### Inspecting trigger selections ################### <---\n")
+    logger.info(f"---> ################### Inspecting trigger selections ################### <---\n")
     
     from tabulate import tabulate        
     # trigger details
@@ -100,9 +115,9 @@ def debug_main(events, results, triggers):
         nPassed = ak.sum(ak.any(trigger_ids == ID, axis=1))
         trig_info.append([HLT, ID, nPassed, round(nPassed/len(events), 3)])
     trig_table = tabulate(trig_info, ["HLT", "ID", "nEvents Passed", "Efficiency"], tablefmt="pretty")
-    print(trig_table)
+    logger.info(trig_table)
     
-    print(f"\n---> ################### Inspecting object selections ################### <---")
+    logger.info(f"---> ################### Inspecting object selections ################### <---")
     # muon
     get_object_eff(results, "muon", "good_selection")
     get_object_eff(results, "muon", "single_veto_selection")
@@ -113,7 +128,7 @@ def debug_main(events, results, triggers):
     get_object_eff(results, "tau")
     get_object_eff(results, "jet")
     
-    print(f"\n---> ################### Inspecting pair selections ################### <---")
+    logger.info(f"---> ################### Inspecting pair selections ################### <---")
     
     # pairs
     #print(f"\n---> Before trigobj matching <---")
@@ -133,7 +148,7 @@ def debug_main(events, results, triggers):
     
     #print(pair_table)
 
-    print(f"\n---> ################### Categorization ################### <---")
+    logger.info(f"---> ################### Categorization ################### <---")
     cats = []
     cats.append(["is_etau", ak.sum(results.aux["cat_is_etau"])])
     cats.append(["is_mutau", ak.sum(results.aux["cat_is_mutau"])])
@@ -143,11 +158,11 @@ def debug_main(events, results, triggers):
     cats.append(["is_mutau_tautau", ak.sum(results.aux["cat_is_mutau_tautau"])])
     cats_table = tabulate(cats, ["category", "nEvents"], tablefmt="pretty")
     
-    print(cats_table)
+    logger.info(cats_table)
     
-    print(f"\n---> Events selected per channel <---")
+    logger.info(f"---> Events selected per channel <---")
     sel_ev = ak.sum(events.channel_id > 0)
-    print(f"nSelectedEvents : {sel_ev}")
+    logger.info(f"nSelectedEvents : {sel_ev}")
     channels = []
     etau_ev = ak.sum(events.channel_id == 1)
     mtau_ev = ak.sum(events.channel_id == 2)
@@ -162,33 +177,33 @@ def debug_main(events, results, triggers):
     channels.append(["other", mixed, round(mixed/sel_ev, 3)])
     channel_table = tabulate(channels, ["channel", "nEvents", "eff"], tablefmt="pretty")
     
-    print(channel_table)
-    print(f" ---> Total selected events in etau, mutau and tautau chennels : {etau_ev+mtau_ev+ttau_ev}\n\n")
+    logger.info(channel_table)
+    logger.info(f" ---> Total selected events in etau, mutau and tautau chennels : {etau_ev+mtau_ev+ttau_ev}\n\n")
 
+    
 
 def debug_extra_lepton_veto(nevts, *args):
     for i in range(nevts):
         if args[0].channel_id[i] < 1: continue
-        print(f"event : {args[0].event[i]}")
-        print(f"hcand_pairs_pt         : {args[1].pt[i]}")
-        print(f"extra leps pt          : {args[2].pt[i]}")
-        print(f"h1 & h2 pt             : {args[3].pt[i]}, {args[4].pt[i]}")
-        print(f"dr_hlep1_extraleps     : {args[5][i]}")
-        print(f"dr_hlep2_extraleps     : {args[6][i]}")
-        print(f"dr_mask                : {args[7][i]}")
-        print(f"has_extra_lepton       : {args[8][i]}")
-        print(f"has_no_extra_lepton    : {args[9][i]}")
-        print("\n")
+        logger.info(f"event : {args[0].event[i]}")
+        logger.info(f"hcand_pairs_pt         : {args[1].pt[i]}")
+        logger.info(f"extra leps pt          : {args[2].pt[i]}")
+        logger.info(f"h1 & h2 pt             : {args[3].pt[i]}, {args[4].pt[i]}")
+        logger.info(f"dr_hlep1_extraleps     : {args[5][i]}")
+        logger.info(f"dr_hlep2_extraleps     : {args[6][i]}")
+        logger.info(f"dr_mask                : {args[7][i]}")
+        logger.info(f"has_extra_lepton       : {args[8][i]}")
+        logger.info(f"has_no_extra_lepton    : {args[9][i]}\n")
         
 
 def debug_double_lepton_veto(nevts, *args):
     for i in range(nevts):
-        print(f"event              : {args[0].event[i]}")
-        print(f"dl_veto_mu_pair_pt : {args[1].pt[i]}, {args[2].pt[i]}")
-        print(f"is Z like pair ?   : {args[3][i]}")
-        print(f"dl_veto_el_pair_pt : {args[4].pt[i]}, {args[5].pt[i]}")
-        print(f"is Z like pair ?   : {args[6][i]}")
-        print(f"concat masks       : {args[7][i]}")
-        print(f" --->> Any True means Z like pair exists --->> ")
-        print(f"has no Z like pair : {args[8][i]}\n")
+        logger.info(f"event              : {args[0].event[i]}")
+        logger.info(f"dl_veto_mu_pair_pt : {args[1].pt[i]}, {args[2].pt[i]}")
+        logger.info(f"is Z like pair ?   : {args[3][i]}")
+        logger.info(f"dl_veto_el_pair_pt : {args[4].pt[i]}, {args[5].pt[i]}")
+        logger.info(f"is Z like pair ?   : {args[6][i]}")
+        logger.info(f"concat masks       : {args[7][i]}")
+        logger.info(f" --->> Any True means Z like pair exists --->> ")
+        logger.info(f"has no Z like pair : {args[8][i]}\n")
         
