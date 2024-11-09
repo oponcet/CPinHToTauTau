@@ -47,4 +47,8 @@ base directory on storage element for crab specific job outputs (CF_CRAB_BASE_DI
 
 This will install the `softwares` in `eos`, but the `data` and `jobs` directories are in `afs`.
 In the next step, the big output files have to be stored in `eos`.
-So, `law.cfg` needs to be set like here.
+So, `law.cfg` needs to be set like here in this repo.
+
+For any computing system, please make sure that this hard-coded (stupid) line is changed to the proper one:
+
+`thisdir` in the config e.g. here: https://github.com/gsaha009/CPinHToTauTau/blob/main/httcp/config/config_run3.py#L33
