@@ -129,6 +129,7 @@ def add_categories(config: od.Config) -> None:
         id=301,
         selection="sel_tautau",
         label="tautau_channel",
+        tags={"iso","os"}
     )
     # add_category(
     #     config,
@@ -178,6 +179,7 @@ def add_categories(config: od.Config) -> None:
         id=500,
         selection="sel_FFDRIso_tautau",
         label="FFDRIso_tautau_channel",
+        tags={"iso","ss"}
     )
     add_category(
         config,
@@ -185,6 +187,7 @@ def add_categories(config: od.Config) -> None:
         id=600,
         selection="sel_FFDRantiIso_tautau",
         label="FFDRantiIso_tautau_channel",
+        tags={"noniso","ss"}
     )
     add_category(
         config,
@@ -192,4 +195,5 @@ def add_categories(config: od.Config) -> None:
         id=700,
         selection="sel_tautau_antiIso",
         label="tautau_antiIso_channel",
+        tags={"noniso","os"}
     )

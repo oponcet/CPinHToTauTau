@@ -74,19 +74,41 @@ def add_config (ana: od.Analysis,
         "vv",
         ## Signal
         "h_ggf_tautau",
+        ## QCD
+        "qcd",
     ]
+    # for process_name in process_names:
+    #     # development switch in case datasets are not _yet_ there
+    #     if process_name not in procs:
+    #         print(f"WARNING: {process_name} not in cmsdb processes")
+    #         continue
+    #     # add the process
+    #     #if process_name == "h_ggf_tautau":
+    #     #    procs.get(process_name).is_signal = True
+    #     proc = cfg.add_process(procs.get(process_name))
+    #     #if proc.name == "h_ggf_tautau":
+    #     #    proc.is_signal = True
+    # # configuration of colors, labels, etc. can happen here
+
     for process_name in process_names:
-        # development switch in case datasets are not _yet_ there
-        if process_name not in procs:
-            print(f"WARNING: {process_name} not in cmsdb processes")
+        if process_name in procs:
+            proc = procs.get(process_name)
+        elif process_name == "qcd":
+            # qcd is not part of procs since there is no dataset registered for it
+            from cmsdb.processes.qcd import qcd
+            proc = qcd
+        else:
+            # development switch in case datasets are not _yet_ there
             continue
+
+        # add tags to processes
+        if process_name.startswith("hh_"):
+            proc.add_tag("signal")
+
         # add the process
-        #if process_name == "h_ggf_tautau":
-        #    procs.get(process_name).is_signal = True
-        proc = cfg.add_process(procs.get(process_name))
-        #if proc.name == "h_ggf_tautau":
-        #    proc.is_signal = True
-    # configuration of colors, labels, etc. can happen here
+        cfg.add_process(proc)
+
+
     from httcp.config.styles import stylize_processes
     stylize_processes(cfg)    
 
@@ -345,8 +367,8 @@ def add_config (ana: od.Analysis,
         raise RuntimeError(f"Wrong year: {year}. Check __init__.py in cmsdb campaign")
 
     # add hist hooks
-    # from httcp.config.hist_hooks import add_hist_hooks
-    # add_hist_hooks(cfg)
+    from httcp.config.hist_hooks import add_hist_hooks
+    add_hist_hooks(cfg)
 
     # Adding met filters
     from httcp.config.met_filters import add_met_filters

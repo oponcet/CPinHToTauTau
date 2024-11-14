@@ -18,7 +18,6 @@ def stylize_processes(config: od.Config) -> None:
     # recommended cms colors
     cfg.x.colors = DotDict(
         bright_blue="#3f90da",
-        dark_blue="#011c87",
         purple="#832db6",
         aubergine="#964a8b",
         yellow="#f7c331",
@@ -28,6 +27,13 @@ def stylize_processes(config: od.Config) -> None:
         teal="#92dadd",
         grey="#94a4a2",
         brown="#a96b59",
+        kOrange_4="#fec44f",
+        violet="#bcbddc",
+        violet_dark="#756bb1",
+        pink="#fa9fb5",
+        dark_blue="#253494",
+
+        
     )
 
     for kl in ["0", "1", "2p45", "5"]:
@@ -48,17 +54,20 @@ def stylize_processes(config: od.Config) -> None:
         )
 
     if (p := config.get_process("h", default=None)):
-        p.color1 = cfg.x.colors.purple
+        p.color1 = cfg.x.colors.dark_blue 
 
     if (p := config.get_process("tt", default=None)):
-        p.color1 = cfg.x.colors.bright_orange
+        p.color1 = cfg.x.colors.violet
         p.label = r"$t\bar{t}$"
 
     if (p := config.get_process("st", default=None)):
         p.color1 = cfg.x.colors.aubergine
 
     if (p := config.get_process("dy", default=None)):
-        p.color1 = cfg.x.colors.dark_orange
+        p.color1 = cfg.x.colors.kOrange_4
+
+    if (p := config.get_process("dy_lep_m50", default=None)):
+        p.color1 = cfg.x.colors.kOrange_4
 
     if (p := config.get_process("vv", default=None)):
         p.color1 = cfg.x.colors.yellow
@@ -81,18 +90,18 @@ def stylize_processes(config: od.Config) -> None:
         p.color1 = cfg.x.colors.teal
 
     if (p := config.get_process("ewk", default=None)):
-        p.color1 = cfg.x.colors.brown
+        p.color1 = cfg.x.colors.red
 
     if (p := config.get_process("ttv", default=None)):
-        p.color1 = cfg.x.colors.grey
+        p.color1 = cfg.x.colors.violet_dark
         p.label = r"$t\bar{t} + V$"
 
     if (p := config.get_process("ttvv", default=None)):
-        p.color1 = cfg.x.colors.grey
+        p.color1 = cfg.x.colors.violet_dark
         p.label = r"$t\bar{t} + VV$"
 
     if (p := config.get_process("tt_multiboson", default=None)):
-        p.color1 = cfg.x.colors.grey
+        p.color1 = cfg.x.colors.violet_dark
 
     if (p := config.get_process("qcd", default=None)):
-        p.color1 = cfg.x.colors.red
+        p.color1 = cfg.x.colors.pink

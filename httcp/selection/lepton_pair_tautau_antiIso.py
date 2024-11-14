@@ -100,39 +100,63 @@ def tautau_antiIso_selection(
 
     #from IPython import embed; embed()
 
-    # Extra channel specific selections on tau
-    # -------------------- #
-    taus            = events.Tau[lep_indices]
-    tau_tagger      = self.config_inst.x.deep_tau_tagger
-    tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
-    is_antiiso_tau     = (
-        (taus.idDeepTau2018v2p5VSjet < tau_tagger_wps.vs_j.Medium)
-        & (taus.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.VVLoose)
-        & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
-        & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose)
-    )
-    lep_indices    = lep_indices[is_antiiso_tau]
-    # -------------------- # 
+    # # Extra channel specific selections on tau
+    # # -------------------- #
+    # taus            = events.Tau[lep_indices]
+    # tau_tagger      = self.config_inst.x.deep_tau_tagger
+    # tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
+    # is_antiiso_tau     = (
+    #     (taus.idDeepTau2018v2p5VSjet < tau_tagger_wps.vs_j.Medium)
+    #     & (taus.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.VVLoose)
+    #     & (taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
+    #     & (taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose)
+    # )
+    # lep_indices    = lep_indices[is_antiiso_tau]
+    # # -------------------- # 
 
     
     # Sorting leps [Tau] by deeptau [descending]
-    lep_sort_key       = events.Tau[lep_indices].rawDeepTau2018v2p5VSjet
+    lep_sort_key       = events.Tau[lep_indices].pt
     lep_sorted_indices = ak.argsort(lep_sort_key, axis=-1, ascending=False)
     lep_indices        = lep_indices[lep_sorted_indices]
 
     leps_pair        = ak.combinations(events.Tau[lep_indices], 2, axis=1)
     lep_indices_pair = ak.combinations(lep_indices, 2, axis=1)
-    
+
+
     # pair of leptons: probable higgs candidate -> leps_pair
     # and their indices                         -> lep_indices_pair 
     lep1, lep2 = ak.unzip(leps_pair)
     lep1_idx, lep2_idx = ak.unzip(lep_indices_pair)
 
+    # Extra channel specific selections on tau
+    # -------------------- #
+    tau            = events.Tau[lep_indices]
+    tau_tagger      = self.config_inst.x.deep_tau_tagger
+    tau_tagger_wps  = self.config_inst.x.deep_tau_info[tau_tagger].wp
+
+
+
+    is_antiiso_tau     = (
+        (lep1.idDeepTau2018v2p5VSjet < tau_tagger_wps.vs_j.Medium)
+        & (lep1.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.VVLoose)
+        & (lep1.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
+        & (lep1.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose)
+    )
+
+    is_iso_tau     = (
+        (lep2.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium)
+        & (lep2.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose)
+        & (lep2.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose)
+    )  
+
+    # from IPython import embed; embed()
     preselection = {
         "tautau_is_pt_40"      : (lep1.pt > 40) & (lep2.pt > 40),
         "tautau_is_eta_2p1"    : (np.abs(lep1.eta) < 2.1) & (np.abs(lep2.eta) < 2.1),
         "tautau_is_os"         : (lep1.charge * lep2.charge) < 0,
         "tautau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  #deltaR(lep1, lep2) > 0.5,
+        "iso_antiiso"          : is_antiiso_tau & is_iso_tau # # Require leading tau to be anti isolated but subleading one to be isolated
     }
 
     good_pair_mask = lep1_idx >= 0

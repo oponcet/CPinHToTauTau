@@ -102,7 +102,8 @@ def get_hist_by_category_var(hists_data, hists_mc, category, var = 'hcand_1_pt')
             # print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
-        hists_data_cat[dataset] = hists_data[dataset][category_index, :, :, :].project(var)
+        hists_data_cat[dataset] = hists_data[dataset][category_index, :, :, :].project(var)[40j:200j:1j]
+
     
     # Loop over the datasets to get the histograms for the category
     for dataset in hists_mc.keys():
@@ -111,7 +112,7 @@ def get_hist_by_category_var(hists_data, hists_mc, category, var = 'hcand_1_pt')
             # print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
-        hists_mc_cat[dataset]  = hists_mc[dataset][category_index, :, :, :].project(var)
+        hists_mc_cat[dataset]  = hists_mc[dataset][category_index, :, :, :].project(var)[40j:200j:1j]
 
     return hists_data_cat, hists_mc_cat
 
@@ -149,7 +150,7 @@ def get_2D_hist_by_category_var(hists_data, hists_mc, category, var_x='hcand_1_p
             print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
-        hists_data_cat[dataset] = hists_data[dataset][category_index, :, :, :, :].project(var_x, var_y)
+        hists_data_cat[dataset] = hists_data[dataset][category_index, :, :, :, :].project(var_x, var_y)[:,40j:200j:1j]
     
     # Loop over the MC samples to retrieve and project histograms for the specified category
     for dataset in hists_mc.keys():
@@ -158,7 +159,7 @@ def get_2D_hist_by_category_var(hists_data, hists_mc, category, var_x='hcand_1_p
             print(f"Warning: Category {category} not found in the histogram data for dataset {dataset}")
             continue
         category_index = category_axis.index(category)
-        hists_mc_cat[dataset] = hists_mc[dataset][category_index, :, :, :, :].project(var_x, var_y)
+        hists_mc_cat[dataset] = hists_mc[dataset][category_index, :, :, :, :].project(var_x, var_y)[:,40j:200j:1j]
 
     return hists_data_cat, hists_mc_cat
 
@@ -480,15 +481,45 @@ def calculate_ratio_hist(hist_iso, hist_antiiso,title=""):
     ratio_hist.view().value[...] = ratio_values
     ratio_hist.view().variance[...] = ratio_variances
 
+    # Calculate bin widths
+    bin_edges = ratio_hist.axes[0].edges  # Get bin edges
+    bin_widths = bin_edges[1:] - bin_edges[:-1]  # Calculate widths of bins
 
     # Plot the ratio
     fig, ax = plt.subplots()
-    ax.errorbar(ratio_hist.axes[0].centers, ratio_hist.values(), yerr=np.sqrt(ratio_hist.variances()), fmt='o', label='Ratio', color='black')
+    ax.errorbar(ratio_hist.axes[0].centers, ratio_hist.values(), yerr=np.sqrt(ratio_hist.variances()),xerr=bin_widths / 2, fmt='o', label='Ratio', color='black')
     ax.set_ylabel("Ratio")
-    ax.set_title("Ratio of Iso / AntiIso")
+    ax.set_xlabel("Tau $p_T$ / GeV")
+    # set ylim
+    ax.set_ylim(0, 0.5)
+    ax.set_title(f"Ratio of Iso / AntiIso {title}")
     ax.legend()
     plt.savefig(f"script_FF/plots/FakeFactor_{title}.png", dpi=140)
 
+    # Extract data from the histogram
+    bin_centers = ratio_hist.axes[0].centers
+    values = ratio_hist.values()
+    variances = ratio_hist.variances()
+    yerr = np.sqrt(variances)
+    xerr = bin_widths / 2
+
+    # Replace any Infinity values in `values` and `yerr` with 0
+    values = np.where(np.isinf(values), 0, values)
+    yerr = np.where(np.isinf(yerr), 0, yerr)
+
+    # Extract data for JSON
+    # Convert data to a dictionary format
+    data_dict = {
+        "title": title,
+        "bin_centers": bin_centers.tolist(),
+        "values": values.tolist(),
+        "yerr": yerr.tolist(),
+        "xerr": xerr.tolist()
+    }
+
+    # Save the data to a JSON file
+    with open(f"script_FF/data/FakeFactor_{title}.json", 'w') as json_file:
+        json.dump(data_dict, json_file, indent=4)
 
     return ratio_values, ratio_variances, ratio_hist
 
@@ -629,10 +660,32 @@ def plot_hist_cat_with_ratio(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_
                       fmt='o', color='black', label='Data/MC', capsize=3, markersize=5)
     ax_ratio.axhline(1, color='red', linestyle='--')  # Reference line at ratio = 1
     ax_ratio.set_ylabel("Data/MC")
+    ax_ratio.set_ylim(0, 2)
     ax_ratio.set_xlabel(var)
 
     # Show the plot and save it
     plt.tight_layout()
+
+    # Save in Json 
+    # Extract data centers, values, and errors
+    bin_centers = data_hist.axes[0].centers  # Bin centers for the ratio plot
+    # Replace NaN or infinite values with zero to avoid issues
+    ratio_values = np.nan_to_num(ratio_values, nan=0.0, posinf=0.0, neginf=0.0)
+    ratio_errors = np.nan_to_num(ratio_errors, nan=0.0, posinf=0.0, neginf=0.0)
+
+    # Create dictionary for JSON output
+    data_dict = {
+    "title": cat_title,  # Category title
+    "bin_centers": bin_centers.tolist(),    # Bin centers for each histogram bin
+    "ratio_values": ratio_values.tolist(),   # Data/MC ratio values
+    "ratio_errors": ratio_errors.tolist()    # Errors in the Data/MC ratio
+    }
+
+
+    # Save data_dict to JSON
+    output_path = f"script_FF/data/control_plots/{var}_DataMC_Ratio_{cat_title}.json"
+    with open(output_path, "w") as json_file:
+        json.dump(data_dict, json_file, indent=4)
 
 
     if hists_mc_data_sub is not None:
@@ -646,13 +699,16 @@ def plot_hist_cat_with_ratio(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_
 def process_histograms(base_path, task, datasets_data, datasets_mc, hist_path, category, cats_title):
     hists_data, hists_mc = get_all_hist(base_path, task, datasets_data, datasets_mc, hist_path)
     hists_mc_data_sub = {}
-    
+
+    # Define the new binning    
     
     for cat, cat_title in zip(category, cats_title):
         hists_data_cat, hists_mc_cat = get_hist_by_category_var(hists_data, hists_mc, cat,var = 'hcand_1_pt')
+
         plot_hist_cat_with_ratio(hists_data_cat, hists_mc_cat, cat, None,fake=False, cat_title=cat_title)
         hists_mc_data_sub[cat] = calculate_data_MC_substraction(hists_data_cat, hists_mc_cat, cat, cat_title=cat_title)
         plot_hist_cat_with_ratio(hists_data_cat, hists_mc_cat, cat, hists_mc_data_sub[cat],fake=False, cat_title=cat_title)
+
     
     return hists_mc_data_sub
 

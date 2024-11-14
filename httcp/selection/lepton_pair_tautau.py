@@ -115,7 +115,7 @@ def tautau_selection(
 
     
     # Sorting leps [Tau] by deeptau [descending]
-    lep_sort_key       = events.Tau[lep_indices].rawDeepTau2018v2p5VSjet
+    lep_sort_key       = events.Tau[lep_indices].pt
     lep_sorted_indices = ak.argsort(lep_sort_key, axis=-1, ascending=False)
     lep_indices        = lep_indices[lep_sorted_indices]
 

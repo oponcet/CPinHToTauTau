@@ -351,7 +351,8 @@ def main_FF(
                                                    mutau_indices_pair,
                                                    tautau_indices_pair,
                                                    FFDRIso_tautau_indices_pair,
-                                                   FFDRantiIso_tautau_indices_pair)
+                                                   FFDRantiIso_tautau_indices_pair,
+                                                   tautau_antiIso_indices_pair)
     results += channel_results
 
     print("get_categories in selection" )

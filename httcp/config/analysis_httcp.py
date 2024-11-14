@@ -35,6 +35,9 @@ ana.x.cmssw_sandboxes = [
 # (used in wrapper_factory)
 ana.x.config_groups = {}
 
+# named function hooks that can modify store_parts of task outputs if needed
+ana.x.store_parts_modifiers = {}
+
 # ------------- #
 # setup configs #
 # ------------- #
@@ -93,22 +96,7 @@ add_config_run3_2022_preEE(
     limit_dataset_files=1
 )
 
-# ===>>> 2022 PostEE
-from httcp.config.config_run3 import add_config as add_config_run3_2022_postEE
-from cmsdb.campaigns.run3_2022_postEE_nano_cp_tau_v12 import campaign_run3_2022_postEE_nano_cp_tau_v12
-add_config_run3_2022_postEE(
-    analysis_httcp,
-    campaign_run3_2022_postEE_nano_cp_tau_v12.copy(),
-    config_name=campaign_run3_2022_postEE_nano_cp_tau_v12.name,
-    config_id=int(f"{campaign_run3_2022_postEE_nano_cp_tau_v12.id}{1}")
-)
-add_config_run3_2022_postEE(
-    analysis_httcp,
-    campaign_run3_2022_postEE_nano_cp_tau_v12.copy(),
-    config_name=f"{campaign_run3_2022_postEE_nano_cp_tau_v12.name}_limited",
-    config_id=int(f"{campaign_run3_2022_postEE_nano_cp_tau_v12.id}{2}"),
-    limit_dataset_files=1
-)
+# #s
 
 # # ===>>> 2023 PreBPix
 # from httcp.config.config_run3 import add_config as add_config_run3_2023_preBPix
