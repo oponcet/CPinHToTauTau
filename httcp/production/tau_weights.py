@@ -355,12 +355,60 @@ def tau_weights_setup(self: Producer, reqs: dict, inputs: dict, reader_targets: 
 # Calculate Tau-Spinner weights
 # ------------------------------------------------- #
 
+#@producer(
+#    uses={
+#        f"TauSpinner*" 
+#    },
+#    produces={
+#        "tauspinner_weight_up", "tauspinner_weight", "tauspinner_weight_down"
+#    },
+#    mc_only=True,
+#)
+#def tauspinner_weights(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
+#    """
+#    A simple function that sets tauspinner_weight according to the cp_hypothesis
+#    # https://github.com/hephysicist/CPinHToTauTau/blob/desy_dev/httcp/production/weigh#ts.py#L411
+#    """
+#    names = ["_up", "", "_down"]
+#
+#    for the_name in names:
+#        #if  "TauSpinner" in list(events.fields):
+#        if the_name == "_up": the_weight = events.TauSpinner.weight_cp_0
+#        #elif the_name == "":  the_weight = ak.ones_like(events.TauSpinner.weight_cp_0p#5)
+#        elif the_name == "":  the_weight =  (events.TauSpinner.weight_cp_0p5 + events.T#auSpinner.weight_cp_0)/2.
+#        elif the_name == "_down": the_weight = events.TauSpinner.weight_cp_0p5
+#        else:  raise NotImplementedError('CP hypothesis is not known to the tauspinner #weight producer!')   
+#        buf = ak.to_numpy(the_weight)
+#        if any(np.isnan(buf)):
+#            warn.warn("tauspinner_weight contains NaNs. Imputing them with zeros.")
+#            buf[np.isnan(buf)] = 0
+#            the_weight = buf
+#    
+#        events = set_ak_column_f32(events, f"tauspinner_weight{the_name}", the_weight)
+#    return events
+
+
 @producer(
     uses={
         f"TauSpinner*" 
     },
     produces={
-        "tauspinner_weight_up", "tauspinner_weight", "tauspinner_weight_down"
+        # Version with _alt are duplicated weights computed with different setup of
+        # neutral currents parameterization and can be used to estimate uncertainty
+        # of the weighting. However it was neglected in the Run-2 analysis
+        "tauspinner_weight",
+        "tauspinner_weight_up",   # same as cpeven
+        "tauspinner_weight_down", # same as cpodd 
+        "tauspinner_weight_cpeven",    # 0
+        "tauspinner_weight_cpeven_alt",# 0
+        "tauspinner_weight_cpmix",     # 0.25
+        "tauspinner_weight_cpmix_alt", # 0.25_alt
+        "tauspinner_weight_cpmixm",    # -0.25
+        "tauspinner_weight_cpmixm_alt",# -0.25_alt
+        "tauspinner_weight_cpalpha0p375",     # 0.375
+        "tauspinner_weight_cpalpha0p375_alt", # 0.375_alt
+        "tauspinner_weight_cpodd",     # 0.5
+        "tauspinner_weight_cpodd_alt", # 0.5
     },
     mc_only=True,
 )
@@ -369,19 +417,51 @@ def tauspinner_weights(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     A simple function that sets tauspinner_weight according to the cp_hypothesis
     # https://github.com/hephysicist/CPinHToTauTau/blob/desy_dev/httcp/production/weights.py#L411
     """
-    names = ["_up", "", "_down"]
-    for the_name in names:
-        #if  "TauSpinner" in list(events.fields):
-        if the_name == "_up": the_weight = events.TauSpinner.weight_cp_0
-        #elif the_name == "":  the_weight = ak.ones_like(events.TauSpinner.weight_cp_0p5)
-        elif the_name == "":  the_weight =  (events.TauSpinner.weight_cp_0p5 + events.TauSpinner.weight_cp_0)/2.
-        elif the_name == "_down": the_weight = events.TauSpinner.weight_cp_0p5
-        else:  raise NotImplementedError('CP hypothesis is not known to the tauspinner weight producer!')   
-        buf = ak.to_numpy(the_weight)
+    wt_names     = ['nom',
+                    'cpeven',
+                    'cpeven_alt',
+                    'cpmix',
+                    'cpmix_alt',
+                    'cpmixm',
+                    'cpmixm_alt',
+                    'cpalpha0p375',
+                    'cpalpha0p375_alt',
+                    'cpodd',
+                    'cpodd_alt']
+
+    branch_names = ['',
+                    'weight_cp_0',
+                    'weight_cp_0_alt',
+                    'weight_cp_0p25',
+                    'weight_cp_0p25_alt',
+                    'weight_cp_minus0p25',
+                    'weight_cp_minus0p25_alt',
+                    'weight_cp_0p375',
+                    'weight_cp_0p375_alt',
+                    'weight_cp_0p5',
+                    'weight_cp_0p5_alt']
+    
+    weight_map   = zip(wt_names, branch_names)
+    
+    for (wt_name, branch) in weight_map:
+        _name = ""
+        if wt_name == "nom":
+            weight = (events.TauSpinner.weight_cp_0p5 + events.TauSpinner.weight_cp_0)/2.
+        else:
+            _name = f"_{wt_name}"
+            weight = events.TauSpinner[branch]
+
+        buf = ak.to_numpy(weight)
         if any(np.isnan(buf)):
             warn.warn("tauspinner_weight contains NaNs. Imputing them with zeros.")
             buf[np.isnan(buf)] = 0
-            the_weight = buf
+            weight = buf
+        
+        events = set_ak_column_f32(events, f"tauspinner_weight{_name}", weight)
+        if _name == "_cpeven": # redundant, needs to be resolved later
+            events = set_ak_column_f32(events, f"tauspinner_weight_up", weight)
+        elif _name == "_cpodd": # redundant, needs to be resolved later
+            events = set_ak_column_f32(events, f"tauspinner_weight_down", weight)
 
-        events = set_ak_column_f32(events, f"tauspinner_weight{the_name}", the_weight)
     return events
+

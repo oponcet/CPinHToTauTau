@@ -5,14 +5,14 @@ era     : 2022
 postfix : PreEE
 wrapper : true
 limited : false
-workers : 3
-tasks_per_job  : 3
+workers : 12
+tasks_per_job  : 4
 
 args:
-  config    : run3_2022_preEE_nano_cp_tau_v12
+  config    : run3_2022_preEE_nano_cp_tau_v14
   workflow  : htcondor
   branch    : -1
-  version   : Run3_2022PreEE_full_20241027_020905
+  version   : Run3_2022PreEE_full_20241111_014708
 
   datasets  :
     ## == data ==
@@ -24,10 +24,28 @@ args:
     - data_e_C
     - data_e_D
     ## == wj ==
-    - wj_incl_madgraph
+    - wj_incl_amcatnlo
+    - wj_0j_amcatnlo
+    - wj_1j_amcatnlo
+    - wj_2j_amcatnlo
     ## == dy ==
-    - dy_lep_m10to50_madgraph
-    - dy_lep_m50_madgraph
+    #- dy_lep_m10to50_madgraph
+    #- dy_lep_m50_madgraph
+    - dy_lep_m10to50_amcatnlo
+    - dy_lep_m50_amcatnlo
+    - dy_lep_m50_0j_amcatnlo
+    - dy_lep_m50_1j_amcatnlo
+    - dy_lep_m50_2j_amcatnlo
+    - dy_lep_m50_1j_pt40to100_amcatnlo
+    - dy_lep_m50_2j_pt40to100_amcatnlo
+    - dy_lep_m50_1j_pt100to200_amcatnlo
+    - dy_lep_m50_2j_pt100to200_amcatnlo
+    - dy_lep_m50_1j_pt200to400_amcatnlo
+    - dy_lep_m50_2j_pt200to400_amcatnlo
+    - dy_lep_m50_1j_pt400to600_amcatnlo
+    - dy_lep_m50_2j_pt400to600_amcatnlo
+    - dy_lep_m50_1j_pt600toInf_amcatnlo
+    - dy_lep_m50_2j_pt600toInf_amcatnlo
     ## == tt ==
     - tt_dl
     - tt_sl
@@ -41,59 +59,40 @@ args:
     - st_tw_tb_sl
     - st_tw_tb_dl
     - st_tw_tb_fh
+    - st_schannel_t
+    - st_schannel_tbar
     ## == vv ==
     - ww
     - wz
     - zz
     ## == signal ==
-    - h_ggf_tautau_prod_cp_even_sm
+    #- h_ggf_tautau_prod_cp_even_sm
 
   processes :
     - data
-    - w_lnu
-    - dy_m10to50
-    - dy_m50toinf_lep
-    - dy_m50toinf_tau
+    - w
+    #- w_lnu
+    #- dy_m10to50
+    #- dy_m50toinf_lep
+    #- dy_m50toinf_tau
+    - dy
     - tt
     #- st_tchannel
     #- st_twchannel
     - st
     - vv
-    - h_ggf_htt
+    #- h_ggf_htt
 
   categories:
     #- incl
     ## --- etau --- #
-    #- etau
-    #- etau_pi
-    #- etau_rho
-    #- etau_a1_1pr_2pi0
-    #- etau_a1_3pr_0pi0
-    ## --- mutau --- #
-    #- mutau
-    #- mutau_pi
-    #- mutau_rho
-    #- mutau_a1_1pr_2pi0
-    #- mutau_a1_3pr_0pi0
+    - etau
+    - etau__real_2__lepC
+    - etau__real_2__lepD
+    - mutau
+    - mutau__real_2__lepC
+    - mutau__real_2__lepD
     ## --- tautau --- #
-    #- tautau
-    #- tautau_pi_pi
-    #- tautau_pi_rho
-    #- tautau_pi_a1_3pr_0pi0
-    #- tautau_rho_rho
-    #- tautau_rho_a1_3pr_0pi0
-    #- tautau_a1_3pr_0pi0_a1_3pr_0pi0
-    ## --- new --- #
-    #- tautau__os__iso1__iso2__nobjet       # D
-    #- tautau__os__noniso1__iso2__nobjet    # C
-    #- tautau__os__iso1__noniso2__nobjet    # D0
-    #- tautau__os__noniso1__noniso2__nobjet # C0    
-    #- tautau__ss__iso1__noniso2__nobjet    # A0
-    #- tautau__ss__noniso1__noniso2__nobjet # B0    
-    #- tautau__ss__iso1__iso2__nobjet       # A
-    #- tautau__ss__noniso1__iso2__nobjet    # B
-    - etau*
-    - mutau*
     - tautau*
 
   variables:
