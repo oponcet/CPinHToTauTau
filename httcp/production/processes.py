@@ -58,11 +58,13 @@ def process_ids_dy(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     njets = events.LHE.NpNLO
     pt = events.LHE.Vpt
 
+    outliers_mask = events.event < 0 # all False
     # raise a warning if a datasets was already created for a specific "bin" (leaf process),
     # but actually does not fit
     njets_range = process_inst.x("njets", None)
     if njets_range is not None:
         outliers = (njets < njets_range[0]) | (njets >= njets_range[1])
+        outliers_mask = (outliers_mask | outliers)
         if ak.any(outliers):
             logger.warning(
                 f"dataset {self.dataset_inst.name} is meant to contain njet values in the range "
@@ -72,6 +74,7 @@ def process_ids_dy(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     pt_range = process_inst.x("ptll", None)
     if pt_range is not None:
         outliers = (pt < pt_range[0]) | (pt >= pt_range[1])
+        outliers_mask =	(outliers_mask | outliers)
         if ak.any(outliers):
             logger.warning(
                 f"dataset {self.dataset_inst.name} is meant to contain ptll values in the range "
@@ -95,7 +98,7 @@ def process_ids_dy(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     # store them
     events = set_ak_column_i64(events, "process_id", process_ids)
 
-    return events
+    return events, outliers_mask
 
 
 @process_ids_dy.setup
@@ -195,11 +198,13 @@ def process_ids_w(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     # get the number of nlo jets and the di-lepton pt
     njets = events.LHE.NpNLO
 
+    outliers_mask = events.event < 0 # all False
     # raise a warning if a datasets was already created for a specific "bin" (leaf process),
     # but actually does not fit
     njets_range = process_inst.x("njets", None)
     if njets_range is not None:
         outliers = (njets < njets_range[0]) | (njets >= njets_range[1])
+        outliers_mask = (outliers_mask | outliers)
         if ak.any(outliers):
             logger.warning(
                 f"dataset {self.dataset_inst.name} is meant to contain njet values in the range "
@@ -218,7 +223,7 @@ def process_ids_w(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     # store them
     events = set_ak_column_i64(events, "process_id", process_ids)
 
-    return events
+    return events, outliers_mask
 
 
 @process_ids_w.setup

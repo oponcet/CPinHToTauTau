@@ -24,6 +24,8 @@ from columnflow.config_util import (
     get_shifts_from_sources,
     verify_config_processes,
 )
+#from httcp.config.config_util import add_expanded_shift_aliases
+
 logger = law.logger.get_logger(__name__)
 
 
@@ -172,6 +174,8 @@ def add_config (ana: od.Analysis,
         "st_tw_tb_dl",
         "st_tw_t_fh",
         "st_tw_tb_fh",
+        "st_schannel_t",
+        "st_schannel_tbar",
         ##Diboson
         "ww",
         "wz",
@@ -879,8 +883,8 @@ def add_config (ana: od.Analysis,
     )
 
     # --- >>> tau spinner weight <<< --- #
-    cfg.add_shift(name="tauspinner_up",   id=150, type="shape")
-    cfg.add_shift(name="tauspinner_down", id=151, type="shape")
+    cfg.add_shift(name="tauspinner_up",   id=150, type="shape") # cp-even
+    cfg.add_shift(name="tauspinner_down", id=151, type="shape") # cp-odd
     add_shift_aliases(
         cfg,
         "tauspinner",
@@ -958,7 +962,17 @@ def add_config (ana: od.Analysis,
             }
         if dataset.x("is_ggf_signal", False) or dataset.x("is_vh_signal", False):
             dataset.x.event_weights = {
-                "tauspinner_weight" : get_shifts("tauspinner"),
+                "tauspinner_weight"    : get_shifts("tauspinner"),
+                #"tauspinner_weight_cpeven" : [],
+                #"tauspinner_weight_cpeven_alt" : [],
+                #"tauspinner_weight_cpmix"  : [],
+                #"tauspinner_weight_cpmix_alt"  : [],
+                #"tauspinner_weight_cpmixm" : [],
+                #"tauspinner_weight_cpmixm_alt" : [],
+                #"tauspinner_weight_cpalpha0p375" : [],
+                #"tauspinner_weight_cpalpha0p375_alt" : [],
+                #"tauspinner_weight_cpodd"  : [],
+                #"tauspinner_weight_cpodd_alt"  : [],
             }
             
     #cfg.x.default_weight_producer = "all_weights"

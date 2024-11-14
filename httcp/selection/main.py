@@ -488,13 +488,26 @@ def main(
 
     #events = self[process_ids](events, **kwargs)
     # create process ids
+
+    outliers_mask_for_stitching = None
+    
     if self.process_ids_dy is not None:
-        events = self[self.process_ids_dy](events, **kwargs)
+        events, outliers_mask_for_stitching = self[self.process_ids_dy](events, **kwargs)
     elif self.process_ids_w is not None:
-        events = self[self.process_ids_w](events, **kwargs)
+        events, outliers_mask_for_stitching = self[self.process_ids_w](events, **kwargs)
     else:
         events = self[process_ids](events, **kwargs)
 
+    if outliers_mask_for_stitching is not None:
+        n_outliers = ak.sum(outliers_mask_for_stitching)
+        if n_outliers > 0:
+            logger.warning(f"{self.dataset_inst} has {ak.sum(outliers_mask_for_stitching)} outlier events. Removing those events only")
+        outliers_result_for_stitching = SelectionResult(
+            steps = {"reject_stitching_outliers": ~outliers_mask_for_stitching}
+        )
+        results += outliers_result_for_stitching
+
+        
     #events = self[category_ids](events, **kwargs)
     events, category_ids_debug_dict = self[category_ids](events, debug=True)
     #events = set_ak_column(events, 'category_ids', ak.ones_like(events.event, dtype=np.uint8))

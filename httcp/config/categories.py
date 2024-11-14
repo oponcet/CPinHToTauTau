@@ -34,7 +34,7 @@ def create_nested_categories(config: od.Config, categories) -> None:
         }
 
     n = create_category_combinations(config, categories, name_fn, kwargs_fn)
-    logger.info(f" ---> created {n} categories")
+    logger.info(f"\t{n} categories created")
 
 
 
@@ -189,15 +189,16 @@ def add_etau_mutau_real_categories(config: od.Config) -> None:
         "channel": [config.get_category("etau"),
                     config.get_category("mutau")],
         "TorF"   : [config.get_category("real_2")],
-        "abcd"   : [config.get_category("lepA"),  config.get_category("lepB"),
-                    config.get_category("lepA0"), config.get_category("lepB0"),
-                    config.get_category("lepA1"), config.get_category("lepB1"),
-                    config.get_category("lepC"),  config.get_category("lepD")],
-        "cp"     : [config.get_category("pi_2"),
-                    config.get_category("rho_2"),
-                    config.get_category("a1dm2_2"),
-                    config.get_category("a1dm10_2"),
-                    config.get_category("a1dm11_2")],
+        #"abcd"   : [config.get_category("lepA"),  config.get_category("lepB"),
+        #            config.get_category("lepA0"), config.get_category("lepB0"),
+        #            config.get_category("lepA1"), config.get_category("lepB1"),
+        #            config.get_category("lepC"),  config.get_category("lepD")],
+        "abcd"   : [config.get_category("lepC"),  config.get_category("lepD")],
+        #"cp"     : [config.get_category("pi_2"),
+        #            config.get_category("rho_2"),
+        #            config.get_category("a1dm2_2"),
+        #            config.get_category("a1dm10_2"),
+        #            config.get_category("a1dm11_2")],
     }
     logger.info("etau_mutau_real_categories")
     create_nested_categories(config, categories)
@@ -209,15 +210,16 @@ def add_etau_mutau_fake_categories(config: od.Config) -> None:
         "channel": [config.get_category("etau"),
                     config.get_category("mutau")],
         "TorF"   : [config.get_category("fake_2")],
-        "abcd"   : [config.get_category("lepA"),  config.get_category("lepB"),
-                    config.get_category("lepA0"), config.get_category("lepB0"),
-                    config.get_category("lepA1"), config.get_category("lepB1"),
-                    config.get_category("lepC"),  config.get_category("lepD")],
-        "cp"     : [config.get_category("pi_2"),
-                    config.get_category("rho_2"),
-                    config.get_category("a1dm2_2"),
-                    config.get_category("a1dm10_2"),
-                    config.get_category("a1dm11_2")],
+        #"abcd"   : [config.get_category("lepA"),  config.get_category("lepB"),
+        #            config.get_category("lepA0"), config.get_category("lepB0"),
+        #            config.get_category("lepA1"), config.get_category("lepB1"),
+        #            config.get_category("lepC"),  config.get_category("lepD")],
+        "abcd"   : [config.get_category("lepC"),  config.get_category("lepD")],
+        #"cp"     : [config.get_category("pi_2"),
+        #            config.get_category("rho_2"),
+        #            config.get_category("a1dm2_2"),
+        #            config.get_category("a1dm10_2"),
+        #            config.get_category("a1dm11_2")],
     }
     logger.info("etau_mutau_fake_categories")
     create_nested_categories(config, categories)
@@ -308,9 +310,9 @@ def add_categories(config: od.Config) -> None:
     add_hadtauh_ABCD_categories(config)
     add_hadr_cp_categories(config)
     
-    #add_etau_mutau_real_categories(config)
+    add_etau_mutau_real_categories(config)
     #add_etau_mutau_fake_categories(config)
     add_tautau_real_categories(config)
-    #add_tautau_fake_categories(config)
+    add_tautau_fake_categories(config)
     
-    #add_test_categories(config)
+    add_test_categories(config)
