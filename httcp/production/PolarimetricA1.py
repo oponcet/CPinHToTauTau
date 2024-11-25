@@ -53,51 +53,88 @@ class PolarimetricA1:
 
 
     def PVC(self) -> ak.Array:
-        P  = self.p4_tau
-        q1 = self.p4_ss1_pi
-        q2 = self.p4_ss2_pi
-        q3 = self.p4_os_pi
+        """
+        Calculate Polarimetric Vector for tau to a1 decay
+        """
+        P  = self.p4_tau # tau 4-momentum
+        
+        # 4-momenta of the pions
+        q1 = self.p4_ss1_pi # ss1-pion 4-momentum
+        q2 = self.p4_ss2_pi # ss2-pion 4-momentum
+        q3 = self.p4_os_pi # os-pion 4-momentum
 
-        a1 = q1.add(q2.add(q3))
+        # 4-momentum of the a1 resonance 
+        a1 = q1.add(q2.add(q3)) # a1 4-momentum = q1 + q2 + q3
+ 
+        # 4-momentum of the neutrino
+        N = P.subtract(a1) # N = P - a1
 
-        N = P.subtract(a1)
-
-        s1 = (q2.add(q3)).mass2
-        s2 = (q1.add(q3)).mass2
-        s3 = (q1.add(q2)).mass2
+        # Invariant masses
+        s1 = (q2.add(q3)).mass2 # s1 = (q2 + q3)^2
+        s2 = (q1.add(q3)).mass2 # s2 = (q1 + q3)^2
+        s3 = (q1.add(q2)).mass2 # s3 = (q1 + q2)^2
 
         # Three Lorentzvector: Why??? : No idea!!!
+        # Define a lambda function to calculate a vector that removes the component of (b - c)
+        # parallel to a. The result is the part of (b - c) that is transverse to a.
         getvec = lambda a,b,c: b - c - a*(a.dot((b - c))*(1/a.mass2))
 
+        # Calculate the transverse vector (vec1) for q2 and q3 relative to a1.
         vec1 = getvec(a1, q2, q3)
+
+        # Calculate the transverse vector (vec2) for q3 and q1 relative to a1.
         vec2 = getvec(a1, q3, q1)
+
+        # Calculate the transverse vector (vec3) for q1 and q2 relative to a1.
         vec3 = getvec(a1, q1, q2)
         
+        # Calculate the F3PIFactor
+        # F1, F2, and F3 represent the complex-valued contributions to the hadronic current 
+        # from the three possible pion pair combinations in the decay. These factors include 
+        # coefficients (COEF1, COEF2, COEF3) and the F3PI function, which models the dynamics of 
+        # the three-pion decay process.        
         F1 = TComplex(self.COEF1)*self.F3PI(1, a1.mass2, s1, s2)
         F2 = TComplex(self.COEF2)*self.F3PI(2, a1.mass2, s2, s1)
         F3 = TComplex(self.COEF3)*self.F3PI(3, a1.mass2, s3, s1)
 
+        # Calculate the Hadronic Current
+        # The hadronic current is constructed as a linear combination of the 
+        # F3PI factors weighted by the energies and momenta of the vec1, vec2, and vec3 vectors.
+        # These vectors represent transformed pion 4-momenta based on the a1 momentum and energy.
         HADCUR = []
 
+        # Calculate the Hadronic Current for the a1 decay
         HADCUR.append(TComplex(vec1.energy)*F1 + TComplex(vec2.energy)*F2 + TComplex(vec3.energy)*F3)
         HADCUR.append(TComplex(vec1.px)*F1 + TComplex(vec2.px)*F2 + TComplex(vec3.px)*F3)
         HADCUR.append(TComplex(vec1.py)*F1 + TComplex(vec2.py)*F2 + TComplex(vec3.py)*F3)
         HADCUR.append(TComplex(vec1.pz)*F1 + TComplex(vec2.pz)*F2 + TComplex(vec3.pz)*F3)
 
+        # Calculate the Hadronic Current for the a1 decay conjugate
         HADCURC = [val.Conjugate() for val in HADCUR]
 
+        # Calculate the conjugate of the Hadronic Current (HADCURC)
+        # This is needed for constructing the vector (CLV) and axial (CLA) components of the current
         CLV = self.CLVEC(HADCUR, HADCURC, N)
         CLA = self.CLAXI(HADCUR, HADCURC, N)
 
+        # Compute various intermediate terms involving CLV and CLA for the final polarimetric vector calculation
+
+        # Dot product of the tau momentum (P) with the vector component (CLV)
         pclv    = P.dot(CLV)
+
+        # Dot product of the tau momentum (P) with the axial component (CLA)
         pcla    = P.dot(CLA)
+
+        # Omega is the difference between the dot products of the tau momentum with the vector and axial components
         omega   = pclv - pcla
+        
         A       = (P.mass)**2
         CLAmCLV = CLA.subtract(CLV)
         
-        out = ((P.mass)*(P.mass)*(CLA-CLV) - P*(P.dot(CLA) - P.dot(CLV)))*(1/omega/P.mass)
+        # Compute the polarimetric vector output
+        h = ((P.mass)*(P.mass)*(CLA-CLV) - P*(P.dot(CLA) - P.dot(CLV)))*(1/omega/P.mass)
 
-        return out
+        return h
 
     
     def F3PI(self,

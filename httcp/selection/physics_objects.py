@@ -789,22 +789,80 @@ def gentau_selection(
 
     is_mu = np.abs(events.GenTauProd.pdgId) == 13
     is_e  = np.abs(events.GenTauProd.pdgId) == 11
-    is_pi = (np.abs(events.GenTauProd.pdgId) == 211) | (np.abs(events.GenTauProd.pdgId) == 321) # | (np.abs(events.GenTauProd.pdgId) == 323)
+    is_pi = (np.abs(events.GenTauProd.pdgId) == 211) | (np.abs(events.GenTauProd.pdgId) == 321)  # | (np.abs(events.GenTauProd.pdgId) == 323)
+    is_pi_oneprong = (events.GenTau.decayMode == 0) & is_pi # 1-prong
 
-    prod_e   = ak.with_name(events.GenTauProd[is_e], "PtEtaPhiMLorentzVector")
-    prod_mu  = ak.with_name(events.GenTauProd[is_mu], "PtEtaPhiMLorentzVector")
-    prod_pi  = ak.with_name(events.GenTauProd[is_pi], "PtEtaPhiMLorentzVector")
+    # prod_e   = ak.with_name(events.GenTauProd[is_e], "PtEtaPhiMLorentzVector")
+    # prod_mu  = ak.with_name(events.GenTauProd[is_mu], "PtEtaPhiMLorentzVector")
+    # prod_pi  = ak.with_name(events.GenTauProd[is_pi_oneprong], "PtEtaPhiMLorentzVector")
 
-    gPx = ak.drop_none(ak.firsts(ak.concatenate([prod_e.x, prod_mu.x, prod_pi.x], axis=-1), axis=-1))
-    gPy = ak.drop_none(ak.firsts(ak.concatenate([prod_e.y, prod_mu.y, prod_pi.y], axis=-1), axis=-1))
-    gPz = ak.drop_none(ak.firsts(ak.concatenate([prod_e.z, prod_mu.z, prod_pi.z], axis=-1), axis=-1))
+    prod_e = events.GenTauProd[is_e]
+    prod_mu = events.GenTauProd[is_mu]
+    prod_pi = events.GenTauProd[is_pi_oneprong]
 
-    #from IPython import embed; embed()
+    prod = events.GenTauProd[is_e | is_mu | is_pi_oneprong]
+
+    # gPx = ak.drop_none(ak.firsts(ak.concatenate([prod_e.x, prod_mu.x, prod_pi.x], axis=-1), axis=-1))
+    # gPy = ak.drop_none(ak.firsts(ak.concatenate([prod_e.y, prod_mu.y, prod_pi.y], axis=-1), axis=-1))
+    # gPz = ak.drop_none(ak.firsts(ak.concatenate([prod_e.z, prod_mu.z, prod_pi.z], axis=-1), axis=-1))
+
+    # from IPython import embed; embed()
     
-    events = set_ak_column(events, "GenTau.IPx",  gPx)
-    events = set_ak_column(events, "GenTau.IPy",  gPy)
-    events = set_ak_column(events, "GenTau.IPz",  gPz)
+    # events = set_ak_column(events, "GenTau.IPx",  gPx)
+    # events = set_ak_column(events, "GenTau.IPy",  gPy)
+    # events = set_ak_column(events, "GenTau.IPz",  gPz)
 
+    ### IMPACT PARAMETER ###
+    # from IPython import embed; embed()
+    # Displacement vector L components
+    Lx = prod.vx - events.PV.x
+    Ly = prod.vy - events.PV.y
+    Lz = prod.vz - events.PV.z
+
+    # Direction vector d components (normalized momentum of GenTau)
+    # Calculate px, py, pz from pt, eta, phi
+    prod_px = prod.pt * np.cos(prod.phi)
+    prod_py = prod.pt * np.sin(prod.phi)
+    prod_pz = prod.pt * np.sinh(prod.eta)
+
+    d_norm = np.sqrt(prod_px**2 + prod_py**2 + prod_pz**2)
+    dx = prod_px / d_norm
+    dy = prod_py / d_norm
+    dz = prod_pz / d_norm
+
+    # Projection of L onto d (L_par components)
+    L_dot_d = Lx * dx + Ly * dy + Lz * dz
+    Lpar_x = L_dot_d * dx
+    Lpar_y = L_dot_d * dy
+    Lpar_z = L_dot_d * dz
+
+    # Impact parameter vector IP = L - L_par (L_perp components)
+    IPx = Lx - Lpar_x
+    IPy = Ly - Lpar_y
+    IPz = Lz - Lpar_z
+
+    IPx = ak.firsts(IPx, axis=-1)
+    IPy = ak.firsts(IPy, axis=-1)
+    IPz = ak.firsts(IPz, axis=-1)
+
+    # Replace None by -999 
+    IPx = ak.fill_none(IPx, -999)
+    IPy = ak.fill_none(IPy, -999)
+    IPz = ak.fill_none(IPz, -999)
+
+    # Set new columns for impact parameter components
+    events = set_ak_column(events, "GenTau.IPx", IPx)
+    events = set_ak_column(events, "GenTau.IPy", IPy)
+    events = set_ak_column(events, "GenTau.IPz", IPz)
+
+    # Optional: magnitude of the impact parameter vector
+    IP_magnitude = np.sqrt(IPx**2 + IPy**2 + IPz**2)
+    events = set_ak_column(events, "GenTau.IPmag", IP_magnitude)
+
+
+    # print("IPx ", ak.to_list(events.GenTau.IPx))
+    # print("IPy ", ak.to_list(events.GenTau.IPy))
+    # print("IPz ", ak.to_list(events.GenTau.IPz))
 
     return events, SelectionResult(
         steps = {
