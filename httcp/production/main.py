@@ -38,7 +38,7 @@ from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO:
 #from httcp.production.weights import tau_weight
 from httcp.production.sample_split import split_dy
 
-#from httcp.production.angular_features import ProduceDetCosPsi, ProduceGenCosPsi
+from httcp.production.angular_features import ProduceDetCosPsi, ProduceGenCosPsi
 
 from httcp.util import IF_DATASET_HAS_LHE_WEIGHTS, IF_DATASET_IS_DY, IF_DATASET_IS_W, IF_DATASET_IS_SIGNAL
 from httcp.util import IF_RUN2, IF_RUN3, IF_ALLOW_STITCHING
@@ -60,18 +60,18 @@ logger = law.logger.get_logger(__name__)
         "hcand.*", optional("GenTau.*"), optional("GenTauProd.*"),
         "Jet.pt",
         "PuppiMET.pt", "PuppiMET.phi",
-        #reArrangeDecayProducts,
-        #reArrangeGenDecayProducts,
-        #ProduceGenPhiCP, #ProduceGenCosPsi, 
-        #ProduceDetPhiCP, #ProduceDetCosPsi,
+        reArrangeDecayProducts,
+        reArrangeGenDecayProducts,
+        ProduceGenPhiCP,# ProduceGenCosPsi, 
+        ProduceDetPhiCP, #ProduceDetCosPsi,
     },
     produces={
         # new columns
         "hcand_invm",
         "hcand_dr",
         "n_jet",
-        #ProduceGenPhiCP, #ProduceGenCosPsi,
-        #ProduceDetPhiCP, #ProduceDetCosPsi,
+        ProduceGenPhiCP, #ProduceGenCosPsi,
+        ProduceDetPhiCP, #ProduceDetCosPsi,
         "dphi_met_h1", "dphi_met_h2", "met_var_qcd_h1",
     },
 )
@@ -107,11 +107,11 @@ def hcand_features(
     events = set_ak_column_i32(events, "n_jet", ak.num(events.Jet.pt, axis=1))
 
     
-    """
+   
     events, P4_dict     = self[reArrangeDecayProducts](events)
     events              = self[ProduceDetPhiCP](events, P4_dict)
     #from IPython import embed; embed()
-    #events              = self[ProduceDetCosPsi](events, P4_dict)
+    # events              = self[ProduceDetCosPsi](events, P4_dict)
     
     if self.config_inst.x.extra_tags.genmatch:
         if "is_signal" in list(self.dataset_inst.aux.keys()):
@@ -119,7 +119,7 @@ def hcand_features(
             events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
             events = self[ProduceGenPhiCP](events, P4_gen_dict)
             #events = self[ProduceGenCosPsi](events, P4_gen_dict)
-    """
+    
     return events
 
 
@@ -224,7 +224,7 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = self[hcand_features](events, **kwargs)       
 
     # features
-    events = self[hcand_mass](events, **kwargs)
+    # events = self[hcand_mass](events, **kwargs)
     # events = self[mT](events, **kwargs)
 
     return events

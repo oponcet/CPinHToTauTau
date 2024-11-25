@@ -88,7 +88,7 @@ def add_gen_features(cfg: od.Config) -> None:
             name=f"gentau_{i+1}_IPx",
             expression=f"GenTau.IPx[:,{i}]",
             null_value=EMPTY_FLOAT,
-            binning=(60, -60.0, 60.0),
+            binning=(30, -0.015, 0.015),
             unit="GeV",
             x_title=f"GenTau[{i+1}]" + r" $IPx$",
         )
@@ -96,14 +96,14 @@ def add_gen_features(cfg: od.Config) -> None:
             name=f"gentau_{i+1}_IPy",
             expression=f"GenTau.IPy[:,{i}]",
             null_value=EMPTY_FLOAT,
-            binning=(60, -60.0, 60.0),
+            binning=(30, -0.015, 0.015),
             x_title=f"GenTau[{i+1}]" + r" $IPy$",
         )
         cfg.add_variable(
             name=f"gentau_{i+1}_IPz",
             expression=f"GenTau.IPz[:,{i}]",
             null_value=EMPTY_FLOAT,
-            binning=(60, -60.0, 60.0),
+            binning=(30, -0.015, 0.015),
             x_title=f"GenTau[{i+1}]" + r" $IPz$",
         )
         
@@ -420,63 +420,63 @@ def add_hcand_features(cfg: od.Config) -> None:
         x_title=r"$\alpha_{-} [GenLevel]$",
     )
     # conditional PhiCP
-    # TODO:
-    cfg.add_variable(
-        name="PhiCP_IPIP_alpha_lt_piby4",
-        expression="PhiCP_IPIP_alpha_lt_piby4",
-        null_value=EMPTY_FLOAT,
-        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
-        x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- < pi/4]",
-    )
-    cfg.add_variable(
-        name="PhiCP_IPIP_alpha_gt_piby4",
-        expression="PhiCP_IPIP_alpha_gt_piby4",
-        null_value=EMPTY_FLOAT,
-        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
-        x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- > pi/4]",
-    )
-    cfg.add_variable(
-        name="PhiCP_IPDP_alpha_lt_piby4",
-        expression="PhiCP_IPDP_alpha_lt_piby4",
-        null_value=EMPTY_FLOAT,
-        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
-        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- < pi/4]",
-    )
-    cfg.add_variable(
-        name="PhiCP_IPDP_alpha_gt_piby4",
-        expression="PhiCP_IPDP_alpha_gt_piby4",
-        null_value=EMPTY_FLOAT,
-        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
-        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- > pi/4]",
-    )
-    cfg.add_variable(
-        name="PhiCPGen_IPIP_alpha_lt_piby4",
-        expression="PhiCPGen_IPIP_alpha_lt_piby4",
-        null_value=EMPTY_FLOAT,
-        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
-        x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- < pi/4] [Gen Level]",
-    )
-    cfg.add_variable(
-        name="PhiCPGen_IPIP_alpha_gt_piby4",
-        expression="PhiCPGen_IPIP_alpha_gt_piby4",
-        null_value=EMPTY_FLOAT,
-        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
-        x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- > pi/4] [Gen Level]",
-    )
-    cfg.add_variable(
-        name="PhiCPGen_IPDP_alpha_lt_piby4",
-        expression="PhiCPGen_IPDP_alpha_lt_piby4",
-        null_value=EMPTY_FLOAT,
-        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
-        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- < pi/4] [Gen Level]",
-    )
-    cfg.add_variable(
-        name="PhiCPGen_IPDP_alpha_gt_piby4",
-        expression="PhiCPGen_IPDP_alpha_gt_piby4",
-        null_value=EMPTY_FLOAT,
-        binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
-        x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- > pi/4] [Gen Level]",
-    )
+    # # TODO:
+    # cfg.add_variable(
+    #     name="PhiCP_IPIP_alpha_lt_piby4",
+    #     expression="PhiCP_IPIP_alpha_lt_piby4",
+    #     null_value=EMPTY_FLOAT,
+    #     binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+    #     x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- < pi/4]",
+    # )
+    # cfg.add_variable(
+    #     name="PhiCP_IPIP_alpha_gt_piby4",
+    #     expression="PhiCP_IPIP_alpha_gt_piby4",
+    #     null_value=EMPTY_FLOAT,
+    #     binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+    #     x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- > pi/4]",
+    # )
+    # cfg.add_variable(
+    #     name="PhiCP_IPDP_alpha_lt_piby4",
+    #     expression="PhiCP_IPDP_alpha_lt_piby4",
+    #     null_value=EMPTY_FLOAT,
+    #     binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+    #     x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- < pi/4]",
+    # )
+    # cfg.add_variable(
+    #     name="PhiCP_IPDP_alpha_gt_piby4",
+    #     expression="PhiCP_IPDP_alpha_gt_piby4",
+    #     null_value=EMPTY_FLOAT,
+    #     binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+    #     x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- > pi/4]",
+    # )
+    # cfg.add_variable(
+    #     name="PhiCPGen_IPIP_alpha_lt_piby4",
+    #     expression="PhiCPGen_IPIP_alpha_lt_piby4",
+    #     null_value=EMPTY_FLOAT,
+    #     binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+    #     x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- < pi/4] [Gen Level]",
+    # )
+    # cfg.add_variable(
+    #     name="PhiCPGen_IPIP_alpha_gt_piby4",
+    #     expression="PhiCPGen_IPIP_alpha_gt_piby4",
+    #     null_value=EMPTY_FLOAT,
+    #     binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+    #     x_title=r"$\Phi_{CP}^{IP-IP}$ (rad) [a- > pi/4] [Gen Level]",
+    # )
+    # cfg.add_variable(
+    #     name="PhiCPGen_IPDP_alpha_lt_piby4",
+    #     expression="PhiCPGen_IPDP_alpha_lt_piby4",
+    #     null_value=EMPTY_FLOAT,
+    #     binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+    #     x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- < pi/4] [Gen Level]",
+    # )
+    # cfg.add_variable(
+    #     name="PhiCPGen_IPDP_alpha_gt_piby4",
+    #     expression="PhiCPGen_IPDP_alpha_gt_piby4",
+    #     null_value=EMPTY_FLOAT,
+    #     binning=(int(2*np.pi/(0.1*np.pi)), 0, 2*np.pi),
+    #     x_title=r"$\Phi_{CP}^{IP-NP}$ (rad) [a- > pi/4] [Gen Level]",
+    # )
 
     
 

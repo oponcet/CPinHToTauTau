@@ -32,7 +32,7 @@ logger = law.logger.get_logger(__name__)
 ak = maybe_import("awkward")
 
 #thisdir = os.path.dirname(os.path.abspath(__file__))
-thisdir = "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/httcp/config"
+thisdir = "/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/config"
 #print(f"thisdir: {thisdir}")
 corrdir = os.path.join(os.path.dirname(thisdir), "data")
 #print(f"corrdir: {corrdir}")
@@ -183,11 +183,11 @@ def add_config (ana: od.Analysis,
         # signal
         "h_ggf_tautau_uncorrelated_filter",
         "h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay",
-        "h_ggf_tautau_uncorrelatedDecay_CPodd_UnFiltered_ProdAndDecay",
+        # "h_ggf_tautau_uncorrelatedDecay_CPodd_UnFiltered_ProdAndDecay",
         "h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay",
-        "h_ggf_tautau_uncorrelatedDecay_MM_UnFiltered_ProdAndDecay",
+        # "h_ggf_tautau_uncorrelatedDecay_MM_UnFiltered_ProdAndDecay",
         "h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay",
-        "h_ggf_tautau_uncorrelatedDecay_SM_UnFiltered_ProdAndDecay",
+        # "h_ggf_tautau_uncorrelatedDecay_SM_UnFiltered_ProdAndDecay",
         "h_ggf_tautau_M125_amcatnloFXFX",
         "h_ggf_tautau_prod_cp_even_sm",
         "zh_tautau_uncorrelatedDecay_Filtered",
@@ -334,7 +334,7 @@ def add_config (ana: od.Analysis,
 
     # define inclusive datasets for the stitched process identification with corresponding leaf processes
     # drell-yan [NLO]
-    cfg.x.allow_dy_stitching = True
+    cfg.x.allow_dy_stitching = False
     cfg.x.dy_stitching = {
         "dy": {
             "inclusive_dataset": cfg.datasets.n.dy_lep_m50_amcatnlo,
@@ -351,7 +351,7 @@ def add_config (ana: od.Analysis,
         },
     }
     # w+jets [NLO]
-    cfg.x.allow_w_stitching = True
+    cfg.x.allow_w_stitching = False
     cfg.x.w_stitching = {
         "wj": {
             "inclusive_dataset": cfg.datasets.n.wj_incl_amcatnlo,
@@ -1252,5 +1252,5 @@ def add_config (ana: od.Analysis,
 
 
     cfg.x.extra_tags = DotDict.wrap({
-        "genmatch"       : False,
+        "genmatch"       : True,
     })
