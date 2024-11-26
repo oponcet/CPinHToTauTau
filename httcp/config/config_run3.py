@@ -945,7 +945,7 @@ def add_config (ana: od.Analysis,
         "tau_weight"                            : [], #get_shifts("tau"),
         #"ff_weight"                             : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
-        #"tauspinner_weight"                    : get_shifts("tauspinner"),
+        "tauspinner_weight"                    : get_shifts("tauspinner"),
         #"pdf_weight"                            : [],
         #"zpt_reweight"                          : [],
     })
