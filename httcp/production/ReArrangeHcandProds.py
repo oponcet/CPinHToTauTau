@@ -273,7 +273,7 @@ def reArrangeGenDecayProducts(
 
     hcand1prod_pizeros = getgenpizeros(hcand1prod)
     hcand2prod_pizeros = getgenpizeros(hcand2prod)
-        
+
     # hcand1 and its decay products
     p4_hcand1     = ak.with_name(hcand1, "PtEtaPhiMLorentzVector")
     p4_hcand1_pi  = ak.with_name(hcand1prod_pions, "PtEtaPhiMLorentzVector")

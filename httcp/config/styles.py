@@ -18,13 +18,17 @@ def stylize_processes(config: od.Config) -> None:
     # recommended cms colors
     cfg.x.colors = DotDict(
         col_h_ggf_htt="#690301",
+        col_zh_htt="#1b07f0",
+        col_wh_htt="#014d06",
         col_tt="#998ec3",
         col_st="#5ab4ac",
         col_vv="#5a3a1a",
+        col_vvv="#b3987d",
         col_w="#d78a7e",
         col_dy="#fec44f",
         col_dy_lep="#3690c0",
         col_dy_tau="#fec44f",
+        col_dy_jet="#db9af5",
         col_dy_lm="#357591",
         col_h="#f768a1",
         light_blue="#bbd3f3",
@@ -49,7 +53,15 @@ def stylize_processes(config: od.Config) -> None:
     if (p := config.get_process("h_ggf_htt", default=None)):
         p.color1 = cfg.x.colors.col_h_ggf_htt
         p.label = r"$H_{ggf} \rightarrow \tau\tau$"
-        
+
+    if (p := config.get_process("zh_htt", default=None)):
+        p.color1 = cfg.x.colors.col_zh_htt
+        p.label = r"$(Z)H \rightarrow \tau\tau$"
+
+    if (p := config.get_process("wh_htt", default=None)):
+        p.color1 = cfg.x.colors.col_wh_htt
+        p.label = r"$(W)H \rightarrow \tau\tau$"
+                
     if (p := config.get_process("h", default=None)):
         p.color1 = cfg.x.colors.col_h
         p.label = r"$Higgs$"
@@ -80,9 +92,9 @@ def stylize_processes(config: od.Config) -> None:
         p.color1 = cfg.x.colors.col_dy_tau
         p.label = r"$Z \to \ell^+ \ell^- (\ell \equiv \tau)$"
 
-    #if (p := config.get_process("dy_m50toinf_mc_fake", default=None)):
-    #    p.color1 = cfg.x.colors.col_dy_mcfake
-    #    p.label = r"$Z\to j(\tau_{h}) \tau_{h}$"
+    if (p := config.get_process("dy_m50toinf_jet", default=None)):
+        p.color1 = cfg.x.colors.col_dy_jet
+        p.label = r"$Z \to \ell^+ \ell^- (\ell \equiv j)$"
         
     if (p := config.get_process("dy_m10to50", default=None)):
         p.color1 = cfg.x.colors.col_dy_lm
@@ -92,14 +104,15 @@ def stylize_processes(config: od.Config) -> None:
         p.color1 = cfg.x.colors.col_vv
 
     if (p := config.get_process("vvv", default=None)):
-        p.color1 = cfg.x.colors.col_vv
+        p.color1 = cfg.x.colors.col_vvv
 
     if (p := config.get_process("multiboson", default=None)):
-        p.color1 = cfg.x.colors.yellow
+        p.color1 = cfg.x.colors.col_vv
 
     if (p := config.get_process("w", default=None)):
         p.color1 = cfg.x.colors.col_w
         p.label = "W + jets"
+        
     if (p := config.get_process("w_lnu", default=None)):
         p.color1 = cfg.x.colors.col_w
         p.label = "W + jets"
