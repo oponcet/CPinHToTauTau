@@ -144,9 +144,9 @@ def add_jet_features(cfg: od.Config) -> None:
         )
     cfg.add_variable(
         name="ht",
-        # expression=lambda events: ak.sum(events.Jet.pt, axis=1),
-        expression="ht",
-        binning=(40, 0.0, 800.0),
+        expression=lambda events: ak.sum(events.Jet.pt, axis=1),
+        #expression="ht",
+        binning=(25, 0.0, 500.0),
         unit="GeV",
         x_title="HT",
     )
@@ -270,7 +270,7 @@ def add_hcand_features(cfg: od.Config) -> None:
             name=f"hcand_{i+1}_decayMode",
             expression=f"hcand.decayMode[:,{i}]",
             null_value=EMPTY_FLOAT,
-            binning=(12, -1, 11),
+            binning=(12, 0, 12),
             x_title=f"hcand[{i+1}]" + r" $DM$",
         )
         cfg.add_variable(
