@@ -29,7 +29,6 @@ set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
         "Jet.*",
         "RawPuppiMET.*",
         "PuppiMET.*",
-        #jec_nominal, jec_full, jer,
         jets,
         tau_energy_scale,
     },
@@ -37,7 +36,6 @@ set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
         deterministic_seeds,
         "Jet.pt_no_corr", "Jet.phi_no_corr", "Jet.eta_no_corr", "Jet.mass_no_corr",
         "PuppiMET.pt_no_corr", "PuppiMET.phi_no_corr",
-        #jec_nominal, jec_full, jer,
         jets,
         tau_energy_scale,
     },
@@ -54,13 +52,6 @@ def main(self: Calibrator, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "PuppiMET.pt_no_corr", events.PuppiMET.pt)
     events = set_ak_column_f32(events, "PuppiMET.phi_no_corr", events.PuppiMET.phi)
 
-    """
-    if self.dataset_inst.is_data or not self.global_shift_inst.is_nominal:
-        events = self[jec_nominal](events, **kwargs)
-    else:
-        events = self[jec_full](events, **kwargs)
-        events = self[jer](events, **kwargs)
-    """
     if self.config_inst.campaign.x.run == 3:
         events = ak.with_field(events, events.RawPuppiMET, "RawMET")
         events = ak.with_field(events, events.PuppiMET, "MET")
@@ -74,7 +65,7 @@ def main(self: Calibrator, events: ak.Array, **kwargs) -> ak.Array:
         events = ak.with_field(events, events.MET, "PuppiMET")
         events = ak.without_field(events, "RawMET")
         events = ak.without_field(events, "MET")
-   
+
     if self.dataset_inst.is_mc: 
         ##Apply tau energy scale correction
         events = self[tau_energy_scale](events, **kwargs)
