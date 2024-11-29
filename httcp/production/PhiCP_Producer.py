@@ -12,9 +12,11 @@ from httcp.production.PhiCP_Estimator import GetPhiCP
 from httcp.production.angular_features import ProduceDetCosPsi, ProduceGenCosPsi
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column, optional_column as optional
 
+import law
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
 
+logger = law.logger.get_logger(__name__)
 #from IPython import embed
 
 
@@ -117,7 +119,8 @@ def ProducePhiCP(
     #                                      IPIP                                      #
     #                        Only possible for (e/mu/pi)-pi                          #
     ##################################################################################
-
+    logger.info("IP-IP")
+    
     PhiCP_IPIP = ak.where(mask_e_pi,    GetPhiCP(PrepareP4(p4hcandinfo, mask_e_pi   ), "IP", "IP", "e",   "pi" ), dummyPhiCP)
     PhiCP_IPIP = ak.where(mask_mu_pi,   GetPhiCP(PrepareP4(p4hcandinfo, mask_mu_pi  ), "IP", "IP", "mu",  "pi" ), PhiCP_IPIP)
     PhiCP_IPIP = ak.where(mask_pi_pi,   GetPhiCP(PrepareP4(p4hcandinfo, mask_pi_pi  ), "IP", "IP", "pi",  "pi" ), PhiCP_IPIP)
@@ -129,7 +132,8 @@ def ProducePhiCP(
     #                                       DPDP                                     #
     #                    Only possible for (rho/a1)-(rho/a1) channel                 #
     ##################################################################################
-
+    logger.info("DP-DP")
+    
     # -- rho-rho
     PhiCP_DPDP = ak.where(mask_rho_rho,    GetPhiCP(PrepareP4(p4hcandinfo, mask_rho_rho    ), "DP", "DP", "rho", "rho"), dummyPhiCP)
     # -- rho-a1
@@ -158,7 +162,8 @@ def ProducePhiCP(
     #                                      PVPVP                                     #
     #                         Only possible for tau-tau channel                      #
     ##################################################################################
-
+    logger.info("PV-PV")
+    
     # -- pi-pi
     PhiCP_PVPV = ak.where(mask_pi_pi,   GetPhiCP(PrepareP4(p4hcandinfo, mask_pi_pi  ), "PV", "PV", "pi",  "pi" ), dummyPhiCP)
     # -- pi-rho
@@ -201,7 +206,8 @@ def ProducePhiCP(
     #                                      IPDP                                      #
     #                   Only possible for (e/mu/pi)-(rho/a1) channel                 #
     ##################################################################################
-
+    logger.info("IP-DP")
+    
     # -- e-rho
     PhiCP_IPDP = ak.where(mask_e_rho,    GetPhiCP(PrepareP4(p4hcandinfo, mask_e_rho    ), "IP", "DP", "e",   "rho"), dummyPhiCP)
     # -- e-a1
@@ -228,7 +234,8 @@ def ProducePhiCP(
     #                                      IPPV                                      #
     #                Only possible for (e/mu/pi)-(pi/rho/a1) channel                 #
     ##################################################################################
-
+    logger.info("IP-PV")
+    
     # -- e-pi
     PhiCP_IPPV = ak.where(mask_e_pi,    GetPhiCP(PrepareP4(p4hcandinfo, mask_e_pi    ), "IP", "PV", "e",  "pi"),   dummyPhiCP)    
     # -- e-rho
