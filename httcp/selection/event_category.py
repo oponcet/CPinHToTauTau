@@ -204,7 +204,7 @@ def build_abcd_masks(
     is_lep_1 = ak.fill_none(ak.any(is_lep_1, axis=1), False)
 
     # IPSig
-    is_ipsig_0to1_1 = h1.IPsig < 1.0
+    is_ipsig_0to1_1 = np.abs(h1.IPsig) < 1.0
     is_ipsig_0to1_1 = ak.fill_none(ak.any(is_ipsig_0to1_1, axis=1), False)
 
     
