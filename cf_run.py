@@ -188,6 +188,7 @@ if wrapper:
             f"--cf.{main_func}-workflow", workflow,
             f"--cf.{main_func}-branch", branch,
             f"--cf.{main_func}-tasks-per-job", tasks_per_job,
+            f"--cf.{main_func}-pilot",
             "--version", version,
             "--workers", nworkers,
             f"--cf.{main_func}-log-file", jobfile,
@@ -204,6 +205,7 @@ if wrapper:
             "--categories", categories,
             "--variables", variables,
             "--workers", nworkers,
+            "--pilot",
             f"--log-file", jobfile,
         ] + extras
     
