@@ -3,7 +3,7 @@
 """
 Default event weight definitions.
 """
-
+import law
 from columnflow.weight import WeightProducer, weight_producer
 from columnflow.columnar_util import Route
 from columnflow.util import maybe_import, pattern_matcher
@@ -12,7 +12,10 @@ ak = maybe_import("awkward")
 np = maybe_import("numpy")
 
 
+logger = law.logger.get_logger(__name__)
+
 @weight_producer(
+    #uses={"channel_id", "is_os", "is_low_mt", "is_b_veto", "is_real_2", "is_fake_2", "is_iso_2", "hcand.*"},
     # both produced columns and dependent shifts are defined in init below
     # only run on mc
     mc_only=True,
@@ -23,8 +26,13 @@ np = maybe_import("numpy")
 def main(self: WeightProducer, events: ak.Array, **kwargs) -> ak.Array:
     # build the full event weight
     weight = ak.Array(np.ones(len(events), dtype=np.float32))
+    logger.warning("The following weights will be applied for this dataset")
     for column in self.weight_columns:
+        logger.info(column)
         weight = weight * Route(column).apply(events)
+
+    logger.warning("And, these are the shifts")
+    logger.info(self.shifts)
 
     return events, weight
 
@@ -43,29 +51,34 @@ def main_init(self: WeightProducer) -> None:
         if not do_keep(weight_name) or do_drop(weight_name):
             continue
 
-        # manually skip pdf and scale weights for samples that do not have lhe info
+        # manually skip weights for samples that do not have lhe info
         if getattr(self, "dataset_inst", None) is not None:
+
+            # skip pdf weights for samples that dont have lhe weight
             is_lhe_weight = any(
-                shift_inst.has_tag("pdf_weights")
+                shift_inst.has_tag("pdf_weight")
                 for shift_inst in self.config_inst.x.event_weights[weight_name]
             )
-            if is_lhe_weight and self.dataset_inst.has_tag("no_lhe_weights"):
-                continue
+            if self.dataset_inst.has_tag("no_lhe_weights"):
+                if weight_name in ["pdf_weight"] or is_lhe_weight:
+                    continue
 
+            # zpt weight only for DY samples
             is_zpt_reweight = any(
                 shift_inst.has_tag("zpt_reweight")
                 for shift_inst in self.config_inst.x.event_weights[weight_name]
             )
-            if is_zpt_reweight:
-                if not self.dataset_inst.has_tag("is_dy"):
+            if not self.dataset_inst.has_tag("is_dy"):
+                if weight_name in ["zpt_reweight"] or is_zpt_reweight:
                     continue
 
+            # tau-spinner weights are only for signal samples
             is_tauspinner_weight = any(
                 shift_inst.has_tag("tauspinner_weight")
                 for shift_inst in self.config_inst.x.event_weights[weight_name] 
             )
-            if is_tauspinner_weight:
-                if not (self.dataset_inst.has_tag("is_ggf_signal") | self.dataset_inst.has_tag("is_vh_signal")):
+            if not (self.dataset_inst.has_tag("is_ggf_signal") or self.dataset_inst.has_tag("is_vh_signal")):
+                if weight_name in ["tauspinner_weight"] or is_tauspinner_weight:
                     continue
 
         self.weight_columns.append(weight_name)
