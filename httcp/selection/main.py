@@ -4,6 +4,8 @@
 Exemplary selection methods.
 """
 
+import law
+
 from typing import Optional
 from operator import and_
 from functools import reduce
@@ -44,6 +46,7 @@ from httcp.util import filter_by_triggers, get_objs_p4, trigger_object_matching_
 
 from httcp.selection.debug import debug_main
 
+logger = law.logger.get_logger(__name__)
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -498,6 +501,9 @@ def main(
     else:
         events = self[process_ids](events, **kwargs)
 
+    #print("sel main")
+    #from IPython import embed; embed()
+        
     if outliers_mask_for_stitching is not None:
         n_outliers = ak.sum(outliers_mask_for_stitching)
         if n_outliers > 0:
