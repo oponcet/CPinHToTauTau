@@ -168,9 +168,6 @@ def process_ids_2d_dy_setup(
     for proc in self.dy_leaf_processes:
         key = key_func(proc.x.njets[0], proc.x("ptll", [-1])[0])
         self.id_table[key] = proc.id
-    # adjustments for missing DY-0to40GeV pt binned process
-    #self.id_table[(2,0)] = 51111 #self.dataset_inst.processes.get_first().id
-    #self.id_table[(3,0)] = 51112 #self.dataset_inst.processes.get_first().id + 1
     #logger.info(f"id_table : \n{self.id_table}")
     
         
