@@ -5,14 +5,14 @@ era     : 2022
 postfix : PreEE
 wrapper : true
 limited : false
-workers : 12
+workers : 8
 tasks_per_job  : 2
 
 args:
   config    : run3_2022_preEE_nano_cp_tau_v14
   workflow  : htcondor
   branch    : -1
-  version   : Run3_2022PreEE_full_20241123_181914
+  version   : Run3_2022PreEE_full_20241130_190734
 
   datasets  :
     ## == data ==
@@ -83,19 +83,19 @@ args:
     - h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay
     - h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay
     - h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay
-    - zh_tautau_uncorrelatedDecay_Filtered
-    - wph_tautau_uncorrelatedDecay_Filtered
-    - wmh_tautau_uncorrelatedDecay_Filtered
+    #- zh_tautau_uncorrelatedDecay_Filtered
+    #- wph_tautau_uncorrelatedDecay_Filtered
+    #- wmh_tautau_uncorrelatedDecay_Filtered
 
   processes :
     - data
     #- w
     - w_lnu
     #- dy_m10to50
-    - dy_m50toinf_lep
-    - dy_m50toinf_tau
-    - dy_m50toinf_jet
-    #- dy
+    #- dy_m50toinf_lep
+    #- dy_m50toinf_tau
+    #- dy_m50toinf_jet
+    - dy
     - tt
     ##- st_tchannel
     ##- st_twchannel
@@ -103,21 +103,13 @@ args:
     - vv
     - vvv
     - h_ggf_htt
-    - zh_htt
-    - wh_htt
+    #- zh_htt
+    #- wh_htt
 
   categories:
-    #- incl
-    ## --- etau --- #
-    - etau
-    - etau__real_2__lepC
-    - etau__real_2__lepD
-    - mutau
-    - mutau__real_2__lepC
-    - mutau__real_2__lepD
-    ## --- tautau --- #
-    - tautau
-    - tautau__real_1__*
+    - etau__*
+    - mutau__*
+    - tautau__real_1__had*
     
 
   variables:
@@ -145,24 +137,25 @@ args:
     - hcand_1_pt
     - hcand_1_eta
     - hcand_1_phi
-    - hcand_1_IPx
-    - hcand_1_IPy
-    - hcand_1_IPz
+    #- hcand_1_IPx
+    #- hcand_1_IPy
+    #- hcand_1_IPz
     - hcand_1_IPsig
     #- hcand_1_decayMode
     - hcand_2_pt
     - hcand_2_eta
     - hcand_2_phi
-    - hcand_2_IPx
-    - hcand_2_IPy
-    - hcand_2_IPz
+    #- hcand_2_IPx
+    #- hcand_2_IPy
+    #- hcand_2_IPz
     - hcand_2_IPsig
     #- hcand_2_decayMode
     - hcand_dr
     - hcand_invm
     - dphi_met_h1
     - dphi_met_h2
-    - hcand_met_var_qcd
+    - met_var_qcd_h1
+    - met_var_qcd_h2
     ## -- jet -- #
     - n_jet
     - jet_1_pt
@@ -201,4 +194,4 @@ args:
     
 
   extras:
-    - process-settings "h_ggf_htt,unstack,100:zh_htt,unstack,100:wh_htt,unstack,100"
+    - process-settings "h_ggf_htt,unstack,300"
