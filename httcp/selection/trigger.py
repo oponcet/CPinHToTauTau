@@ -125,7 +125,8 @@ def trigger_selection(
             if leg.trigger_bits is not None:
                 # OR across bits themselves, AND between all decision in the list
                 for bits in leg.trigger_bits:
-                    leg_mask = leg_mask & ((events.TrigObj.filterBits & bits) > 0)
+                    # https://github.com/uhh-cms/hh2bbww/blob/master/hbw/selection/trigger.py#L94
+                    leg_mask = leg_mask & ((events.TrigObj.filterBits & bits) == bits)
 
             leg_matched_trigobj_idxs_shallow.append(index[leg_mask])         # O L D
             leg_matched_trigobj_idxs.append(index[leg_mask][:,None])         # N E W
@@ -165,13 +166,10 @@ def trigger_selection(
         leg_max_eta_concat.append(leg_max_eta_concat_legs[:,None])
 
         
-        #from IPython import embed; embed()
-        
     fired_and_all_legs_match_concat = ak.concatenate([*fired_and_all_legs_match_concat], axis=1)
     trigger_ids              = ak.concatenate(trigger_ids, axis=1)    
     trigger_names            = ak.concatenate(trigger_names, axis=1)
     trigger_types            = ak.concatenate(trigger_types, axis=1)
-    #from IPython import embed; embed()
     leg_min_pt_concat        = ak.concatenate([*leg_min_pt_concat], axis=1)
     leg_max_eta_concat       = ak.concatenate([*leg_max_eta_concat], axis=1)
     leg_matched_trigobj_idxs = ak.concatenate([*leg_matched_trigobj_idxs_concat], axis=1)
