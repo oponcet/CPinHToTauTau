@@ -59,10 +59,9 @@ def muon_selection(
     events = set_ak_column(events, "Muon.rawIdx",    ak.local_index(events.Muon))
     events = set_ak_column(events, "Muon.decayMode", -2)
     # make sure that there is no nan sip3d
-    ipsig_dummy = ak.min(ak.flatten(events.Muon.sip3d)) - 10.0 # going to set nan values to (min value - 10)
-    events = set_ak_column(events, "Muon.IPsig", ak.nan_to_num(events.Muon.sip3d, ipsig_dummy))
+    ipsig_dummy = -999.9
+    events = set_ak_column(events, "Muon.IPsig", ak.nan_to_num(events.Muon.sip3d, nan=ipsig_dummy))
     events = set_ak_column(events, "Muon.idVsJet", -2.0)
-
     
     # pt sorted indices for converting masks to indices
     sorted_indices = ak.argsort(events.Muon.pt, axis=-1, ascending=False)
@@ -100,11 +99,6 @@ def muon_selection(
         ##"muon_ipsig_safe"     : muons.IPsig > ipsig_dummy,
     }
 
-    
-    # sort muons by pt
-    #muons = ak.sort(events.Muon.pt, axis=-1, ascending=False)
-    
-    #muon_mask      = ak.local_index(events.Muon.pt) >= 0
     muon_mask      = ak.local_index(muons) >= 0
     
     good_muon_mask = muon_mask
@@ -162,6 +156,8 @@ def muon_selection(
         }
     ), good_muon_indices, single_veto_muon_indices, double_veto_muon_indices
 
+
+
 # ------------------------------------------------------------------------------------------------------- #
 # Electron Selection
 # Reference:
@@ -201,8 +197,8 @@ def electron_selection(
     events = set_ak_column(events, "Electron.rawIdx",    ak.local_index(events.Electron))
     events = set_ak_column(events, "Electron.decayMode", -1)
     # make sure that there is no nan sip3d
-    ipsig_dummy = ak.min(ak.flatten(events.Electron.sip3d)) - 10.0 # going to set nan values to (min value - 10)
-    events = set_ak_column(events, "Electron.IPsig", ak.nan_to_num(events.Electron.sip3d, ipsig_dummy))
+    ipsig_dummy = -999.9
+    events = set_ak_column(events, "Electron.IPsig", ak.nan_to_num(events.Electron.sip3d, nan=ipsig_dummy))
     events = set_ak_column(events, "Electron.idVsJet", -1.0)
     
     # pt sorted indices for converting masks to indices
@@ -243,9 +239,6 @@ def electron_selection(
         "electron_pfRelIso03_all" : electrons.pfRelIso03_all < 0.3,
         ##"electron_ipsig_safe"     : electrons.IPsig > ipsig_dummy,
     }
-
-    # pt sorted indices for converting masks to indices
-    #sorted_indices = ak.argsort(events.Electron.pt, axis=-1, ascending=False)    
 
     electron_mask  = ak.local_index(electrons) >= 0
 
@@ -337,16 +330,16 @@ def tau_selection(
         **kwargs
 ) -> tuple[ak.Array, SelectionResult, ak.Array]:
     """
-    Tau selection returning two sets of indidces for default and veto muons.
-    
+    Tau selection returning two sets of indidces for default and veto muons.    
     References:
       - 
     """
     tau_local_indices = ak.local_index(events.Tau)
 
     events = set_ak_column(events, "Tau.rawIdx", tau_local_indices)
-    ipsig_dummy = ak.min(ak.flatten(events.Tau.ipLengthSig)) - 10.0
-    events = set_ak_column(events, "Tau.IPsig",  ak.nan_to_num(events.Tau.ipLengthSig, ipsig_dummy))
+    # to get rid of any nan values
+    ipsig_dummy = -999.9
+    events = set_ak_column(events, "Tau.IPsig",  ak.nan_to_num(events.Tau.ipLengthSig, nan=ipsig_dummy))
     events = set_ak_column(events, "Tau.idVsJet", events.Tau.idDeepTau2018v2p5VSjet)
     
     # https://cms-nanoaod-integration.web.cern.ch/integration/cms-swmaster/data106Xul17v2_v10_doc.html#Tau
@@ -360,7 +353,6 @@ def tau_selection(
     if "decayModeHPS" not in events.Tau.fields:
         events = set_ak_column(events, "Tau.decayModeHPS", events.Tau.decayMode)      # explicitly renaming decayMode to decayModeHPS
         events = set_ak_column(events, "Tau.decayMode",    events.Tau.decayModePNet)  # set decayModePNet as decayMode
-        #events = set_ak_column(events, "Tau.decayMode",    events.Tau.decayMode)     # swutch to HPS again ----> W A R N I N G !!!!!!!!!!!!!!!!!!!!!!!
     
     tau_pt = None
     if channel_ == "mutau":
@@ -400,15 +392,11 @@ def tau_selection(
                    | (taus.decayMode ==  2)
                    | (taus.decayMode == 10)
                    | (taus.decayMode == 11))
-                  & (taus.decayModeHPS != 0)))),
+                  & (taus.decayModeHPS != 0)))), # decayMode is now decayModePNet
         "tau_ipsig_safe"    : taus.IPsig > ipsig_dummy,
         #"tau_ipsig_1p5"     : (taus.decayModePNet ==  0) & (np.abs(taus.IPsig) > 1.5), # ipsig > 1.5 only for pion
     }
     
-    # pt sorted indices for converting masks to indices
-    #sorted_indices = ak.argsort(tau_pt, axis=-1, ascending=False)
-    #tau_mask  = sorted_indices >= 0
-
     tau_mask = ak.local_index(taus) >= 0
     
     good_tau_mask = tau_mask
@@ -426,10 +414,6 @@ def tau_selection(
     if muon_indices is not None:
         good_tau_mask = good_tau_mask & ak.all(taus.metric_table(events.Muon[muon_indices]) > 0.2, axis=2)
         selection_steps["tau_clean_against_muons"] = good_tau_mask
-
-    # convert to sorted indices
-    #good_tau_indices = sorted_indices[good_tau_mask[sorted_indices]]
-    #good_tau_indices = ak.values_astype(good_tau_indices, np.int32)
 
     good_taus = taus[good_tau_mask]
 
@@ -486,9 +470,8 @@ def jet_selection(
     """
     This function vetoes b-jets with sufficiently high pt and incide eta region of interest
     """
-    year = self.config_inst.campaign.x.year
-    is_run2 = (self.config_inst.campaign.x.year in [2016,2017,2018])
-    is_run3 = (self.config_inst.campaign.x.year in [2022,2023,2024])
+    is_run2 = self.config_inst.campaign.x.run == 2
+    is_run3 = self.config_inst.campaign.x.run == 3
    
     # nominal selection
     good_selections = {
@@ -534,9 +517,7 @@ def jet_selection(
     bjet_veto = ak.sum(b_jet_mask, axis=1) == 0
     
     results = SelectionResult(
-        #steps = {
-        #    "b_veto": bjet_veto,
-        #}, 
+        # bveto selection will be required later for ABCD
         objects = {
             "Jet": {
                 "RawJet": events.Jet.rawIdx,
@@ -547,10 +528,8 @@ def jet_selection(
         },
         aux = selection_steps,
     )
-
     
     # additional jet veto map, vetoing entire events
-    # NO chEmEF INFO IN JET ????????? IMPORTANT !!!!
     if self.config_inst.campaign.x.run == 3:
         events, veto_result = self[jet_veto_map](events, **kwargs)
         results += veto_result
@@ -642,10 +621,6 @@ def gentau_selection(
     #matched_gentaus = ak.where(is_none, gentaus[:,:0], matched_gentaus)
     matched_gentaus = ak.where(is_none, matched_gentaus_dummy, matched_gentaus) # new
 
-    # --------------------------------------------- N E W --------------------------------------------------- #
-    #matched_gentaus = ak.drop_none(matched_gentaus)
-    # --------------------------------------------- N E W --------------------------------------------------- #
-    
     has_full_match           = ~is_none
     has_two_matched_gentaus  = has_full_match & ak.fill_none(ak.num(matched_gentaus.rawIdx, axis=1) == 2, False)
     gentaus_of_opposite_sign = ak.fill_none(ak.sum(matched_gentaus.pdgId, axis=1) == 0, False)
@@ -661,7 +636,6 @@ def gentau_selection(
     # get decay modes for the GenTaus
     decay_gentau_indices = matched_gentaus.distinctChildrenIdxG
     decay_gentaus = events.GenPart._apply_global_index(decay_gentau_indices)
-    #from IPython import embed; embed()
     gentaus_dm = getGenTauDecayMode(decay_gentaus)
 
     mask_genmatchedtaus_1 = ak.fill_none(ak.firsts(((gentaus_dm[:,:1]   == -2)
@@ -692,12 +666,6 @@ def gentau_selection(
     # -- N E W
     has_finite_decay_prods = ak.prod(ak.num(decay_gentaus.pdgId, axis=-1), axis=1) > 1
         
-    #matched_gentaus_dummy = matched_gentaus[:,:0]
-    #matched_gentaus = ak.where(mask_genmatchedtaus, matched_gentaus, matched_gentaus_dummy)
-    #gentaus_dm_dummy = gentaus_dm[:,:0]
-    #gentaus_dm = ak.where(mask_genmatchedtaus, gentaus_dm, gentaus_dm_dummy)
-    #decay_gentaus_dummy = decay_gentaus[:,:0]
-    #decay_gentaus = ak.where(mask_genmatchedtaus, decay_gentaus, decay_gentaus_dummy)
     matched_gentaus =  ak.where((mask_genmatchedtaus & dm_match_evt_mask & has_finite_decay_prods),
                                 matched_gentaus, matched_gentaus_dummy)
     decay_gentaus_dummy = decay_gentaus[:,:0]
@@ -712,9 +680,7 @@ def gentau_selection(
     # creating a proper array to save it as a new column
     dummy_decay_gentaus = decay_gentaus[:,:0][:,None]
     decay_1             = decay_gentaus[:,:1]
-    #decay_1             = ak.where(ak.num(decay_1, axis=1) > 0, decay_1, dummy_decay_gentaus)
     decay_2             = decay_gentaus[:,1:2]
-    #decay_2             = ak.where(ak.num(decay_2, axis=1) > 0, decay_2, dummy_decay_gentaus)
     decay_gentaus       = ak.concatenate([decay_1, decay_2], axis=1)
     
     # WARNING: Not a smart way to convert ak.Array -> List -> ak.Array
@@ -735,37 +701,17 @@ def gentau_selection(
 
     is_mu = np.abs(events.GenTauProd.pdgId) == 13
     is_e  = np.abs(events.GenTauProd.pdgId) == 11
-    """
-    is_pi = (np.abs(events.GenTauProd.pdgId) == 211) | (np.abs(events.GenTauProd.pdgId) == 321) # | (np.abs(events.GenTauProd.pdgId) == 323)
 
-    prod_e   = ak.with_name(events.GenTauProd[is_e], "PtEtaPhiMLorentzVector")
-    prod_mu  = ak.with_name(events.GenTauProd[is_mu], "PtEtaPhiMLorentzVector")
-    prod_pi  = ak.with_name(events.GenTauProd[is_pi], "PtEtaPhiMLorentzVector")
-
-    gPx = ak.drop_none(ak.firsts(ak.concatenate([prod_e.x, prod_mu.x, prod_pi.x], axis=-1), axis=-1))
-    gPy = ak.drop_none(ak.firsts(ak.concatenate([prod_e.y, prod_mu.y, prod_pi.y], axis=-1), axis=-1))
-    gPz = ak.drop_none(ak.firsts(ak.concatenate([prod_e.z, prod_mu.z, prod_pi.z], axis=-1), axis=-1))
-
-    #from IPython import embed; embed()
-    """
+    # new implementation for GenTau : IPx,IPy,IPz
+    # Ref: https://indico.cern.ch/event/1451226/contributions/6253060/attachments/2976341/5239440/Pi_CP_28_11_24.pdf
 
     is_pi = (np.abs(events.GenTauProd.pdgId) == 211) | (np.abs(events.GenTauProd.pdgId) == 321)  # | (np.abs(events.GenTauProd.pdgId) == 323)
     is_pi_oneprong = (events.GenTau.decayMode == 0) & is_pi # 1-prong
-    # prod_e   = ak.with_name(events.GenTauProd[is_e], "PtEtaPhiMLorentzVector")
-    # prod_mu  = ak.with_name(events.GenTauProd[is_mu], "PtEtaPhiMLorentzVector")
-    # prod_pi  = ak.with_name(events.GenTauProd[is_pi_oneprong], "PtEtaPhiMLorentzVector")
     prod_e = events.GenTauProd[is_e]
     prod_mu = events.GenTauProd[is_mu]
     prod_pi = events.GenTauProd[is_pi_oneprong]
     prod = events.GenTauProd[is_e | is_mu | is_pi_oneprong]
-    # gPx = ak.drop_none(ak.firsts(ak.concatenate([prod_e.x, prod_mu.x, prod_pi.x], axis=-1), axis=-1))
-    # gPy = ak.drop_none(ak.firsts(ak.concatenate([prod_e.y, prod_mu.y, prod_pi.y], axis=-1), axis=-1))
-    # gPz = ak.drop_none(ak.firsts(ak.concatenate([prod_e.z, prod_mu.z, prod_pi.z], axis=-1), axis=-1))
-    # from IPython import embed; embed()
     
-    # events = set_ak_column(events, "GenTau.IPx",  gPx)
-    # events = set_ak_column(events, "GenTau.IPy",  gPy)
-    # events = set_ak_column(events, "GenTau.IPz",  gPz)
     ### IMPACT PARAMETER ###
     # from IPython import embed; embed()
     # Displacement vector L components
