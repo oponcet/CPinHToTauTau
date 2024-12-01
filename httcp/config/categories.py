@@ -222,30 +222,30 @@ def add_tautau_phiCP_categories(config: od.Config) -> None:
 # ################### #
 # test categorization #
 # ################### #
-#@call_once_on_config()
-#def add_test_categories(config: od.config) -> None:
-#
-#    categories = {
-#        "channel": [config.get_category("tautau")],
-#        "abcd"   : [
-#            config.get_category("hadA"),   config.get_category("hadB"),
-#            config.get_category("hadA0"),  config.get_category("hadB0"),
-#            config.get_category("hadC0"),  config.get_category("hadD0"),
-#            config.get_category("hadC"),   config.get_category("hadD"),
-#        ],
-#        "TorF"   : [config.get_category("real_1")],
-#        "IP"     : [config.get_category("ipsig_0to1_1"), config.get_category("ipsig_1toany_1")],
-#        "cp"     : [config.get_category("pi_rho_1")],
-#    }
-#
-#    logger.info("test_categories")
-#    n = create_category_combinations(config,
-#                                     categories,
-#                                     name_fn=name_fn,
-#                                     kwargs_fn=kwargs_fn,
-#                                     skip_existing=True)
-#    logger.info(f"{n} categories have been created")
+"""
+@call_once_on_config()
+def add_test_categories(config: od.config) -> None:
+    categories = {
+        "channel": [config.get_category("tautau")],
+        "TorF"   : [config.get_category("real_1")],
+        "abcd"   : [
+            config.get_category("hadA"),   config.get_category("hadB"),
+            config.get_category("hadA0"),  config.get_category("hadB0"),
+            config.get_category("hadC0"),  config.get_category("hadD0"),
+            config.get_category("hadC"),   config.get_category("hadD"),
+        ],
+        "IP"     : [config.get_category("ipsig_0to1_1"), config.get_category("ipsig_1toany_1")],
+        "cp"     : [config.get_category("pi_rho_1")],
+    }
 
+    logger.info("test_categories")
+    n = create_category_combinations(config,
+                                     categories,
+                                     name_fn=name_fn,
+                                     kwargs_fn=kwargs_fn,
+                                     skip_existing=True)
+    logger.info(f"{n} categories have been created")
+"""
     
 # ################### #
 # main categorization #
@@ -265,7 +265,8 @@ def add_categories(config: od.Config) -> None:
 
     add_etau_mutau_categories(config)
     add_tautau_real_categories(config)
-    add_tautau_phiCP_categories(config)
-
+    #add_tautau_phiCP_categories(config)
+    #add_test_categories(config)
+    
     #all_cats = [cat.name for cat, _, _ in config.walk_categories()]
     #print(f"List of all cateogries in config: \n{all_cats}")
