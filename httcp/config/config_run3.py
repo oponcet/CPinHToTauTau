@@ -251,7 +251,7 @@ def add_config (ana: od.Analysis,
         
         # add the dataset
         dataset = cfg.add_dataset(campaign.get_dataset(dataset_name))
-        if re.match(r"^(ww|wz|zz)$", dataset.name):
+        if re.match(r"^(ww|wz|zz|www|wwz|wzz|zzz)$", dataset.name):
             dataset.add_tag("no_lhe_weights")
         elif re.match(r"^dy_lep_m50.*$", dataset.name):
             dataset.add_tag("is_dy")
@@ -349,7 +349,7 @@ def add_config (ana: od.Analysis,
         "dy": {
             "inclusive_dataset": cfg.datasets.n.dy_lep_m50_madgraph,
             "leaf_processes": [
-                # the following processes cover the full njet and pt phasespace
+                # the following processes cover the full njet phasespace
                 *(
                     procs.get(f"dy_m50toinf_{nj}j")
                     for nj in [0, 1, 2, 3, 4]
@@ -380,9 +380,9 @@ def add_config (ana: od.Analysis,
         "wj": {
             "inclusive_dataset": cfg.datasets.n.wj_incl_madgraph,
             "leaf_processes": [
-                # the following processes cover the full njet and pt phasespace
+                # the following processes cover the full njet phasespace
                 *(
-                    procs.get(f"w_lnu_{nj}j") # njet from NLO samples
+                    procs.get(f"w_lnu_{nj}j") # njet from LO samples
                     for nj in [0,1,2,3,4]
                 ),
             ],
@@ -987,36 +987,7 @@ def add_config (ana: od.Analysis,
         "pdf_weight"                            : [],
         "zpt_reweight"                          : [],
     })
-    """
-    dataset.x.event_weights = DotDict({})
-    # define per-dataset event weights
-    for dataset in cfg.datasets:
-        #from IPython import embed; embed()
-        if not dataset.has_tag("no_lhe_weights"):
-            dataset.x.event_weights = {
-                "pdf_weight": [], #get_shifts("pdf"),
-            }
-        if dataset.has_tag("is_dy"):
-            dataset.x.event_weights = {
-                "zpt_reweight": [],
-            }
-        if dataset.has_tag("is_ggf_signal") or dataset.has_tag("is_vh_signal"):
-            dataset.x.event_weights = {
-                "tauspinner_weight"    : get_shifts("tauspinner"),
-                #"tauspinner_weight_cpeven" : [],
-                #"tauspinner_weight_cpeven_alt" : [],
-                #"tauspinner_weight_cpmix"  : [],
-                #"tauspinner_weight_cpmix_alt"  : [],
-                #"tauspinner_weight_cpmixm" : [],
-                #"tauspinner_weight_cpmixm_alt" : [],
-                #"tauspinner_weight_cpalpha0p375" : [],
-                #"tauspinner_weight_cpalpha0p375_alt" : [],
-                #"tauspinner_weight_cpodd"  : [],
-                #"tauspinner_weight_cpodd_alt"  : [],
-            }
-            
-    #cfg.x.default_weight_producer = "all_weights"
-    """
+
     #---------------------------------------------------------------------------------------------#
     # No Idea
     # versions per task family, either referring to strings or to callables receving the invoking
@@ -1291,5 +1262,5 @@ def add_config (ana: od.Analysis,
 
 
     cfg.x.extra_tags = DotDict.wrap({
-        "genmatch"       : True,
+        "genmatch"       : False,
     })
