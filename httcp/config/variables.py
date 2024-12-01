@@ -305,9 +305,16 @@ def add_hcand_features(cfg: od.Config) -> None:
             name=f"dphi_met_h{i+1}",
             expression=f"dphi_met_h{i+1}",
             null_value=EMPTY_FLOAT,
-            binning=(32, -np.pi, np.pi),
+            binning=(32, 0, 3.2),
             x_title=f"hcand[{i+1}]" + r" $-MET \Delta_{phi}$",
         )
+        cfg.add_variable(
+            name=f"met_var_qcd_h{i+1}",
+            expression=f"met_var_qcd_h{i+1}",
+            null_value=EMPTY_FLOAT,
+            binning=(30, -1.5, 1.5),
+            x_title=r"$MET var QCD$",
+        )    
 
     cfg.add_variable(
         name="hcand_invm",
@@ -324,13 +331,6 @@ def add_hcand_features(cfg: od.Config) -> None:
         binning=(40, 0, 5),
         x_title=r"$\Delta R(h1,h2)$",
     )
-    cfg.add_variable(
-        name="hcand_met_var_qcd",
-        expression="met_var_qcd_h1",
-        null_value=EMPTY_FLOAT,
-        binning=(20, -5.0, 5.0),
-        x_title=r"$MET QCD var$$",
-    )    
     # PhiCP - Det
     cfg.add_variable(
         name="PhiCP_IPIP",
@@ -557,21 +557,9 @@ def add_test_variables(cfg: od.Config) -> None:
         )
         
 
-#def add_2Ds(cfg: od.Config) -> None:
-#    """
-#    2D histograms
-#    """
-#    cfg.add_variable(
-#        name=f"hcand_{i+1}_pt",
-#        expression=f"hcand.pt[:,{i}]",
-#        null_value=EMPTY_FLOAT,
-#        binning=(40, 0., 200.),
-#        unit="GeV",
-#        x_title=f"hcand[{i+1}]" + r" $p_{T}$",
-#    )
-    
-
-        
+# ############################ #
+#  main add_variables function #
+# ############################ #
 def add_variables(cfg: od.Config) -> None:
     """
     Adds all variables to a *config*.
