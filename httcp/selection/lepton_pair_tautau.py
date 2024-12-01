@@ -26,8 +26,6 @@ def match_trigobjs(
         **kwargs,
 ) -> tuple[ak.Array, ak.Array]:
 
-    print("match trigger objects")
-
     # extract the trigger names, types & others from trigger_results.x (aux)
     trigger_ids           = trigger_results.x.trigger_ids
     trigger_types         = trigger_results.x.trigger_types
@@ -187,8 +185,6 @@ def match_trigobjs(
 
 
 def sort_pairs(dtrpairs: ak.Array)->ak.Array:
-    print("sorting pairs if many")
-
     sorted_idx = ak.argsort(dtrpairs["0"].rawDeepTau2018v2p5VSjet, ascending=False)
     dtrpairs = dtrpairs[sorted_idx]
 
@@ -318,17 +314,9 @@ def tautau_selection(
     # sort the pairs if many
     leps_pair = ak.where(npair > 1, sort_pairs(leps_pair), leps_pair)
 
-    print("tautau")
-    #from IPython import embed; embed()
-
     
     # match trigger objects for all pairs
     leps_pair, trigIds, trigTypes = match_trigobjs(leps_pair, trigger_results)
-
-    
-    #from IPython import embed; embed()
-
-
 
     
     pair_selection_steps["tautau_after_trigger_matching"] = leps_pair["0"].pt >= 0.0
@@ -348,124 +336,6 @@ def tautau_selection(
     leps_pair = leps_pair[sort_idx]
 
 
-    """
-    lep1 = leps_pair[:,0:1]
-    lep2 = leps_pair[:,1:2]
-    
-    
-    # masks for different regions
-    mask_isOS            = (lep1.charge * lep2.charge) < 0                                 # OS
-    pair_selection_steps["tautau_is_os"] = mask_isOS
-    
-    mask_isSS            = ~mask_isOS                                                      # SS
-    pair_selection_steps["tautau_is_ss"] = mask_isSS
-    
-    mask_isTau1Iso       = (lep1.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j["Medium"])  # leading tau passing Medium WP
-    pair_selection_steps["tautau_is_tau1_iso"] = mask_isTau1Iso
-
-    mask_isTau1AntiIso   = ~mask_isTau1Iso                                                 # failing Medium WP, but passing VVVLosse WP (physics_objects.py)
-    pair_selection_steps["tautau_is_tau1_antiIso"] = mask_isTau1AntiIso
-
-    mask_isTau2Iso       = (lep2.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j["Medium"])  # sub-leading tau passing Medium WP 
-    pair_selection_steps["tautau_is_tau2_iso"] = mask_isTau2Iso
-
-    mask_isTau2AntiIso   = ~mask_isTau2Iso                                                 # failing Medium WP, but passing VVVLosse WP (physics_objects.py)
-    pair_selection_steps["tautau_is_tau2_antiIso"] = mask_isTau2AntiIso
-
-
-    #mask_isTau2IsoCR     = (lep2.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j["VVLoose"]) # sub-leading tau passing VVLoose WP [for closure]
-    #pair_selection_steps["tautau_is_tau2_iso_CR"] = mask_isTau2IsoCR
-
-    #mask_isTau2AntiIsoCR = (lep2.idDeepTau2018v2p5VSjet < tau_tagger_wps.vs_j["VVLoose"])  # failing VVLoose WP [for closure]
-    #pair_selection_steps["tautau_is_tau2_antiIso_CR"] = mask_isTau2AntiIsoCR
-
-
-    # create event level mask for categorization later
-    is_OS   = ak.fill_none(ak.any(mask_isOS, axis=1), False)
-    category_selections["cat_tautau_is_OS"] = is_OS
-    is_ISO1 = ak.fill_none(ak.any(mask_isTau1Iso, axis=1), False)
-    category_selections["cat_tautau_is_ISO1"] = is_ISO1
-    is_ISO2 = ak.fill_none(ak.any(mask_isTau2Iso, axis=1), False)
-    category_selections["cat_tautau_is_ISO2"] = is_ISO2
-    #is_ISO2CR = ak.fill_none(ak.any(mask_isTau2IsoCR, axis=1), False)
-    #category_selections["cat_tautau_is_ISO2_CR"] = is_ISO2CR
-    
-    if self.dataset_inst.is_mc:
-        mask_isTau1Real    = lep1.genPartFlav > 0
-        mask_isTau2Real    = lep2.genPartFlav > 0
-        
-        pair_selection_steps["tautau_is_tau1_real"] = mask_isTau1Real
-        pair_selection_steps["tautau_is_tau1_fake"] = ~mask_isTau1Real
-        pair_selection_steps["tautau_is_tau2_real"] = mask_isTau2Real
-        pair_selection_steps["tautau_is_tau2_fake"] = ~mask_isTau2Real
-        
-        is_REAL1 = ak.fill_none(ak.any(mask_isTau1Real, axis=1), False)
-        is_REAL2 = ak.fill_none(ak.any(mask_isTau2Real, axis=1), False)
-
-        category_selections["cat_tautau_is_REAL1"] = is_REAL1
-        category_selections["cat_tautau_is_REAL2"] = is_REAL2
-
-    
-    # ---------------- #
-    #        ABCD      #
-    # ---------------- #
-    #
-    #<--------|-----------|------->
-    #
-    #
-    # -------------^<-----|--------> tau-2 iso
-    #         |    |      |       | 
-    #     A   |    |  D0  |   D   | 
-    #         |    |      |  [SR] | 
-    # ----------------------------| 
-    #         |    |      |       | 
-    #     B   |    |  C0  |   C   | 
-    #         |    |      |  [AR] | 
-    # -------------|--------------| 
-    #       SS     v      OS        
-    #       tau-1 iso           
-    # A & B : Derivation regions
-    # C0 & D0 : Correction regions
-    # C : Application region
-    # D : Signal region
-    # INFO:
-    # For FF measurement and application,
-    # tau genFlav 1,2,3,4,5 will be used, and
-    # for closure test, tau genFlav 6 will be used
-    
-    
-    in_region_D  = mask_isOS & mask_isTau1Iso & mask_isTau2Iso
-    pair_selection_steps["tautau_region_D"]  = in_region_D
-
-    in_region_C  = mask_isOS & mask_isTau1AntiIso & mask_isTau2Iso
-    pair_selection_steps["tautau_region_C"]  = in_region_C
-
-    in_region_C0 = mask_isOS & mask_isTau1AntiIso & mask_isTau2AntiIso
-    pair_selection_steps["tautau_region_C0"] = in_region_C0
-    
-    in_region_D0 = mask_isOS & mask_isTau1Iso & mask_isTau2AntiIso
-    pair_selection_steps["tautau_region_D0"] = in_region_D0
-
-    in_region_A0 = mask_isSS & mask_isTau1Iso & mask_isTau2AntiIso
-    pair_selection_steps["tautau_region_A0"] = in_region_A0
-    
-    in_region_B0 = mask_isSS & mask_isTau1AntiIso & mask_isTau2AntiIso
-    pair_selection_steps["tautau_region_B0"] = in_region_B0
-    
-    in_region_B  = mask_isSS & mask_isTau1AntiIso & mask_isTau2Iso
-    pair_selection_steps["tautau_region_B"]  = in_region_B
-
-    in_region_A  = mask_isSS & mask_isTau1Iso & mask_isTau2Iso
-    pair_selection_steps["tautau_region_A"]  = in_region_A
-
-
-    #print("done")
-    #from IPython import embed; embed()
-    
-    return SelectionResult(
-        aux = pair_selection_steps | category_selections,
-    ), leps_pair, trigIds, trigTypes
-    """
     return SelectionResult(
         aux = pair_selection_steps,
     ), leps_pair, trigIds, trigTypes
