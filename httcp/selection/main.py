@@ -64,19 +64,25 @@ def custom_increment_stats(
     """
     Unexposed selector that does not actually select objects but instead increments selection
     *stats* in-place based on all input *events* and the final selection *mask*.
+    This function saves the nevents/nfiles (from campaign) per file, so that at 
+    the time of merging, the total nevents produced can be used for normalization.
+    instead of nevents, the sum_mc_weights will be used actually.
+    ** the same nevents or sum_wt will be saved for each process id.
+    e.g. In an inclusive dataset, if three different processes are there,
+    all of those will have the same number. After merging, all processes
+    eventually will have same numbers.
     """
     # get event masks
     event_mask = results.event
 
     # get a list of unique process ids present in the chunk
     unique_process_ids = np.unique(events.process_id)
+
     # increment plain counts
-    #n_evt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files
     n_evt_per_file = self.dataset_inst.aux['n_events']/self.dataset_inst.n_files # new
     sumwt_per_file = self.dataset_inst.n_events/self.dataset_inst.n_files     # new
 
     stats["num_events"] = int(n_evt_per_file)
-    #stats["num_events_selected"] += int(ak.sum(event_mask, axis=0))
     stats.setdefault(f"num_events_per_process", defaultdict(int))
     for p in unique_process_ids:
         # for splitting, each process will have the same number of events
@@ -84,50 +90,12 @@ def custom_increment_stats(
         
         
     if self.dataset_inst.is_mc:
-        #stats[f"sum_mc_weight"] = n_evt_per_file
         stats[f"sum_mc_weight"] = sumwt_per_file
         stats.setdefault(f"sum_mc_weight_per_process", defaultdict(float))
         for p in unique_process_ids:
             # for splitting, each process will have the same sumwt 
             stats[f"sum_mc_weight_per_process"][int(p)] = sumwt_per_file
         
-    # create a map of entry names to (weight, mask) pairs that will be written to stats
-    #weight_map = OrderedDict()
-    #if self.dataset_inst.is_mc:
-    #    # mc weight for selected events
-    #    weight_map["num_events_selected"] = (results.event, event_mask)
-    #    weight_map["sum_mc_weight_selected"]  = (events.mc_weight, event_mask)
-    #
-    # get and store the sum of weights in the stats dictionary
-    #for name, (weights, mask) in weight_map.items():
-    #    joinable_mask = True if mask is Ellipsis else mask
-    #
-    #    # sum of different weights in weight_map for all processes
-    #    #stats[f"sum_{name}"] += float(ak.sum(weights[mask]))
-    #    #stats[f"num_{name}"] += float(ak.sum(weights[mask]))
-    #    if name.startswith('num'):
-    #        stats[name] += int(ak.sum(mask))
-    #        stats.setdefault(f"{name}_per_process", defaultdict(int))
-    #        for p in unique_process_ids:
-    #            stats[f"{name}_per_process"][int(p)] += int(ak.sum(
-    #                mask[(events.process_id == p) & joinable_mask],
-    #            ))
-    #    elif name.startswith('sum'):
-    #        stats[name] += float(ak.sum(weights[mask]))
-    #        stats.setdefault(f"{name}_per_process", defaultdict(float))
-    #        for p in unique_process_ids:
-    #            stats[f"{name}_per_process"][int(p)] += float(ak.sum(
-    #                weights[(events.process_id == p) & joinable_mask],
-    #            ))
-    #    
-    #    # sums per process id
-    #    """
-    #    stats.setdefault(f"sum_{name}_per_process", defaultdict(float))
-    #    for p in unique_process_ids:
-    #        stats[f"sum_{name}_per_process"][int(p)] += float(ak.sum(
-    #            weights[(events.process_id == p) & joinable_mask],
-    #        ))
-    #    """
     return events, results
 
 
@@ -220,7 +188,7 @@ def main(
     **kwargs,
 ) -> tuple[ak.Array, SelectionResult]:
     
-    # ################### ensure coffea behaviors are loaded ################### #
+    # ensure coffea behaviors are loaded
     events = self[attach_coffea_behavior](events, **kwargs)
 
     # prepare the selection results that are updated at every step
@@ -230,7 +198,6 @@ def main(
     if self.dataset_inst.is_mc:
         events = self[scale_mc_weight](events, **kwargs)
     
-    # ############# Sel : Good Lumi JSON for DATA only ############# #
     # filter bad data events according to golden lumi mask
     if self.dataset_inst.is_data:
         events, json_filter_results = self[json_filter](events, **kwargs)
@@ -238,20 +205,15 @@ def main(
     else:
         results += SelectionResult(steps={"json": np.ones(len(events), dtype=bool)})
 
-
-    # -------- Sel : Met Filters -------- #
     # met filter selection
     events, met_filter_results = self[met_filters](events, **kwargs)
     results += met_filter_results
 
-
-    # --------- Sel : Trigger Selection -------- #
     # trigger selection
     events, trigger_results = self[trigger_selection](events, **kwargs)
     results += trigger_results
 
-
-    # -------- Get genZ collection for Zpt reweight
+    # Get genZ collection for Zpt reweighting
     if self.dataset_inst.has_tag("is_dy"):
         events = self[genZ_selection](events, **kwargs)
         
@@ -272,6 +234,7 @@ def main(
 
 
     # tau selection
+    # three times for three channels
     # e.g. tau_idx: [ [1], [0,1], [1,2], [], [0,1] ]
     good_tau_indices = None
     good_tau_indices_mutau = None
@@ -331,44 +294,6 @@ def main(
     )
     results += match_pair_result
 
-    """
-    # Trigger objects matching
-    # ################## W A R N I N G ################# #
-    # Mind the SWITCH: True  -> TriggerObject matching ON 
-    #                  False -> TriggerObject matching OFF
-    # although, the trigger requirement per channel is automatic
-    # ################################################## #
-    events, matchedResults = self[match_trigobj](events,
-                                                 trigger_results,
-                                                 etau_pair,
-                                                 mutau_pair,
-                                                 tautau_pair,
-                                                 True)
-
-    #print("before +")
-    #from IPython import embed; embed()
-
-    results += matchedResults
-
-    
-    etau_pair    = matchedResults.x.etau["pairs"]
-    mutau_pair   = matchedResults.x.mutau["pairs"]
-    tautau_pair  = matchedResults.x.tautau["pairs"]
-
-    #print("after +")
-    #from IPython import embed; embed()
-
-    
-    post_match_at_least_one_pair = get_2n_pairs(etau_pair.rawIdx,
-                                                mutau_pair.rawIdx,
-                                                tautau_pair.rawIdx)
-    post_match_pair_result = SelectionResult(
-        steps = {
-            "has_at_least_1_pair_after_trigobj_matching"  : post_match_at_least_one_pair,
-        },
-    )
-    results += post_match_pair_result
-    """
     
     # channel selection
     # channel_id is now in columns
@@ -378,19 +303,7 @@ def main(
                                                    mutau_pair.rawIdx,
                                                    tautau_pair.rawIdx)
     results += channel_results
-    """
-    etau_trigger_types = matchedResults.x.etau["trigger_types"]
-    etau_trigger_ids   = matchedResults.x.etau["trigger_ids"]
 
-    mutau_trigger_types = matchedResults.x.mutau["trigger_types"]
-    mutau_trigger_ids   = matchedResults.x.mutau["trigger_ids"]
-    
-    tautau_trigger_types = matchedResults.x.tautau["trigger_types"]
-    tautau_trigger_ids   = matchedResults.x.tautau["trigger_ids"]
-    """
-
-    #from IPython import embed; embed()
-    
     
     trigger_types = ak.concatenate([etau_trig_types, mutau_trig_types, tautau_trig_types], axis=1)
     # save single_triggered and cross_triggered
@@ -409,8 +322,6 @@ def main(
     events = set_ak_column(events, "cross_tau_jet_triggered", cross_tau_jet_triggered)
     events = set_ak_column(events, "single_triggered", (single_e_triggered | single_mu_triggered))
     events = set_ak_column(events, "cross_triggered", (cross_e_triggered | cross_mu_triggered | cross_tau_triggered | cross_tau_jet_triggered))
-
-
 
     trigger_ids   = ak.concatenate([etau_trig_ids, mutau_trig_ids, tautau_trig_ids], axis=1)
     trigger_ids = ak.values_astype(ak.fill_none(ak.firsts(trigger_ids, axis=1), 999), np.uint64)
@@ -465,8 +376,8 @@ def main(
     # ############################################ #
     # After building the higgs candidates, one can
     # switch on the production of GenTau. Those gentaus
-    # will be selected which get matched to the hcand
-    # hcand-gentau match = True/False
+    # will be selected which are matched to the hcand
+    # hcand-gentau match = True/False (via config)
     # ############################################ #
     if self.config_inst.x.extra_tags.genmatch:
         if "is_signal" in list(self.dataset_inst.aux.keys()):
@@ -479,18 +390,8 @@ def main(
     event_sel = reduce(and_, results.steps.values())
     results.event = event_sel
     
-    # add the mc weight
-    #if self.dataset_inst.is_mc:
-    #    events = self[scale_mc_weight](events, **kwargs)
-
     # rel-charge
     events = self[rel_charge](events, **kwargs)
-
-    # add cutflow features, passing per-object masks
-    #events = self[cutflow_features](events, results.objects, **kwargs)
-
-    #events = self[process_ids](events, **kwargs)
-    # create process ids
 
     outliers_mask_for_stitching = None
     
@@ -501,9 +402,6 @@ def main(
     else:
         events = self[process_ids](events, **kwargs)
 
-    #print("sel main")
-    #from IPython import embed; embed()
-        
     if outliers_mask_for_stitching is not None:
         n_outliers = ak.sum(outliers_mask_for_stitching)
         if n_outliers > 0:
@@ -514,17 +412,7 @@ def main(
         results += outliers_result_for_stitching
 
         
-    #events = self[category_ids](events, **kwargs)
     events, category_ids_debug_dict = self[category_ids](events, debug=True)
-    #events = set_ak_column(events, 'category_ids', ak.ones_like(events.event, dtype=np.uint8))
-
-    """
-    events, results = self[custom_increment_stats]( 
-        events,
-        results,
-        stats,
-    )
-    """
 
     events, results = self[custom_increment_stats]( 
         events,
@@ -532,8 +420,11 @@ def main(
         stats,
     )
 
-
-    # ---------------------------------------------- #
+    # On top of custom stats, the incremet_stat from columnflow is used here, just to save the
+    # number of selected events per process and sum_mc_weight as well. At the time of stitching,
+    # the fraction of sum_wt_selected/total_sum_wt per process can be multiplied to the total
+    # sum_wt produced to get the fraction of that particular exclusive process embeded into the
+    # inclusive process.
     weight_map = {
         "num_filtered_events": Ellipsis,
         "num_events_selected": event_sel,
@@ -564,7 +455,6 @@ def main(
         #group_combinations=group_combinations,
         **kwargs,
     )
-    # --------------------------------------------- #
     
 
     # inspect cuts
@@ -582,7 +472,6 @@ def main_init(self: Selector) -> None:
     if getattr(self, "dataset_inst", None) is None:
         return
 
-    #from IPython import embed; embed()
     self.process_ids_dy: process_ids_dy | None = None
     if self.dataset_inst.has_tag("is_dy"):
         if self.config_inst.x.allow_dy_stitching:
