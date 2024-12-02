@@ -67,6 +67,7 @@ ListOfMainFuncs = ['CalibrateEvents',
                    'ReduceEvents',
                    'PlotCutFlow',
                    'ProduceColumns',
+                   'CreateHistograms',
                    'PlotVariables1D', 'PlotVariables2D',
                    'PlotShiftedVariables1D', 'PlotShiftedVariables2D',
                    'UniteColumns']
@@ -188,10 +189,14 @@ if wrapper:
             f"--cf.{main_func}-workflow", workflow,
             f"--cf.{main_func}-branch", branch,
             f"--cf.{main_func}-tasks-per-job", tasks_per_job,
+            f"--cf.{main_func}-pilot",
             "--version", version,
             "--workers", nworkers,
             f"--cf.{main_func}-log-file", jobfile,
         ]
+        if main_func.startswith("CreateHistograms"):
+            cmd_list.append(f"--cf.{main_func}-variables")
+            cmd_list.append(variables)
     else:
         cmd_list = [
             "law", "run", f"cf.{main_func}",
@@ -204,6 +209,7 @@ if wrapper:
             "--categories", categories,
             "--variables", variables,
             "--workers", nworkers,
+            "--pilot",
             f"--log-file", jobfile,
         ] + extras
     

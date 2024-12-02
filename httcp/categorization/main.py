@@ -203,7 +203,39 @@ def cat_real_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array,
 def cat_fake_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     return events, events.is_fake_2
 
+# TODO : need to fix this later
+@categorizer(uses={"channel_id","is_real_1"})
+def cat_tautau_real_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("tautau")
+    ch_mask = events["channel_id"] == ch.id
+    return events, ch_mask & events.is_real_1
+@categorizer(uses={"channel_id","is_fake_1"})
+def cat_tautau_fake_1(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("tautau")
+    ch_mask = events["channel_id"] == ch.id
+    return events, ch_mask & events.is_fake_1
 
+@categorizer(uses={"channel_id","is_real_2"})
+def cat_etau_real_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("etau")
+    ch_mask = events["channel_id"] == ch.id
+    return events, ch_mask & events.is_real_2
+@categorizer(uses={"channel_id","is_fake_2"})
+def cat_etau_fake_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("etau")
+    ch_mask = events["channel_id"] == ch.id
+    return events, ch_mask & events.is_fake_2
+
+@categorizer(uses={"channel_id","is_real_2"})
+def cat_mutau_real_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("mutau")
+    ch_mask = events["channel_id"] == ch.id
+    return events, ch_mask & events.is_real_2
+@categorizer(uses={"channel_id","is_fake_2"})
+def cat_mutau_fake_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    ch = self.config_inst.get_channel("mutau")
+    ch_mask = events["channel_id"] == ch.id
+    return events, ch_mask & events.is_fake_2
 
 
 # ---------------------------------------------------------- #

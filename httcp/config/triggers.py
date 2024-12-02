@@ -719,6 +719,9 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
     # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauTrigger#Tau_Triggers_in_NanoAOD
     Adds all triggers to a *config*. For the conversion from filter names to trigger bits, see
     https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/NanoAOD/python/triggerObjects_cff.py.
+    ** Tau Trigger: https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauTrigger#Trigger_Table_for_2022
+    ** Electron Trigger: https://twiki.cern.ch/twiki/bin/view/CMS/EgHLTRunIIISummary
+    ** Muon Trigger: https://twiki.cern.ch/twiki/bin/view/CMS/MuonHLT2022
     PreEE:
       /afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/yamls/HLTlog_2022PreEE.log
     PostEE:
@@ -726,7 +729,7 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
     """
     config.x.triggers = od.UniqueObjectIndex(Trigger,[
         ## ===>>> single electron
-        Trigger( #IC, IPHC
+        Trigger(
             name="HLT_Ele30_WPTight_Gsf",
             id=111000,
             legs=[
@@ -735,83 +738,41 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     min_pt=31.0,
                     max_abseta=2.1,
                     # filter names:
-                    #
-                    trigger_bits=None, #TODO
+                    # hltEle30WPTightGsfTrackIsoFilter
+                    trigger_bits=2**1,  # 1e (WPTight) (bit 1)
                 ),
             ],
             tags=["single_trigger", "single_e", "channel_e_tau"],
         ),
-        #Trigger( #DESY
-        #    name="HLT_Ele32_WPTight_Gsf",
-        #    id=112000,
-        #    legs=[
-        #        TriggerLeg(
-        #            pdg_id=11,
-        #            min_pt=33.0,
-        #            max_abseta=None,
-        #            # filter names:
-        #            #
-        #            trigger_bits=1, #TODO
-        #        ),
-        #    ],
-        #    tags=["single_trigger", "single_e", "channel_e_tau"],
-        #),
-        #Trigger( #DESY
-        #    name="HLT_Ele35_WPTight_Gsf",
-        #    id=113000,
-        #    legs=[
-        #        TriggerLeg(
-        #            pdg_id=11,
-        #            min_pt=36.0,
-        #            max_abseta=None,
-        #            # filter names:
-        #            #
-        #            trigger_bits=1, #TODO
-        #        ),
-        #    ],
-        #    tags=["single_trigger", "single_e", "channel_e_tau"],
-        #),
         ## ===>>> e-tauh
-        Trigger( #IC, IPHC
+        Trigger(
             name="HLT_Ele24_eta2p1_WPTight_Gsf_LooseDeepTauPFTauHPS30_eta2p1_CrossL1",
             id=11151,
             legs=[
                 TriggerLeg(
                     pdg_id=11,
-                    min_pt=25.0, # 26 -> savva
+                    min_pt=25.0, # 26 -> Imperial
                     max_abseta=2.1,
                     # filter names:
-                    # hltHpsOverlapFilterIsoEle24WPTightGsfLooseETauWPDeepTauPFTau30
-                    trigger_bits=None, #TODO
+                    # hltOverlapFilterIsoEle24IsoTau30WPTightGsfCaloJet5 # TODO Twiki has no matches
+                    trigger_bits=2**3,
                 ),
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=35.0,
                     max_abseta=2.1,
                     # filter names:
-                    # hltOverlapFilterIsoEle24IsoTau30WPTightGsfCaloJet5 
-                    trigger_bits=None, #TODO
+                    # (DeepTau + HPS) # TODO Twiki sugests 8 + 32 + 256
+                    # hltHpsOverlapFilterIsoEle24WPTightGsfLooseETauWPDeepTauPFTau30 (OverlapFilter) # TODO Twiki sugests 8 + 64  # noqa
+                    # hltHpsOverlapFilterIsoEle24WPTightGsfLooseETauWPDeepTauPFTau30
+                    trigger_bits=2**3 + 2**5,
                 ),
             ],
             tags={"cross_trigger", "cross_e_tau", "channel_e_tau"},
         ),
         ## ===>>> single muon
-        #Trigger( # DESY
-        #    name="HLT_IsoMu27",
-        #    id=132000,
-        #    legs=[
-        #        TriggerLeg(
-        #            pdg_id=13,
-        #            min_pt=28.0, # check AN for Run2, v15, L 1224
-        #            max_abseta=None,
-        #            # filter names:
-        #            #
-        #            trigger_bits=3, #TODO
-        #        ),
-        #    ],
-        #    tags={"single_trigger", "single_mu", "channel_mu_tau"},
-        #),
-        Trigger( # IC,IPHC
+        # https://cmshltinfo.app.cern.ch/path/HLT_IsoMu24_v#state=53332ee4-249a-4fd3-8152-5ddbcec178c6&session_state=4d32aa9a-e3a3-4947-8c1a-6d96d0a49833&code=90d18d3f-5685-4f64-899f-02aa42d33b2c.4d32aa9a-e3a3-4947-8c1a-6d96d0a49833.1363e04b-e180-4d83-92b3-3aca653d1d8d
+        Trigger(
             name="HLT_IsoMu24",
             id=131000,
             legs=[
@@ -820,16 +781,14 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     min_pt=25.0,
                     max_abseta=2.4,
                     # filter names:
-                    # hltL3crIsoL1sSingleMu22L1f0L2f10QL3f24QL3trkIsoFiltered0p07 or
-                    # hltL3crIsoL1sSingleMu22L1f0L2f10QL3f24QL3trkIsoFiltered0p08 or
-                    # hltL3crIsoL1sSingleMu22L1f0L2f10QL3f24QL3trkIsoFiltered
-                    trigger_bits=None, #TODO
+                    # hltL3crIsoL1sSingleMu22L1f0L2f10QL3f24QL3trkIsoFiltered0p08
+                    trigger_bits=2**1 + 2**3,  # Iso (bit 1) + 1mu (bit 3)
                 ),
             ],
             tags={"single_trigger", "single_mu", "channel_mu_tau"},
         ),
         ## ===>>> mu-tauh
-        Trigger( # IC,IPHC
+        Trigger(
             name="HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1",
             id=13151,
             legs=[
@@ -838,22 +797,25 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     min_pt=21.0,
                     max_abseta=2.4,
                     # filter names:
-                    # hltHpsOverlapFilterIsoMu20LooseMuTauWPDeepTauPFTau27L1Seeded 
-                    trigger_bits=None, #TODO
+                    # hltL3crIsoBigORMu18erTauXXer2p1L1f0L2f10QL3f20QL3trkIsoFiltered  # TODO Twiki sugests 2
+                    # hltHpsOverlapFilterIsoMu20LooseMuTauWPDeepTauPFTau27L1Seeded (OverlapFilter PFTau) # TODO Twiki sugests 4 + 64  # noqa
+                    trigger_bits=2**2,
                 ),
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=32.0,
                     max_abseta=2.1,
                     # filter names:
-                    # hltL3crIsoBigORMu18erTauXXer2p1L1f0L2f10QL3f20QL3trkIsoFiltered
-                    trigger_bits=None, #TODO
+                    # (DeepTau + HPS) # TODO Twiki sugests 8 + 32 + 512 + 262144
+                    # hltHpsOverlapFilterIsoMu20LooseMuTauWPDeepTauPFTau27L1Seeded
+                    trigger_bits=2**3 + 2**5,
                 ),
             ],
             tags={"cross_trigger", "cross_mu_tau", "channel_mu_tau"},
         ),
         ## https://cmshltinfo.app.cern.ch/summary?search=HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1&year=2022&paths=true&prescaled=false&stream-types=Physics,Scouting,Parking
-        Trigger( # IC,IPHC
+        ## ===>>> tauh-tauh
+        Trigger(
             name="HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
             id=15151,
             #run_range=[355862,362760],
@@ -863,21 +825,27 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     min_pt=40.0,
                     max_abseta=2.1,
                     # filter names:
-                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
-                    trigger_bits=None, # TODO
+                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02 (Deeptau + HPS)
+                    trigger_bits=2**3 + 2**5,
                ),
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=40.0,
                     max_abseta=2.1,
                     # filter names:
-                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
-                    trigger_bits=None, #TODO
+                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02 (Deeptau + HPS)
+                    trigger_bits=2**3 +	2**5,
                 ),
             ],
             tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
         ),
-        Trigger( # IC,IPHC
+        # ==> diTau + Jet
+        # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauTrigger#Trigger_Table_for_2022
+        # bits mentioned : 3, 14
+        # 14 is found in https://cms-nanoaod-integration.web.cern.ch/autoDoc/NanoAODv14/2024Prompt/doc_EGamma1_Run2024D-PromptReco-v1.html#TrigObj,
+        # reference taken from https://github.com/cms-sw/cmssw/blob/583e1a68e97c446b7f53098725e97747790c6a70/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L127-L154
+        # but 3 means DeepTau no spec WP, which is not specified in triggerObjects_cff.py
+        Trigger(
             name="HLT_DoubleMediumDeepTauPFTauHPS30_L2NN_eta2p1_PFJet60",
             id=15152,
             #run_range=[355862,362760],
@@ -887,8 +855,9 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     min_pt=35.0,
                     max_abseta=2.1,
                     # filter names:
-                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
-                    trigger_bits=None, # TODO
+                    # (TightOOSCPhotons + di-tau + PFJet) # TODO Twiki sugests 8 + 32 + 16384
+                    # hltHpsOverlapFilterDeepTauDoublePFTau30PFJet60
+                    trigger_bits=2**4 + 2**14,
                 ),
                 TriggerLeg(
                     pdg_id=15,
@@ -896,7 +865,7 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     max_abseta=2.1,
                     # filter names:
                     # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
-                    trigger_bits=None, #TODO
+                    trigger_bits=2**4 + 2**14,
                 ),
             ],
             tags={"cross_trigger", "cross_tau_tau_jet", "channel_tau_tau"},

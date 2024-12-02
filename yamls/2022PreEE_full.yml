@@ -5,14 +5,14 @@ era     : 2022
 postfix : PreEE
 wrapper : true
 limited : false
-workers : 12
-tasks_per_job  : 4
+workers : 8
+tasks_per_job  : 2
 
 args:
   config    : run3_2022_preEE_nano_cp_tau_v14
   workflow  : htcondor
   branch    : -1
-  version   : Run3_2022PreEE_full_20241111_014708
+  version   : Run3_2022PreEE_full_20241130_190734
 
   datasets  :
     ## == data ==
@@ -24,28 +24,37 @@ args:
     - data_e_C
     - data_e_D
     ## == wj ==
-    - wj_incl_amcatnlo
-    - wj_0j_amcatnlo
-    - wj_1j_amcatnlo
-    - wj_2j_amcatnlo
+    #- wj_incl_amcatnlo
+    #- wj_0j_amcatnlo
+    #- wj_1j_amcatnlo
+    #- wj_2j_amcatnlo
+    - wj_incl_madgraph
+    - wj_1j_madgraph
+    - wj_2j_madgraph
+    - wj_3j_madgraph
+    - wj_4j_madgraph    
     ## == dy ==
-    #- dy_lep_m10to50_madgraph
-    #- dy_lep_m50_madgraph
-    - dy_lep_m10to50_amcatnlo
-    - dy_lep_m50_amcatnlo
-    - dy_lep_m50_0j_amcatnlo
-    - dy_lep_m50_1j_amcatnlo
-    - dy_lep_m50_2j_amcatnlo
-    - dy_lep_m50_1j_pt40to100_amcatnlo
-    - dy_lep_m50_2j_pt40to100_amcatnlo
-    - dy_lep_m50_1j_pt100to200_amcatnlo
-    - dy_lep_m50_2j_pt100to200_amcatnlo
-    - dy_lep_m50_1j_pt200to400_amcatnlo
-    - dy_lep_m50_2j_pt200to400_amcatnlo
-    - dy_lep_m50_1j_pt400to600_amcatnlo
-    - dy_lep_m50_2j_pt400to600_amcatnlo
-    - dy_lep_m50_1j_pt600toInf_amcatnlo
-    - dy_lep_m50_2j_pt600toInf_amcatnlo
+    - dy_lep_m10to50_madgraph
+    - dy_lep_m50_madgraph
+    - dy_lep_m50_1j_madgraph
+    - dy_lep_m50_2j_madgraph
+    - dy_lep_m50_3j_madgraph
+    - dy_lep_m50_4j_madgraph    
+    #- dy_lep_m10to50_amcatnlo
+    #- dy_lep_m50_amcatnlo
+    #- dy_lep_m50_0j_amcatnlo
+    #- dy_lep_m50_1j_amcatnlo
+    #- dy_lep_m50_2j_amcatnlo
+    #- dy_lep_m50_1j_pt40to100_amcatnlo
+    #- dy_lep_m50_2j_pt40to100_amcatnlo
+    #- dy_lep_m50_1j_pt100to200_amcatnlo
+    #- dy_lep_m50_2j_pt100to200_amcatnlo
+    #- dy_lep_m50_1j_pt200to400_amcatnlo
+    #- dy_lep_m50_2j_pt200to400_amcatnlo
+    #- dy_lep_m50_1j_pt400to600_amcatnlo
+    #- dy_lep_m50_2j_pt400to600_amcatnlo
+    #- dy_lep_m50_1j_pt600toInf_amcatnlo
+    #- dy_lep_m50_2j_pt600toInf_amcatnlo
     ## == tt ==
     - tt_dl
     - tt_sl
@@ -65,35 +74,43 @@ args:
     - ww
     - wz
     - zz
+    ## == vvv ==
+    - www
+    - wwz
+    - wzz
+    - zzz
     ## == signal ==
-    #- h_ggf_tautau_prod_cp_even_sm
+    - h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay
+    - h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay
+    - h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay
+    #- zh_tautau_uncorrelatedDecay_Filtered
+    #- wph_tautau_uncorrelatedDecay_Filtered
+    #- wmh_tautau_uncorrelatedDecay_Filtered
 
   processes :
     - data
-    - w
-    #- w_lnu
+    #- w
+    - w_lnu
     #- dy_m10to50
     #- dy_m50toinf_lep
     #- dy_m50toinf_tau
+    #- dy_m50toinf_jet
     - dy
     - tt
-    #- st_tchannel
-    #- st_twchannel
+    ##- st_tchannel
+    ##- st_twchannel
     - st
     - vv
-    #- h_ggf_htt
+    - vvv
+    - h_ggf_htt
+    #- zh_htt
+    #- wh_htt
 
   categories:
-    #- incl
-    ## --- etau --- #
-    - etau
-    - etau__real_2__lepC
-    - etau__real_2__lepD
-    - mutau
-    - mutau__real_2__lepC
-    - mutau__real_2__lepD
-    ## --- tautau --- #
-    - tautau*
+    - etau__*
+    - mutau__*
+    - tautau__real_1__had*
+    
 
   variables:
     ## -- electron -- #
@@ -123,23 +140,31 @@ args:
     #- hcand_1_IPx
     #- hcand_1_IPy
     #- hcand_1_IPz
-    #- hcand_1_IPsig
+    - hcand_1_IPsig
+    #- hcand_1_decayMode
     - hcand_2_pt
     - hcand_2_eta
     - hcand_2_phi
     #- hcand_2_IPx
     #- hcand_2_IPy
     #- hcand_2_IPz
-    #- hcand_2_IPsig
+    - hcand_2_IPsig
+    #- hcand_2_decayMode
     - hcand_dr
     - hcand_invm
+    - dphi_met_h1
+    - dphi_met_h2
+    - met_var_qcd_h1
+    - met_var_qcd_h2
     ## -- jet -- #
-    #- jet_1_pt
-    #- jet_1_eta
-    #- jet_1_phi
-    #- jet_2_pt
-    #- jet_2_eta
-    #- jet_2_phi
+    - n_jet
+    - jet_1_pt
+    - jet_1_eta
+    - jet_1_phi
+    - jet_2_pt
+    - jet_2_eta
+    - jet_2_phi
+    #- ht
     ## -- met -- #
     - puppi_met_pt
     - puppi_met_phi
@@ -169,4 +194,4 @@ args:
     
 
   extras:
-    - process-settings "h_ggf_htt,unstack,100000"
+    - process-settings "h_ggf_htt,unstack,300"

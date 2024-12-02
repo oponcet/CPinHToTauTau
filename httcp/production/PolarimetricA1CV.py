@@ -1,18 +1,25 @@
-import numpy as np
-import awkward as ak
-from coffea.nanoevents.methods import vector
-import matplotlib.pyplot as plt
+import os
+from columnflow.util import maybe_import
+from typing import Optional
 
-from TComplex import TComplex
-from util import *
+np     = maybe_import("numpy")
+ak     = maybe_import("awkward")
+coffea = maybe_import("coffea")
+
+from httcp.production.TComplex import TComplex
+from columnflow.columnar_util import EMPTY_FLOAT, Route, flat_np_view, layout_ak_array
+
+
 
 
 class PolarimetricA1:
-    def __init__(self,
-                 p4_tau: ak.Array, 
-                 p4_os_pi: ak.Array, p4_ss1_pi: ak.Array, p4_ss2_pi: ak.Array,
-                 taucharge: int,
-                 decayChannel: str) -> None:
+    def __init__(
+            self,
+            p4_tau: ak.Array, 
+            p4_os_pi: ak.Array, p4_ss1_pi: ak.Array, p4_ss2_pi: ak.Array,
+            taucharge: ak.Array,
+            decayChannel: Optional[str]="k3ChargedPi"
+    ) -> None:
         """
           Calculate Polarimetric vector for tau to a1 decay
           args:
@@ -92,7 +99,7 @@ class PolarimetricA1:
         #                   [ 0.0,  0.0, -1.0, -1.0],
         #                   [ 0.0,  0.0,  0.0,  1.0]])
         
-
+        
     def get_g(self, mu: int, nu: int) -> int:
         if (mu == 0 and nu == 0) or (mu == 1 and nu == 1) or (mu == 2 and nu == 2): return -1.0
         elif mu == 3 and nu == 3:                                                   return 1.0
@@ -117,6 +124,19 @@ class PolarimetricA1:
         p2 = self.p2
         p3 = self.p3
 
+        # saving original dimension
+        numP = ak.num(P, axis=1)
+        mask = numP > 0
+        P = P[mask]
+        p1 = p1[mask]
+        p2 = p2[mask]
+        p3 = p3[mask]
+        tauc = self.taucharge[mask]
+        
+        #_layout = ak.num(P,  axis=1)[:,None]
+        
+        #from IPython import embed; embed()
+        
         #p1 = self.Boost(self.p1, self.P)
         #p2 = self.Boost(self.p2, self.P)
         #p3 = self.Boost(self.p3, self.P)
@@ -140,10 +160,10 @@ class PolarimetricA1:
 
         # CV: sign of terms proportional to gammaVA differs for tau+ and tau-,
         #     cf. text following Eq. (3.16) in Comput.Phys.Commun. 64 (1991) 275
-        sign = 0.0
-        if    self.taucharge == +1: sign = -1.
-        elif  self.taucharge == -1: sign = +1.
-        else: assert False
+        sign = np.where(tauc > 0, -1, 1)
+        #if    self.taucharge == +1: sign = -1.
+        #elif  self.taucharge == -1: sign = +1.
+        #else: assert False
 
         print(f"sign: {sign}")
         
@@ -154,16 +174,41 @@ class PolarimetricA1:
         print(f"np.power(self.m_tau, 2)*(Pi5 - sign*gammaVA*Pi): {np.power(self.m_tau, 2)*(Pi5 - sign*gammaVA*Pi)}")
         print(f"P.dot(Pi5 - sign*gammaVA*Pi)*P: {P.dot(Pi5 - sign*gammaVA*Pi)*P}")
         
-        P = setp4("LorentzVector", P.px, P.py, P.pz, P.energy)
+        #P = setp4("LorentzVector", P.px, P.py, P.pz, P.energy)
+        P = ak.zip(
+            {
+                "x": P.px,
+                "y": P.py,
+                "z": P.pz,
+                "t": P.energy,
+            },
+            with_name="LorentzVector",
+            behavior=coffea.nanoevents.methods.vector.behavior,
+        )
+
+        
         #H = (1./(omega*P.mass))*(np.power(P.mass, 2)*(Pi5 - sign*gammaVA*Pi) - P.dot(Pi5 - sign*gammaVA*Pi)*P)
         H = (1./(omega*self.m_tau))*(np.power(self.m_tau, 2)*(Pi5 - sign*gammaVA*Pi) - P.dot(Pi5 - sign*gammaVA*Pi)*P)
         print(f"H: {H}, {type(H)}")
         
-        retVal = H.pvec.unit
+        #retVal = H.pvec.unit
+        #retVal = H.pvec
 
-        return retVal
+        #return retVal
+
+        #H = layout_ak_array(np.flatten(H), _layout)
 
 
+        fH = ak.flatten(H)
+        masked_numP = numP.mask[numP == 1]
+        flat_index = np.cumsum(masked_numP) - 1
+        flat_result = fH[flat_index]
+        H = flat_result[:,None]
+        H = ak.drop_none(H)
+        
+        return H
+
+        
     def comp_J(self, p1: ak.Array, p2: ak.Array, p3: ak.Array) -> np.array(4, dtype=TComplex):
         """
         Args:
@@ -187,10 +232,6 @@ class PolarimetricA1:
         h3 = p1 + p2
         Q3 = h3 - p3
         s3 = h3.mass2
-
-        plotit(arrlist=[ak.fill_none(ak.flatten(s1),0).to_numpy(),
-                        ak.fill_none(ak.flatten(s2),0).to_numpy(),
-                        ak.fill_none(ak.flatten(s3),0).to_numpy()])
         
         m1, m2, m3 = 0., 0., 0.
         if self.decayChannel == "k3ChargedPi":
@@ -208,6 +249,8 @@ class PolarimetricA1:
         a = p1 + p2 + p3
         s = a.mass2
 
+        #from IPython import embed; embed()
+        
         T = np.zeros((4,4), dtype=TComplex)
         for mu in range(4):
             for nu in range(4):
@@ -487,7 +530,7 @@ class PolarimetricA1:
                 "t": p[3].Re() if not isinstance(p[3], np.ndarray) else ak.Array(p[3]),
             },
             with_name = "LorentzVector",
-            behavior = vector.behavior,
+            behavior = coffea.nanoevents.methods.vector.behavior,
         )
         return retVal
 
@@ -643,7 +686,7 @@ class PolarimetricA1:
                 "t": ak.Array(2.*vProd[3].Im())
             },
             with_name="LorentzVector",
-            behavior=vector.behavior,            
+            behavior=coffea.nanoevents.methods.vector.behavior,            
         )
         print(f"retVal: {retVal}")
         return retVal
@@ -832,10 +875,10 @@ class PolarimetricA1:
 
         
         
-        print(ak.min(ak.num(s_lo, axis=1)),     ak.sum(ak.num(s_lo, axis=1)), s_lo[1816], s_lo[7363])
-        print(ak.min(ak.num(s_hi, axis=1)),     ak.sum(ak.num(s_hi, axis=1)), s_hi[1816], s_hi[7363])
-        print(ak.min(ak.num(Gamma_lo, axis=1)), ak.sum(ak.num(Gamma_lo, axis=1)), Gamma_lo[1816], Gamma_lo[7363])
-        print(ak.min(ak.num(Gamma_hi, axis=1)), ak.sum(ak.num(Gamma_hi, axis=1)), Gamma_hi[1816], Gamma_hi[7363])
+        #print(ak.min(ak.num(s_lo, axis=1)),     ak.sum(ak.num(s_lo, axis=1)), s_lo[1816], s_lo[7363])
+        #print(ak.min(ak.num(s_hi, axis=1)),     ak.sum(ak.num(s_hi, axis=1)), s_hi[1816], s_hi[7363])
+        #print(ak.min(ak.num(Gamma_lo, axis=1)), ak.sum(ak.num(Gamma_lo, axis=1)), Gamma_lo[1816], Gamma_lo[7363])
+        #print(ak.min(ak.num(Gamma_hi, axis=1)), ak.sum(ak.num(Gamma_hi, axis=1)), Gamma_hi[1816], Gamma_hi[7363])
 
         print(ak.argsort(ak.num(s_hi, axis=1), ascending=True))
         

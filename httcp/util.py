@@ -326,7 +326,8 @@ def getGenTauDecayMode(prod: ak.Array):
                                     -9)
                        )
               )
-
+    
+    dm = ak.fill_none(dm, -3) # just to make ?int64 to int64
     return dm
 
 
@@ -428,3 +429,41 @@ def call_once_on_config(include_hash=False):
             return func(config, *args, **kwargs)
         return inner
     return outer
+
+
+def setp4(name="LorentzVector", *args, verbose: Optional[bool] = False):
+    if len(args) < 4:
+        raise RuntimeError ("Need at least four components")
+
+    if name == "PtEtaPhiMLorentzVector":
+        if verbose:
+            print(f" --- pT  : {args[0]}")
+            print(f" --- eta : {args[1]}")
+            print(f" --- phi : {args[2]}")
+            print(f" --- mass: {args[3]}")
+        return ak.zip(
+            {
+                "pt": args[0],
+                "eta": args[1],
+                "phi": args[2],
+                "mass": args[3],
+            },
+            with_name=name,
+            behavior=coffea.nanoevents.methods.vector.behavior
+        )
+    else:
+        if verbose:
+            print(f" --- px     : {args[0]}")
+            print(f" --- py     : {args[1]}")
+            print(f" --- pz     : {args[2]}")
+            print(f" --- energy : {args[3]}")
+        return ak.zip(
+            {
+                "x": args[0],
+                "y": args[1],
+                "z": args[2],
+                "t": args[3],
+            },
+            with_name=name,
+            behavior=coffea.nanoevents.methods.vector.behavior
+        )

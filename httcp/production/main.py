@@ -72,7 +72,8 @@ logger = law.logger.get_logger(__name__)
         "n_jet",
         #ProduceGenPhiCP, #ProduceGenCosPsi,
         #ProduceDetPhiCP, #ProduceDetCosPsi,
-        "dphi_met_h1", "dphi_met_h2", "met_var_qcd_h1",
+        "dphi_met_h1", "dphi_met_h2",
+        "met_var_qcd_h1", "met_var_qcd_h2",
     },
 )
 def hcand_features(
@@ -89,33 +90,30 @@ def hcand_features(
 
     
     mass = (hcand1 + hcand2).mass
-    #dr = ak.firsts(hcand1.metric_table(hcand2), axis=1)
-    #dr = ak.enforce_type(dr, "var * float32")
     dr = hcand1.delta_r(hcand2)
 
     # deltaPhi between MET and hcand1 & 2
     dphi_met_h1 = met.delta_phi(hcand1)
     dphi_met_h2 = met.delta_phi(hcand2)
     met_var_qcd_h1 = met.pt * np.cos(dphi_met_h1)/hcand1.pt
+    met_var_qcd_h2 = met.pt * np.cos(dphi_met_h2)/hcand2.pt
     
     events = set_ak_column_f32(events, "hcand_invm",  mass)
     events = set_ak_column_f32(events, "hcand_dr",    dr)
-    events = set_ak_column_f32(events, "dphi_met_h1", dphi_met_h1)
-    events = set_ak_column_f32(events, "dphi_met_h2", dphi_met_h2)
+    events = set_ak_column_f32(events, "dphi_met_h1", np.abs(dphi_met_h1))
+    events = set_ak_column_f32(events, "dphi_met_h2", np.abs(dphi_met_h2))
     events = set_ak_column_f32(events, "met_var_qcd_h1", met_var_qcd_h1)
+    events = set_ak_column_f32(events, "met_var_qcd_h2", met_var_qcd_h2)
     
     events = set_ak_column_i32(events, "n_jet", ak.num(events.Jet.pt, axis=1))
 
-    
     """
     events, P4_dict     = self[reArrangeDecayProducts](events)
     events              = self[ProduceDetPhiCP](events, P4_dict)
-    #from IPython import embed; embed()
     #events              = self[ProduceDetCosPsi](events, P4_dict)
     
     if self.config_inst.x.extra_tags.genmatch:
         if "is_signal" in list(self.dataset_inst.aux.keys()):
-            #    if self.dataset_inst.aux["is_signal"]:
             events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
             events = self[ProduceGenPhiCP](events, P4_gen_dict)
             #events = self[ProduceGenCosPsi](events, P4_gen_dict)
@@ -193,8 +191,9 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         else:
             events = self[normalization_weights](events, **kwargs)
 
+        # TODO : pileup weight is constrained to max value 10
+        # TODO : check columnflow production/pileup
         events = self[pu_weight](events, **kwargs)
-        #if not self.dataset_inst.has_tag("no_lhe_weights"):
         if self.has_dep(pdf_weights):
             events = self[pdf_weights](events, **kwargs)
         # ----------- Muon weights ----------- #

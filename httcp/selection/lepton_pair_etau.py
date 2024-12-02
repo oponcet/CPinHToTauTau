@@ -31,8 +31,6 @@ def match_trigobjs(
         **kwargs,
 ) -> tuple[ak.Array, ak.Array]:
 
-    print("match trigger objects")
-
     # extract the trigger names, types & others from trigger_results.x (aux)
     trigger_ids           = trigger_results.x.trigger_ids
     trigger_types         = trigger_results.x.trigger_types
@@ -151,8 +149,6 @@ def match_trigobjs(
     
 
 def sort_pairs(dtrpairs: ak.Array)->ak.Array:
-    print("sorting pairs if many")
-    
     # Just to get the indices
     # Redundatnt as already sorted by their isolation
     sorted_idx = ak.argsort(dtrpairs["0"].pfRelIso03_all, ascending=True)
@@ -287,8 +283,6 @@ def etau_selection(
     # sort the pairs if many
     leps_pair = ak.where(npair > 1, sort_pairs(leps_pair), leps_pair)
 
-    print("etau")
-
     # match trigger objects for all pairs
     leps_pair, trigIds, trigTypes = match_trigobjs(leps_pair, trigger_results)
 
@@ -305,29 +299,6 @@ def etau_selection(
     # rebuild the pair with the 1st one only
     leps_pair = ak.concatenate([lep1, lep2], axis=1)
 
-
-    #
-    # ABCD
-    #
-    #
-    """
-    mask_isOS = (lep1.charge * lep2.charge) < 0
-    pair_selection_steps["etau_is_os"] = mask_isOS
-    pair_selection_steps["etau_is_ss"] = ~mask_isOS
-    
-    mask_isLowMT = transverse_mass(lep1, met) < 50.0
-    pair_selection_steps["etau_is_lowMT"]  = mask_isLowMT
-    pair_selection_steps["etau_is_highMT"] = ~mask_isLowMT
-
-    mask_isTauIso = (lep2.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j["Medium"])  # leading tau passing Medium WP                                                                                  
-    pair_selection_steps["etau_is_tau_iso"] = mask_isTauIso
-    pair_selection_steps["etau_is_tau_antiIso"] = ~mask_isTauIso
-    
-
-    mask_hasNobjet = 
-    """
-
-    
     return SelectionResult(
         aux = pair_selection_steps,
     ), leps_pair, trigIds, trigTypes

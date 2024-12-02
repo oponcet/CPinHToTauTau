@@ -80,15 +80,16 @@ def add_config (ana: od.Analysis,
         "dy",
         #"dy_m10to50",
         #"dy_m50toinf",
-        #"dy_m50toinf_lep",
-        #"dy_m50toinf_tau",
-        #"dy_m50toinf_mc_fake",
+        "dy_m50toinf_lep",
+        "dy_m50toinf_tau",
+        "dy_m50toinf_jet",
         ## TTJets
         "tt",
         ## Single top
         "st",
         ## VV [diboson inclusive]
         "vv",
+        "vvv",
         ## Signal
         "h_ggf_htt",
         "zh_htt",
@@ -120,51 +121,52 @@ def add_config (ana: od.Analysis,
     dataset_names = [
         ##W+jets
         # --- LO --- #
-        #"wj_incl_madgraph",
-        #"wj_1j_madgraph",
-        #"wj_2j_madgraph",
-        #"wj_3j_madgraph",
-        #"wj_4j_madgraph",
+        "wj_incl_madgraph",
+        "wj_1j_madgraph",
+        "wj_2j_madgraph",
+        "wj_3j_madgraph",
+        "wj_4j_madgraph",
         #"wj_ht40to100_madgraph",
         #"wj_ht100to400_madgraph",
         #"wj_ht400to800_madgraph",
         #"wj_ht800to1500_madgraph",
         #"wj_ht1500to2500_madgraph",
         # --- NLO --- #
-        "wj_incl_amcatnlo",
-        "wj_0j_amcatnlo",
-        "wj_1j_amcatnlo",
-        "wj_2j_amcatnlo",
+        #"wj_incl_amcatnlo",
+        #"wj_0j_amcatnlo",
+        #"wj_1j_amcatnlo",
+        #"wj_2j_amcatnlo",
+
         ##Drell-Yan
         # --- LO --- #
-        #"dy_lep_m10to50_madgraph",
-        #"dy_lep_m50_madgraph",
-        #"dy_lep_m50_1j_madgraph",
-        #"dy_lep_m50_2j_madgraph",
-        #"dy_lep_m50_3j_madgraph",
-        #"dy_lep_m50_4j_madgraph",
+        "dy_lep_m10to50_madgraph",
+        "dy_lep_m50_madgraph",
+        "dy_lep_m50_1j_madgraph",
+        "dy_lep_m50_2j_madgraph",
+        "dy_lep_m50_3j_madgraph",
+        "dy_lep_m50_4j_madgraph",
         # --- NLO --- #
-        "dy_lep_m10to50_amcatnlo",
-        "dy_lep_m50_amcatnlo",
-        "dy_lep_m50_0j_amcatnlo",
-        "dy_lep_m50_1j_amcatnlo",
-        "dy_lep_m50_2j_amcatnlo",
-        #"dy_lep_m50_1j_pt0to40_amcatnlo",
-        #"dy_lep_m50_2j_pt0to40_amcatnlo",
-        "dy_lep_m50_1j_pt40to100_amcatnlo",
-        "dy_lep_m50_2j_pt40to100_amcatnlo",
-        "dy_lep_m50_1j_pt100to200_amcatnlo",
-        "dy_lep_m50_2j_pt100to200_amcatnlo",
-        "dy_lep_m50_1j_pt200to400_amcatnlo",
-        "dy_lep_m50_2j_pt200to400_amcatnlo",
-        "dy_lep_m50_1j_pt400to600_amcatnlo",
-        "dy_lep_m50_2j_pt400to600_amcatnlo",
-        "dy_lep_m50_1j_pt600toInf_amcatnlo",
-        "dy_lep_m50_2j_pt600toInf_amcatnlo",
+        #"dy_lep_m10to50_amcatnlo",
+        #"dy_lep_m50_amcatnlo",
+        #"dy_lep_m50_0j_amcatnlo",
+        #"dy_lep_m50_1j_amcatnlo",
+        #"dy_lep_m50_2j_amcatnlo",
+        #"dy_lep_m50_1j_pt40to100_amcatnlo",
+        #"dy_lep_m50_2j_pt40to100_amcatnlo",
+        #"dy_lep_m50_1j_pt100to200_amcatnlo",
+        #"dy_lep_m50_2j_pt100to200_amcatnlo",
+        #"dy_lep_m50_1j_pt200to400_amcatnlo",
+        #"dy_lep_m50_2j_pt200to400_amcatnlo",
+        #"dy_lep_m50_1j_pt400to600_amcatnlo",
+        #"dy_lep_m50_2j_pt400to600_amcatnlo",
+        #"dy_lep_m50_1j_pt600toInf_amcatnlo",
+        #"dy_lep_m50_2j_pt600toInf_amcatnlo",
+
         ## ttbar
         "tt_sl",
         "tt_dl",
         "tt_fh",
+
         ##single top
         "st_tchannel_t",
         "st_tchannel_tbar",
@@ -176,11 +178,19 @@ def add_config (ana: od.Analysis,
         "st_tw_tb_fh",
         "st_schannel_t",
         "st_schannel_tbar",
+
         ##Diboson
         "ww",
         "wz",
         "zz",
-        # signal
+
+        ##Triboson
+        "www",
+        "wwz",
+        "wzz",
+        "zzz",
+
+        ##Signal
         "h_ggf_tautau_uncorrelated_filter",
         "h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay",
         "h_ggf_tautau_uncorrelatedDecay_CPodd_UnFiltered_ProdAndDecay",
@@ -241,7 +251,7 @@ def add_config (ana: od.Analysis,
         
         # add the dataset
         dataset = cfg.add_dataset(campaign.get_dataset(dataset_name))
-        if re.match(r"^(ww|wz|zz)$", dataset.name):
+        if re.match(r"^(ww|wz|zz|www|wwz|wzz|zzz)$", dataset.name):
             dataset.add_tag("no_lhe_weights")
         elif re.match(r"^dy_lep_m50.*$", dataset.name):
             dataset.add_tag("is_dy")
@@ -279,7 +289,7 @@ def add_config (ana: od.Analysis,
     # (used in wrapper_factory and during plotting)
     cfg.x.process_groups = {
         "backgrounds": (backgrounds := [
-            "w_lnu",
+            "w_lnu", #"w_lnu",
             "tt",
             "dy_m50toinf", "dy_m10to50",
             "st",
@@ -287,7 +297,7 @@ def add_config (ana: od.Analysis,
         ]),
         "bkg_sig"       : (bkg_sig       := [*backgrounds, "h_ggf_htt"]),
         "data_bkg"      : (data_bkg      := [*backgrounds, "data"]),
-        "data_bkg_sig"  : (data_bkg_sig  := [*backgrounds, "data", "h_ggf_tautau"]),
+        "data_bkg_sig"  : (data_bkg_sig  := [*backgrounds, "data", "h_ggf_htt"]),
     }
     cfg.x.process_settings_groups = {
         "unstack_processes": {proc: {"unstack": True, "scale": 10.0} for proc in ("h_ggf_htt")},
@@ -337,6 +347,19 @@ def add_config (ana: od.Analysis,
     cfg.x.allow_dy_stitching = True
     cfg.x.dy_stitching = {
         "dy": {
+            "inclusive_dataset": cfg.datasets.n.dy_lep_m50_madgraph,
+            "leaf_processes": [
+                # the following processes cover the full njet phasespace
+                *(
+                    procs.get(f"dy_m50toinf_{nj}j")
+                    for nj in [0, 1, 2, 3, 4]
+                ),
+            ],
+        },
+    }
+    """
+    cfg.x.dy_stitching = {
+        "dy": {
             "inclusive_dataset": cfg.datasets.n.dy_lep_m50_amcatnlo,
             "leaf_processes": [
                 # the following processes cover the full njet and pt phasespace
@@ -350,8 +373,22 @@ def add_config (ana: od.Analysis,
             ],
         },
     }
+    """
     # w+jets [NLO]
     cfg.x.allow_w_stitching = True
+    cfg.x.w_stitching = {
+        "wj": {
+            "inclusive_dataset": cfg.datasets.n.wj_incl_madgraph,
+            "leaf_processes": [
+                # the following processes cover the full njet phasespace
+                *(
+                    procs.get(f"w_lnu_{nj}j") # njet from LO samples
+                    for nj in [0,1,2,3,4]
+                ),
+            ],
+        },
+    }
+    """
     cfg.x.w_stitching = {
         "wj": {
             "inclusive_dataset": cfg.datasets.n.wj_incl_amcatnlo,
@@ -364,6 +401,7 @@ def add_config (ana: od.Analysis,
             ],
         },
     }
+    """
     
     
     # --------------------------------------------------------------------------------------------- #
@@ -945,39 +983,11 @@ def add_config (ana: od.Analysis,
         "tau_weight"                            : [], #get_shifts("tau"),
         #"ff_weight"                             : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
-        #"tauspinner_weight"                    : get_shifts("tauspinner"),
-        #"pdf_weight"                            : [],
-        #"zpt_reweight"                          : [],
+        "tauspinner_weight"                     : get_shifts("tauspinner"),
+        "pdf_weight"                            : [],
+        "zpt_reweight"                          : [],
     })
 
-    # define per-dataset event weights
-    for dataset in cfg.datasets:
-        if dataset.x("no_lhe_weights", False):
-            dataset.x.event_weights = {
-                "pdf_weight": [], #get_shifts("pdf"),
-            }
-        if dataset.x("is_dy", False):
-            dataset.x.event_weights = {
-                "zpt_reweight": [],
-            }
-        if dataset.x("is_ggf_signal", False) or dataset.x("is_vh_signal", False):
-            dataset.x.event_weights = {
-                "tauspinner_weight"    : get_shifts("tauspinner"),
-                #"tauspinner_weight_cpeven" : [],
-                #"tauspinner_weight_cpeven_alt" : [],
-                #"tauspinner_weight_cpmix"  : [],
-                #"tauspinner_weight_cpmix_alt"  : [],
-                #"tauspinner_weight_cpmixm" : [],
-                #"tauspinner_weight_cpmixm_alt" : [],
-                #"tauspinner_weight_cpalpha0p375" : [],
-                #"tauspinner_weight_cpalpha0p375_alt" : [],
-                #"tauspinner_weight_cpodd"  : [],
-                #"tauspinner_weight_cpodd_alt"  : [],
-            }
-            
-    #cfg.x.default_weight_producer = "all_weights"
-
-    
     #---------------------------------------------------------------------------------------------#
     # No Idea
     # versions per task family, either referring to strings or to callables receving the invoking
@@ -1049,14 +1059,14 @@ def add_config (ana: od.Analysis,
     from httcp.config.categories import add_categories
     add_categories(cfg)
 
-    cfg.x.ff_apply_id_map = DotDict.wrap({
-        #"etau"  : {},
-        #"mutau" : {},
-        "tautau" : {
-            "id"  : cfg.get_category("tautau__hadC").id,  # category_id for AR C 
-            "id0" : cfg.get_category("tautau__hadC0").id, # category_id for AR C0
-        },
-    })
+    #cfg.x.ff_apply_id_map = DotDict.wrap({
+    #    #"etau"  : {},
+    #    #"mutau" : {},
+    #    "tautau" : {
+    #        "id"  : cfg.get_category("tautau__hadC").id,  # category_id for AR C 
+    #        "id0" : cfg.get_category("tautau__hadC0").id, # category_id for AR C0
+    #    },
+    #})
     
     #---------------------------------------------------------------------------------------------#
     # Add variables described in variables.py
@@ -1089,7 +1099,7 @@ def add_config (ana: od.Analysis,
             "is_a1_3pr_0pi0_1", "is_a1_3pr_0pi0_2",
             "is_a1_3pr_1pi0_1", "is_a1_3pr_1pi0_2",
             "is_ipsig_0to1_1",
-            "LHE.NpNLO", "LHE.Vpt",
+            #"LHE.NpLO", "LHE.NpNLO", "LHE.Vpt", "LHE.Njets",
         } | {
             f"GenPart.{var}" for var in [
                 "pt", "eta", "phi", "mass",

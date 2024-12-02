@@ -52,3 +52,11 @@ So, `law.cfg` needs to be set like here in this repo.
 For any computing system, please make sure that this hard-coded (stupid) line is changed to the proper one:
 
 `thisdir` in the config e.g. here: https://github.com/gsaha009/CPinHToTauTau/blob/main/httcp/config/config_run3.py#L33
+
+### Best Practices
+
+ - If you want to check whether your changes are working properly, use the config with the "_limited" tag in the end of your actual config. It will take one ROOT file as input to make the execution faster.
+ - For production, if you need to send jobs to any batch system configured in `law`, it is better to run `cd.ReduceEventsWrapper` first. Then it is safe to use `cf.ProduceColumns`. By the end of this task, all possible event and object level corrections have already been applied. So, now usually there are three targets: Plotting, Saving the skimmed and corrected events array (porbably in flat ROOT ntuple) or to produce DataCard. In between, ML training or evaluation task can be used if needed. It is always better to follow this `columnflow` [task-graph](https://github.com/columnflow/columnflow/wiki#default-task-graph).
+ - Now, you may have a ton of datasets and processes. This [script](https://github.com/gsaha009/CPinHToTauTau/blob/main/cf_run.py) might help you to get the commands, which you can copy and paste in a tmux session.
+   - To start with, you can modify this `yaml` depending on your needs : https://github.com/gsaha009/CPinHToTauTau/blob/main/yamls/2022PreEE_full.yml
+   - Then you can run the `cf_run` script like : `python cf_run.py -i <yaml/2022PreEE_full.yml or other> -f <ReduceEvents or other>`
