@@ -171,7 +171,7 @@ cmd_list = [
     "--config", config,
     "--dataset", datasets,
     "--workflow", workflow,
-    "--branch", branch,
+    #"--branch", branch,
     "--version", version,
     #"&>", jobfile, '&'
 ]
@@ -187,12 +187,12 @@ if wrapper:
             "--datasets", datasets,
             f"--shifts", shifts_val,
             f"--cf.{main_func}-workflow", workflow,
-            f"--cf.{main_func}-branch", branch,
+            #f"--cf.{main_func}-branch", branch,
             f"--cf.{main_func}-tasks-per-job", tasks_per_job,
             f"--cf.{main_func}-pilot",
             "--version", version,
             "--workers", nworkers,
-            f"--cf.{main_func}-log-file", jobfile,
+            #f"--cf.{main_func}-log-file", jobfile,
         ]
         if main_func.startswith("CreateHistograms"):
             cmd_list.append(f"--cf.{main_func}-variables")
