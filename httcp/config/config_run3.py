@@ -1264,3 +1264,11 @@ def add_config (ana: od.Analysis,
     cfg.x.extra_tags = DotDict.wrap({
         "genmatch"       : False,
     })
+
+
+    cfg.x.is_channel_specific = False
+    cfg.x.channel_specific_info = DotDict.wrap({
+        "etau"   : False,
+        "mutau"  : True,
+        "tautau" : False,
+    })

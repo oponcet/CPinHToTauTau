@@ -268,7 +268,7 @@ def higgscandprod(
                                        )
                               )
 
-    return events, SelectionResult(
+    result = SelectionResult(
         steps={
             "has_proper_tau_decay_products": ak.sum(hcand_prod_mask, axis=1) == 2,
         },
@@ -284,3 +284,17 @@ def higgscandprod(
             },
         },
     )
+
+    if self.config_inst.x.is_channel_specific:
+        ch_mask_result = SelectionResults()
+        ch_mask = events.event < 0 # all False
+        for ch,mask for self.config_inst.x.channel_specific_info.items():
+            ch_mask = ch_mask | (events.channel_id == self.config_inst.get_channel(ch).id) # False | (True/False)
+        ch_mask_result = SelectionResults(
+            steps = {
+                "channel_mask" : ch_mask,
+            },
+        )
+        result += ch_mask_result
+            
+    return events, result
