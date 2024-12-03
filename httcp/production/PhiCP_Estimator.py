@@ -6,7 +6,6 @@ ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 
 from httcp.production.PolarimetricA1 import PolarimetricA1
-#from IPython import embed
 
 
 def GetPhiCP(
@@ -96,8 +95,8 @@ def PrepareVecsForPhiCP(
     p4h2pi  = p4hcandinfodict["p4h2pi"]
     p4h2pi0 = p4hcandinfodict["p4h2pi0"]
     
-    _P1, _R1, _y1 = _prepareVecs(p4h1, p4h1pi, p4h1pi0, method_leg1, mode_leg1)
-    _P2, _R2, _y2 = _prepareVecs(p4h2, p4h2pi, p4h2pi0, method_leg2, mode_leg2)
+    _P1, _R1, _y1, _c1 = _prepareVecs(p4h1, p4h1pi, p4h1pi0, method_leg1, mode_leg1)
+    _P2, _R2, _y2, _c2 = _prepareVecs(p4h2, p4h2pi, p4h2pi0, method_leg2, mode_leg2)
 
     # Get the boost vector
     boostv = _getBoost(_P1, _P2)
@@ -115,7 +114,8 @@ def PrepareVecsForPhiCP(
 
     return {"P1" : P1, "R1" : R1, 
             "P2" : P2, "R2" : R2,
-            "Y1" : y1, "Y2" : y2}
+            "Y1" : y1, "Y2" : y2,
+            "C1" : _c1, "C2": _c2}
 
 
 def _boostVec_and_PV(
@@ -135,14 +135,14 @@ def _boostVec_and_PV(
     R = None
     Y = _y
     if mode_leg == "pi":
-        R = p4_hcand_pi.boost(boostv.negative())
+        R = p4_hcand_pi.boost(boostv.negative()).pvec
     elif mode_leg == "rho":
         pi  = p4_hcand_pi.boost(boostv.negative())
         pi0 = p4_hcand_pi0.boost(boostv.negative())
         q   = pi.subtract(pi0)
         N   = P.subtract(pi.add(pi0))
         pv  = (((2*(q.dot(N))*q.pvec).subtract(q.mass2*N.pvec)))
-        R = pv.unit
+        R = pv #.unit
     elif mode_leg == "a1":
         os_pi_HRF   = p4_hcand_pi[:, 0:1].boost(boostv.negative())
         ss1_pi_HRF  = p4_hcand_pi[:, 1:2].boost(boostv.negative()) 
@@ -152,7 +152,7 @@ def _boostVec_and_PV(
                                      ss1_pi_HRF,
                                      ss2_pi_HRF,
                                      p4_hcand.charge)
-        R = -a1pol.PVC().pvec.unit
+        R = -a1pol.PVC().pvec #.pvec #.unit
     else:
         raise RuntimeError(f"Wrong mode: {mode_leg}")
 
@@ -173,7 +173,9 @@ def _boostVecs(
     R = _R.boost(boostv.negative())
     Y = _y
 
-    return P, R, Y
+    return P.pvec, R.pvec, Y
+    #return P, R, Y
+
 
 def ComputeAcopAngle(vecsdict):
     """
@@ -197,39 +199,35 @@ def ComputeAcopAngle(vecsdict):
     R2 = vecsdict["R2"]
     Y1 = vecsdict["Y1"]
     Y2 = vecsdict["Y2"]
-
-    print(f"P1: {P1}")
-    print(f"R1: {R1}")
-    print(f"P2: {P2}")
-    print(f"R2: {R2}")
-    print(f"Y1: {Y1}")
-    print(f"Y2: {Y2}")
+    C1 = vecsdict["C1"]
+    C2 = vecsdict["C2"]
     
-
-
     # Calculate the phase shift
     Y = Y1*Y2
 
     # Calculate R_perp
     R1_perp = R1 - R1.dot(P1.unit)*P1.unit
     R2_perp = R2 - R2.dot(P2.unit)*P2.unit
-
-    # Calculate the sign O
+    """
     O_sign = (R2_perp.cross(R1_perp)).dot(P1)
-
+    """
     acop = np.arccos(R1_perp.unit.dot(R2_perp.unit))
     
+    # to get the sign
+    Pm = ak.where(C1 < 0, P1, P2)
+    Rm_perp = ak.where(C1 < 0, R1_perp, R2_perp)
+    Pp = ak.where(C1 < 0, P2, P1)
+    Rp_perp = ak.where(C1 < 0, R2_perp, R1_perp)
+    O_sign = (Rp_perp.cross(Rm_perp)).dot(Pm)
+    
     # Apply the shift if sign is negative
-    acop = ak.where(O_sign < 0.0, 2.*np.pi - acop, acop)
-    if Y is not None:
-        acop  = ak.where(Y < 0.0, acop + np.pi, acop)
-        #acop  = ak.where((Y < 0.0) & (acop > 2.*np.pi), 
-        #                 acop - 2.*np.pi, 
-        #                 acop)
-
+    acop  = ak.where(O_sign < 0.0, 2.*np.pi - acop, acop)
+    acop  = ak.where(Y < 0.0, acop + np.pi, acop) # effective for DP method only
+    
     #Map  angles into [0,2pi] interval
     acop = ak.where(acop > 2.*np.pi, acop - 2.* np.pi, acop) 
     acop = ak.where(acop < 0,        acop + 2.* np.pi, acop)
+
     return acop
 
 
@@ -295,11 +293,13 @@ def _prepareVecs(
       if leg_mode == "rho":
           _P = p4_hcand_pi
           _R = p4_hcand_pi0
-          _y = (p4_hcand_pi.energy - p4_hcand_pi0.energy)/(p4_hcand_pi.energy + p4_hcand_pi0.energy)
+          #_y = (p4_hcand_pi.energy - p4_hcand_pi0.energy)/(p4_hcand_pi.energy + p4_hcand_pi0.energy)
+          _y = _getshift(_P, _R)
       elif leg_mode == "a1":
           _P = _get_pi_a1_DP(p4_hcand_pi)
           _R = p4_hcand_pi[:,:1]
-          _y = (p4_hcand_pi[:,:1].energy - p4_hcand_pi[:,1:2].energy)/(p4_hcand_pi[:,:1].energy + p4_hcand_pi[:,1:2].energy)
+          #_y = (p4_hcand_pi[:,:1].energy - p4_hcand_pi[:,1:2].energy)/(p4_hcand_pi[:,:1].energy + p4_hcand_pi[:,1:2].energy)
+          _y = _getshift(_P, _R) #(_P.energy - _R.energy)/(_P.energy + _R.energy)
       else:
           raise RuntimeError(f"Wrong mode : {leg_mode}")
     
@@ -310,16 +310,27 @@ def _prepareVecs(
     else:
         raise RuntimeError(f"Wrong {leg_method}")
 
-    return _P, _R, _y
+    return _P, _R, _y, p4_hcand.charge
+
 
 def _calculateIP(hcand: ak.Array) -> ak.Array:
     """
     Calculate the impact parameter vector and retrun it
     """
-    IP = ak.zip({"x":hcand.IPx, "y":hcand.IPy, "z":hcand.IPz, "t":ak.zeros_like(hcand.IPz)},
-                with_name="LorentzVector",
-                behavior=coffea.nanoevents.methods.vector.behavior)
+    IP = ak.zip(
+        {
+            "x":hcand.IPx,
+            "y":hcand.IPy,
+            "z":hcand.IPz,
+            "t":ak.zeros_like(hcand.IPz)
+        },
+        with_name="LorentzVector",
+        behavior=coffea.nanoevents.methods.vector.behavior)
     return IP
+
+
+def _getshift(p4P, p4R):
+    return (p4P.energy - p4R.energy)/(p4P.energy + p4R.energy)
 
 
 def _get_pi_a1_DP(p4_pi):
