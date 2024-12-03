@@ -41,17 +41,17 @@ def cat_tautau(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array,
 # ---------------------------------------------------------- #
 #                          For nJets                         #
 # ---------------------------------------------------------- #
-@categorizer(uses={"Jet.pt"})
+@categorizer(uses={"has_0jet"})
 def cat_0j(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ak.num(events.Jet.pt, axis=1) == 0
+    return events, events.has_0jet
 
-@categorizer(uses={"Jet.pt"})
+@categorizer(uses={"has_1jet"})
 def cat_1j(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ak.num(events.Jet.pt, axis=1) == 1
+    return events, events.has_1jet
 
-@categorizer(uses={"Jet.pt"})
+@categorizer(uses={"has_2jet"})
 def cat_2j(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ak.num(events.Jet.pt, axis=1) >= 2
+    return events, events.has_2jet
 
 # ---------------------------------------------------------- #
 #                          For PhiCP                         #

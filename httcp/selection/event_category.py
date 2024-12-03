@@ -105,6 +105,7 @@ def get_categories(
 def build_abcd_masks(
         self: Selector,
         events: ak.Array,
+        good_jet_indices: ak.Array,
         bjet_veto_mask: ak.Array,
         **kwargs
 ) -> ak.Array:
@@ -252,6 +253,11 @@ def build_abcd_masks(
     is_a1_3pr_1pi0_2 = h2.decayMode == 11
     is_a1_3pr_1pi0_2 = ak.fill_none(ak.any(is_a1_3pr_1pi0_2, axis=1), False)
 
+
+    # njet categories
+    has_0jet = ak.num(good_jet_indices, axis=1) == 0
+    has_1jet = ak.num(good_jet_indices, axis=1) == 1
+    has_2jet = ak.num(good_jet_indices, axis=1) >= 2
     
     # set columns
     events = set_ak_column(events, "is_os",     is_os)
@@ -281,6 +287,11 @@ def build_abcd_masks(
 
     events = set_ak_column(events, "is_ipsig_0to1_1", is_ipsig_0to1_1)
 
+    events = set_ak_column(events, "has_0jet", has_0jet)
+    events = set_ak_column(events, "has_1jet", has_1jet)
+    events = set_ak_column(events, "has_2jet", has_2jet)
+    
+    
     # channel wise events in several categories for debugging
     # -- for tautau
     
