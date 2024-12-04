@@ -99,6 +99,7 @@ def get_categories(
         "is_a1_3pr_0pi0_1", "is_a1_3pr_0pi0_2",
         "is_a1_3pr_1pi0_1", "is_a1_3pr_1pi0_2",
         "is_ipsig_0to1_1",
+        "has_0jet","has_1jet","has_2jet",
     },
     exposed=False,
 )
@@ -255,6 +256,7 @@ def build_abcd_masks(
 
 
     # njet categories
+    #from IPython import embed; embed()
     has_0jet = ak.num(good_jet_indices, axis=1) == 0
     has_1jet = ak.num(good_jet_indices, axis=1) == 1
     has_2jet = ak.num(good_jet_indices, axis=1) >= 2
@@ -290,10 +292,6 @@ def build_abcd_masks(
     events = set_ak_column(events, "has_0jet", has_0jet)
     events = set_ak_column(events, "has_1jet", has_1jet)
     events = set_ak_column(events, "has_2jet", has_2jet)
-    
-    
-    # channel wise events in several categories for debugging
-    # -- for tautau
     
     
     return events

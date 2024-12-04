@@ -372,7 +372,6 @@ def main(
                                     call_force=True,
                                     **kwargs)
     
-    
     # gen particles info
     # ############################################ #
     # After building the higgs candidates, one can
@@ -414,6 +413,7 @@ def main(
 
         
     events, category_ids_debug_dict = self[category_ids](events, debug=True)
+
 
     events, results = self[custom_increment_stats]( 
         events,
