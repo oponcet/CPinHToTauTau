@@ -1099,6 +1099,7 @@ def add_config (ana: od.Analysis,
             "is_a1_3pr_0pi0_1", "is_a1_3pr_0pi0_2",
             "is_a1_3pr_1pi0_1", "is_a1_3pr_1pi0_2",
             "is_ipsig_0to1_1",
+            "has_0jet", "has_1jet", "has_2jet",
             #"LHE.NpLO", "LHE.NpNLO", "LHE.Vpt", "LHE.Njets",
         } | {
             f"GenPart.{var}" for var in [

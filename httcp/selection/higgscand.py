@@ -4,6 +4,7 @@
 Prepare h-Candidate from SelectionResult: selected lepton indices & channel_id [trigger matched] 
 """
 
+import law
 from typing import Optional
 from columnflow.selection import Selector, SelectionResult, selector
 from columnflow.util import maybe_import
@@ -17,7 +18,7 @@ np = maybe_import("numpy")
 ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 
-
+logger = law.logger.get_logger(__name__)
 
 @selector(
     uses={
@@ -285,10 +286,12 @@ def higgscandprod(
         },
     )
 
+    # to make channel specific
     if self.config_inst.x.is_channel_specific:
         ch_mask_result = SelectionResults()
         ch_mask = events.event < 0 # all False
-        for ch,mask for self.config_inst.x.channel_specific_info.items():
+        for ch,mask in self.config_inst.x.channel_specific_info.items():
+            logger.warning(f"Keeping events for {ch} channel only")
             ch_mask = ch_mask | (events.channel_id == self.config_inst.get_channel(ch).id) # False | (True/False)
         ch_mask_result = SelectionResults(
             steps = {

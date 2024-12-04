@@ -360,17 +360,17 @@ def main(
     # this is moved here, because now the jets are
     # cleaned against the tau cadidates of hacnd
     # -------------------------------------------- #
-    events, bjet_veto_result, bjet_veto_mask = self[jet_selection](events, 
-                                                                   call_force=True, 
-                                                                   **kwargs)
+    events, bjet_veto_result, bjet_veto_mask, good_jet_indices = self[jet_selection](events,
+                                                                                     call_force=True, 
+                                                                                     **kwargs)
     results += bjet_veto_result
     
 
     events = self[build_abcd_masks](events,
+                                    good_jet_indices, # this is VERY Essential to make categories with njets
                                     bjet_veto_mask,
                                     call_force=True,
                                     **kwargs)
-    
     
     # gen particles info
     # ############################################ #
@@ -413,6 +413,7 @@ def main(
 
         
     events, category_ids_debug_dict = self[category_ids](events, debug=True)
+
 
     events, results = self[custom_increment_stats]( 
         events,
