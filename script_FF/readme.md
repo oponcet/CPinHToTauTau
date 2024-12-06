@@ -1,3 +1,7 @@
+# Project Directory Structure
+
+```plaintext
+
 fake_factor_derivation/
 │
 ├── inputs/
@@ -161,3 +165,5 @@ fake_factor_derivation/
 | Common utilities for JSON |
 | handling, data operations |
 +---------------------------+
+
+```plaintext
