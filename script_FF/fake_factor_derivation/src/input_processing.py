@@ -31,235 +31,329 @@ import pickle
 import hist
 import numpy as np
 import scinum as sn
-from hist import Hist
 import json
 import ROOT
 import os
 
 
-
 def hist_to_num(h: hist.hist, unc_name=str(sn.DEFAULT)) -> sn.Number:
-        '''
-        Return an `sn.Number` object, where:
-        - The nominal values (i.e., bin contents) are `h.values()`.
-        - The uncertainties are stored in a dictionary where the key is `unc_name` and the value 
-          is the square root of the variances (h.variances()**0.5).
-        '''
-        return sn.Number(h.values(), {unc_name: h.variances()**0.5})
-        return sn.Number(h.values(), {unc_name: h.variances()**0.5})
+    """
+    Convert hist object to sn.Number containing values and uncertainties.
+    """
+    return sn.Number(h.values(), {unc_name: h.variances()**0.5})
 
 
 def load_histogram_data(pickle_file_path):
     """
-    Load histogram data from a specified pickle file.
-
-    Parameters:
-    pickle_file_path (str): The path to the pickle file.
-
-    Returns:
-    dict or object: The loaded histogram data from the pickle file.
-
-    Raises:
-    FileNotFoundError: If the specified file is not found.
-    Exception: For other errors during the loading process.
+    Load histogram data from a pickle file.
     """
     try:
         with open(pickle_file_path, 'rb') as f:
-            hist_data = pickle.load(f)
-            # print("Histogram data loaded successfully!")
-            return hist_data
-    except FileNotFoundError:
-        print(f"Error: The file '{pickle_file_path}' was not found.")
-    except Exception as e:
-        print(f"An unexpected error occurred while loading the file: {e}")
-        raise
+            return pickle.load(f)
+    except (FileNotFoundError, Exception) as e:
+        print(f"Error loading {pickle_file_path}: {e}")
+        return None
 
 
-def get_all_hist(eos_path, task, dataset_data, dataset_mc, hist_path, var, cat_id):
-    ''' 
-    Load all histograms from the pickle files for data and MC samples
-    Returns: dictionnary of histograms for data and MC samples
-    '''
+def get_histograms(eos_path, task, dataset_data, dataset_mc, hist_path, var, cat_id, twoD=False):
+    """
+    Load histograms for data and MC samples and filter by category.
+    """
     hist_path_var = hist_path + "hist__" + var + ".pickle"
-    ## Load data histogram from the pickle file
-    hists_data = {}
-    for dataset in dataset_data:
-        pickle_file_path = eos_path + task + dataset + "/" + hist_path_var
-        # print(f"Loading histogram data from: {pickle_file_path}")
-        hists_data[dataset] = load_histogram_data(pickle_file_path)
-        # print(f"hist_data : {hists_data[dataset]}")
 
-        category_axis = hists_data[dataset].axes['category']
-        if cat_id not in category_axis:
-            # print(f"Warning: The category {cat_id} is not found in the histogram {dataset}.")
-            hists_data[dataset] = None
-            continue
-        else: 
-            cat_index = hists_data[dataset].axes['category'].index(cat_id)
-            hists_data[dataset] = hists_data[dataset][cat_index, :, :, :].project(var)
-        # print(f"hist_data : {hists_data[dataset]}")
-
-    ## Load MC histogram from the pickle file
-    hists_mc = {}
-    for dataset in dataset_mc:
-
-        pickle_file_path = eos_path + task + dataset + "/" + hist_path_var
-        # print(f"Loading histogram data from: {pickle_file_path}")
-        hists_mc[dataset] = load_histogram_data(pickle_file_path)
-        # print(f"hist_mc : {hists_mc[dataset]}")
-
-        category_axis = hists_mc[dataset].axes['category']
-        if cat_id not in category_axis:
-            # print(f"Warning: The category {cat_id} is not found in the histogram {dataset}.")
-            hists_mc[dataset] = None
-            continue
-        else:
-            cat_index = hists_mc[dataset].axes['category'].index(cat_id)
-            hists_mc[dataset] = hists_mc[dataset][cat_index, :, :, :].project(var)
-            #hists_mc[dataset] = hists_mc[dataset][cat_index, :, :, :].project(var)[40j:200j:1j]
-
-        # print(f"hist_mc : {hists_mc[dataset]}
-
-    # print(f">>>>>>>>>>>>>>>>>>>>> Data histograms: \n{hists_data}")
-
-    # print(f">>>>>>>>>>>>>>>>>>>>> MC histograms: \n{hists_mc}")
-
+    # Load data histograms
+    hists_data = load_datasets_histograms(eos_path, task, dataset_data, hist_path_var, cat_id, var, twoD)
+    # Load MC histograms
+    hists_mc = load_datasets_histograms(eos_path, task, dataset_mc, hist_path_var, cat_id, var, twoD)
+    
+    
     return hists_data, hists_mc
 
 
+def load_datasets_histograms(eos_path, task, datasets, hist_path_var, cat_id, var, twoD=False):
+    """
+    Helper function to load histograms for a list of datasets.
+    """
+    hists = {}
+
+    print("var ", var)
+    for dataset in datasets:
+        pickle_file_path = eos_path + task + dataset + "/" + hist_path_var
+        hist_data = load_histogram_data(pickle_file_path)
+        
+        if hist_data:
+            category_axis = hist_data.axes['category']
+            if cat_id not in category_axis:
+                hists[dataset] = None
+            else:
+                cat_index = hist_data.axes['category'].index(cat_id)
+                if twoD == True:
+                    var1 = var.split('-')[0]
+                    var2 = var.split('-')[1]
+                    hists[dataset] = hist_data[cat_index, :, :, :, :].project(var1, var2)
+                else:
+                    hists[dataset] = hist_data[cat_index, :, :, :].project(var)
+        else:
+            hists[dataset] = None
+    return hists
+
+
+def create_th1d_histogram(dataset, var, bin_edges, bin_contents, bin_uncertainties):
+    """
+    Create a ROOT TH1D histogram from bin contents and uncertainties.
+    """
+    n_bins = len(bin_contents)
+    th1d = ROOT.TH1D(dataset, var, n_bins, bin_edges[0], bin_edges[-1])
+    
+    for i, (content, uncertainty) in enumerate(zip(bin_contents, bin_uncertainties), start=1):
+        th1d.SetBinContent(i, content)
+        th1d.SetBinError(i, uncertainty)
+
+    return th1d
+
+
+# def save_histograms_to_root(hists_data, hists_mc, var, cat_dir):
+#     """
+#     Convert histograms to ROOT TH1D format and save them in the ROOT file.
+#     """
+#     # Save data histograms
+#     for dataset, hist_data in hists_data.items():
+#         if hist_data:
+#             bin_edges = hist_data.axes[0].edges
+#             bin_contents = hist_data.values()
+#             bin_uncertainties = hist_data.variances() ** 0.5
+#             th1d = create_th1d_histogram(dataset, var, bin_edges, bin_contents, bin_uncertainties)
+#             th1d.Write()
+
+#     # Save MC histograms
+#     for dataset, hist_mc in hists_mc.items():
+#         if hist_mc:
+#             bin_edges = hist_mc.axes[0].edges
+#             bin_contents = hist_mc.values()
+#             bin_uncertainties = hist_mc.variances() ** 0.5
+#             th1d = create_th1d_histogram(dataset, var, bin_edges, bin_contents, bin_uncertainties)
+#             th1d.Write()
+
+#     # Create stack of histograms for all datasets
+def save_histograms_to_root(hists_data, hists_mc, var, cat_dir):
+    """
+    Convert histograms to ROOT TH1D format, save them in the ROOT file,
+    and create a stack plot for MC and a summed histogram for data.
+    """
+    # Create a list to store TH1D histograms for the stack plot
+    mc_histograms = []
+    data_histogram = None
+    
+    # Save data histograms and sum them
+    for dataset, hist_data in hists_data.items():
+        if hist_data:
+            bin_edges = hist_data.axes[0].edges
+            bin_contents = hist_data.values()
+            bin_uncertainties = hist_data.variances() ** 0.5
+            th1d = create_th1d_histogram(dataset, var, bin_edges, bin_contents, bin_uncertainties)
+            th1d.Write()
+            
+            # Sum the data histograms
+            if data_histogram is None:
+                data_histogram = th1d.Clone(f"{dataset}_data")
+            else:
+                data_histogram.Add(th1d)
+
+    # Save MC histograms and add them to the stack
+    for dataset, hist_mc in hists_mc.items():
+        if hist_mc:
+            bin_edges = hist_mc.axes[0].edges
+            bin_contents = hist_mc.values()
+            bin_uncertainties = hist_mc.variances() ** 0.5
+            th1d = create_th1d_histogram(dataset, var, bin_edges, bin_contents, bin_uncertainties)
+            th1d.Write()
+
+            # Add to the stack of MC histograms
+            mc_histograms.append(th1d)
+
+    # Create a stack plot and a summary plot
+    create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir)
+
+
+def create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir):
+    """
+    Create a stack plot for the MC histograms and a summary plot for Data vs MC.
+    Also allows customization of colors for different MC processes.
+
+    Parameters:
+    - hists_data: Data histograms.
+    - hists_mc: MC histograms.
+    - var: Variable name to label the plot.
+    - cat_dir: Directory where the plot and ROOT file will be saved.
+    - colors: Dictionary containing colors for different MC processes.
+    """
+    # colors = {
+    # 'tt': "#9e9ac8",  # Violet
+    # 'dy': "#feb24c",  # Orange
+    # 'diboson + triboson': "#a96b59",   # Brown for Diboson (WW)
+    # 'wj': "#d73027",  # Red for W+jets
+    # 'higgs': "#253494", # dark blue
+    # 'fake': "#a1d99b"  # green
+    # }
+    # Create a list to store TH1D histograms for the stack plot
+
+    # Create stack for MC histograms
+    stack = ROOT.THStack("mc_stack", "MC Stack")
+    
+    # Add each MC histogram to the stack with custom colors
+    for hist in mc_histograms:
+        # no line for the fill
+        stack.Add(hist)
+
+    # Create a canvas for the Data vs MC plot
+    canvas = ROOT.TCanvas("canvas", "Data vs MC", 800, 600)
+    
+    if data_histogram:
+        data_histogram.SetLineColor(ROOT.kBlack)
+        data_histogram.SetMarkerStyle(20)
+        data_histogram.SetMarkerColor(ROOT.kBlack)
+        data_histogram.Draw("E1")
+
+        stack.Draw("HIST SAME")
+
+        # Add a legend
+        legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
+        legend.AddEntry(data_histogram, "Data", "p")
+        
+        # Add entries for each MC histogram
+        for hist in mc_histograms:
+            legend.AddEntry(hist, hist.GetName(), "f")
+        
+        legend.Draw()
+
+        # Save the canvas
+        # canvas.SaveAs(f"{cat_dir}/{var}_data_vs_mc.png")
+        canvas.Write()
+
+
+
+def save_histograms_to_root2D(hists_data, hists_mc, var1, var2, cat_dir):
+    """
+    Convert histograms to ROOT TH2D format and save them in the ROOT file.
+    """
+    # Save data histograms
+    for dataset, hist_data in hists_data.items():
+        if hist_data:
+            # Extract bin edges, contents, and uncertainties for the 2D histogram
+            bin_edges_x = hist_data.axes[0].edges
+            bin_edges_y = hist_data.axes[1].edges
+            bin_contents = hist_data.values()
+            bin_uncertainties = hist_data.variances() ** 0.5
+
+            th2d = create_th2d_histogram(dataset, var1, var2, bin_edges_x, bin_edges_y, bin_contents, bin_uncertainties)
+            th2d.Write()
+
+    # Save MC histograms
+    for dataset, hist_mc in hists_mc.items():
+        if hist_mc:
+            # Extract bin edges, contents, and uncertainties for the 2D histogram
+            bin_edges_x = hist_mc.axes[0].edges
+            bin_edges_y = hist_mc.axes[1].edges
+            bin_contents = hist_mc.values()
+            bin_uncertainties = hist_mc.variances() ** 0.5
+
+            th2d = create_th2d_histogram(dataset, var1, var2, bin_edges_x, bin_edges_y, bin_contents, bin_uncertainties)
+            th2d.Write()
+
+def create_th2d_histogram(dataset, var1, var2, bin_edges_x, bin_edges_y, bin_contents, bin_uncertainties):
+    """
+    Create a ROOT TH2D histogram from bin contents and uncertainties.
+    """
+    n_bins_x = len(bin_edges_x) - 1
+    n_bins_y = len(bin_edges_y) - 1
+    th2d = ROOT.TH2D(dataset, f"{var1}-{var2}", n_bins_x, bin_edges_x, n_bins_y, bin_edges_y)
+
+    for i in range(n_bins_x):
+            for j in range(n_bins_y):
+                th2d.SetBinContent(i + 1, j + 1, bin_contents[i, j])
+                th2d.SetBinError(i + 1, j + 1, bin_uncertainties[i, j])
+
+    return th2d
+                
+
+def prepare_output_directory(dm):
+    """
+    Prepare the output directory structure.
+    """
+    output_path = f'script_FF/fake_factor_derivation/outputs/{dm}'
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    return output_path
+
+
+def process_categories(categories, dm, output_file, vars1D, vars2D, eos_path, task, dataset_data, dataset_mc, hist_path_base):
+    """
+    Process each category and save the corresponding histograms.
+    """
+    for njet, njet_categories in categories[dm].items():
+        print(f"Processing njet: {njet}")
+        for cat_group, cat_dict in njet_categories.items():
+            for cat, cat_id in cat_dict.items():
+                cat_dir = output_file.mkdir(cat)
+                cat_dir.cd()
+                print(f"Processing category: {cat} with id {cat_id}")
+                
+                for var1D in vars1D:
+                    var1D_dir = cat_dir.mkdir(var1D)
+                    var1D_dir.cd()
+
+                    hists_data, hists_mc = get_histograms(eos_path, task, dataset_data, dataset_mc, hist_path_base, var1D, cat_id, twoD=False)
+                    save_histograms_to_root(hists_data, hists_mc, var1D, cat_dir)
+                    
+                cat_dir.cd()
+                for var2D in vars2D:
+                    print(f"Processing 2D variable: {var2D}")
+                    var2D_name = f"{var2D[0]}-{var2D[1]}"
+                    var2D_dir = cat_dir.mkdir(var2D_name)
+                    var2D_dir.cd()
+
+                    hists_data, hists_mc = get_histograms(eos_path, task, dataset_data, dataset_mc, hist_path_base, var2D_name, cat_id, twoD=True)
+                    save_histograms_to_root2D(hists_data, hists_mc, var2D[0], var2D[1], cat_dir)
+
+
 def main(config_path, dm):
-    # Load the JSON configuration file containing the paths, categories, and variables
+
+    # ROOT configuration
+    ROOT.gROOT.SetBatch(True) # Do not display canvas
+
+    # Load the JSON configuration
     with open(config_path, 'r') as f:
         config = json.load(f)
 
-    # Extract configuration parameters
     eos_path = config['paths']['eos_path']
     task = config['paths']['task']
     hist_path_base = config['paths']['hist_path']
-    hist_path_FF = hist_path_base + "hist__hcand_1_pt.pickle"
     dataset_data = config['datasets']['data']
     dataset_mc = config['datasets']['mc']
     categories = config['categories']
     variables = config['variables']
 
-
     # For 1D histograms
-    vars1D = ["hcand_1_pt"]
-    for var in variables:
-        var1 = var['var1']
-        vars1D.append(var1)
-    
-    print(f"Variables 1D : {vars1D}")
-    
-    # For 2D histograms
-    vars2D = []
-    for var in variables:
-        var1 = var['var1']
-        var2 = var['var2']
-        vars2D.append([var1, var2])
-    
+    vars1D = ["hcand_1_pt"] + [var['var1'] for var in variables]
+    print(f"Variables 1D: {vars1D}")
+
+    vars2D = [[var['var1'], var['var2']] for var in variables]
     print(f"Variables 2D: {vars2D}")
 
-    print("DM = ", dm)
+    # Prepare the output directory
+    output_path = prepare_output_directory(dm)
 
-    # Create the output directory if it does not exist
-    if not os.path.exists('outputs'):
-        os.makedirs('outputs')
-    
-    output_path = f'script_FF/fake_factor_derivation/outputs/{dm}'
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    # Loop over the njet
+    # Loop over the categories and process the histograms
     for njet in categories[dm].keys():
-        print(f"njet: {njet}")
-
-        # Create the ROOT file in the output directory  
         output_file = ROOT.TFile(f"{output_path}/{dm}_{njet}.root", "RECREATE")
         print(f"Output file: {output_file}")
-
-        # Create TDirectory for each region in the ROOT file
-        for cat_group in categories[dm][njet].keys(): # ABCD or A0B0C0D0
-            for cat in categories[dm][njet][cat_group].keys(): # A, B, C, D, A0, B0, C0, D0
-                # print(f"Processing cat: {cat }")
-                cat_dir = output_file.mkdir(cat)
-                cat_dir.cd()
-
-                cat_id = categories[dm][njet][cat_group][cat]
-                print(f"cat_id: {cat_id}")
-
-                # Iterate over the variables 
-                for var1D in vars1D:
-                    # Create a directory for the var1D within the ROOT file
-                    var1D_dir = cat_dir.mkdir(var1D)
-                    var1D_dir.cd()
-                
-                    # Save all datasets in TH1D histograms
-
-                    # Get the hist from the pickle file
-                    hists_data, hists_mc = get_all_hist(eos_path, task, dataset_data, dataset_mc, hist_path_base, var1D, cat_id)
-
-                    # Convert each dataset hist to TH1D and save it in the ROOT file
-                    for dataset in dataset_data:
-                        hist_data = hists_data[dataset]
-
-                        if hist_data is None:
-                            # print(f"Warning: No histogram data found for dataset {dataset}")
-                            continue
-
-                        else: 
-                            # Extract bin edges, contents, and uncertainties
-                            bin_edges = hist_data.axes[0].edges
-                            bin_contents = hist_data.values()
-                            bin_uncertainties = hist_data.variances() ** 0.5
-                            
-                            # Create ROOT TH1D
-                            n_bins = len(bin_contents)
-                            th1d = ROOT.TH1D(dataset, var1D, n_bins, bin_edges[0], bin_edges[-1])
-                            
-                            # Fill TH1D with contents and uncertainties
-                            for i, (content, uncertainty) in enumerate(zip(bin_contents, bin_uncertainties), start=1):
-                                th1d.SetBinContent(i, content)
-                                th1d.SetBinError(i, uncertainty)
-
-                            th1d.Write()
-                            # print(f"TH1D histogram saved for dataset {dataset}")
-
-                    for dataset in dataset_mc:
-                        hist_mc = hists_mc[dataset]
-
-                        if hist_mc is None:
-                            # print(f"Warning: No histogram data found for dataset {dataset}")
-                            continue
-
-                        else: 
-                            # Extract bin edges, contents, and uncertainties
-                            bin_edges = hist_mc.axes[0].edges
-                            bin_contents = hist_mc.values()
-                            bin_uncertainties = hist_mc.variances() ** 0.5
-                            
-                            # Create ROOT TH1D
-                            n_bins = len(bin_contents)
-                            th1d = ROOT.TH1D(dataset, var1D, n_bins, bin_edges[0], bin_edges[-1])
-                            
-                            # Fill TH1D with contents and uncertainties
-                            for i, (content, uncertainty) in enumerate(zip(bin_contents, bin_uncertainties), start=1):
-                                th1d.SetBinContent(i, content)
-                                th1d.SetBinError(i, uncertainty)
-
-                            th1d.Write()
-                            # print(f"TH1D histogram saved for dataset {dataset}")
-    
+        process_categories(categories, dm, output_file, vars1D, vars2D, eos_path, task, dataset_data, dataset_mc, hist_path_base)
         output_file.Close()
 
-if __name__ == "__main__":
-    # Define the path to the configuration file
 
+if __name__ == "__main__":
     # dms = ['pi_1', 'rho_1', 'a1dm2_1', 'a1dm10_1', 'a1dm11_1']
     dms = ['pi_1']
-
     for dm in dms:
         config_path = f'script_FF/fake_factor_derivation/inputs/fake_factors_{dm}.json'
-
-        # Run the main function
         main(config_path, dm)
