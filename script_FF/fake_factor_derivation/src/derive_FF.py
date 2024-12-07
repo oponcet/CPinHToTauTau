@@ -18,7 +18,7 @@ import os
 import json
 import ROOT
 
-# from fit_functions import fit_fake_factor
+from fit_functions import fit_fake_factor
 
 def calculate_fake_factor(input_file, catA, catB, dm, njet):
     """
@@ -60,12 +60,57 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     # Fit the fake factor histogram using `fit_functions.py`
     # fit_result = fit_fake_factor(fake_factor_hist)
+    fit_result, h_uncert, fake_factor_hist = fit_fake_factor(fake_factor_hist, usePol1=True)
 
-    # Save the fake factor to a ROOT file
+    # Save the fake factor and fit results to a ROOT file
     os.makedirs(os.path.dirname(output_root_file), exist_ok=True)
     output_file = ROOT.TFile.Open(output_root_file, "RECREATE")
     fake_factor_hist.Write("FakeFactor")
-    # fit_result.Write("FitResult")
+    fit_result.Write("FitResult")
+    h_uncert.Write("Uncertainties")
+
+    # Plot the uncertainties
+    uncert_canvas = ROOT.TCanvas("Fake_Factor", "Fake Factor", 800, 600)
+
+   
+    # Draw the fake factor histogram
+    fake_factor_hist.Draw("EP")
+    fake_factor_hist.SetLineColor(ROOT.kBlack)
+    fake_factor_hist.SetTitle("Fit Fake Factor;p_{T} (GeV) ;Fake Factor")
+    fake_factor_hist.GetYaxis().SetRangeUser(0, 2.5)
+
+    # Draw the uncertainties as a filled area
+    h_uncert.Draw("E3 SAME")
+    h_uncert.SetFillColorAlpha(ROOT.kAzure + 7 , 0.3)
+    h_uncert.SetLineColor(ROOT.kAzure + 7)
+    h_uncert.SetLineWidth(2)
+
+    # Draw the fit result
+    fit_result.Draw("SAME")
+    fit_result.SetLineColor(ROOT.kAzure + 7)
+
+    # Add a legend for clarity
+    legend = ROOT.TLegend(0.15, 0.75, 0.35, 0.9) #  
+    legend.AddEntry(fake_factor_hist, "Fake Factor", "EP")
+    legend.AddEntry(fit_result, "Fit Result", "L")
+    legend.AddEntry(h_uncert, "95% CL (Uncertainties)", "F")
+    legend.SetBorderSize(0)
+    legend.SetFillStyle(0)
+    legend.Draw()
+
+    # remove stat box
+    ROOT.gStyle.SetOptStat(0)
+
+    # Save the canvas to an image file
+    output_image_path = output_root_file.replace(".root", "_FullPlot.png")
+    uncert_canvas.SaveAs(output_image_path)
+
+    # Save the canvas to the ROOT file for later use
+    uncert_canvas.Write("Flullplot")
+
+    
+
+
     output_file.Close()
 
     # Save the fake factor to a JSON file
@@ -107,6 +152,8 @@ def main(config_path, dm):
     categories = config['categories']
     variable = "hcand_1_pt"
 
+    catA, catB = None, None  # Initialize to None
+
     for njet in config['categories'][dm]:
         for cat in config['categories'][dm][njet]['ABCD']:
 
@@ -115,8 +162,13 @@ def main(config_path, dm):
             if '_hadB__' in cat:
                 catB = cat
             
+        if not catA or not catB:
+            raise ValueError(f"Categories _hadA__ or _hadB__ not found for {dm} in njet {njet}")   
+        
+        # Define input file
         input_file = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_{njet}.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
 
+        # Calculate fake factor
         calculate_fake_factor(input_file, catA, catB, dm, njet)
 
 if __name__ == "__main__":
