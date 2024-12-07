@@ -1,6 +1,6 @@
 '''
 author: @oponcet
-date: 2021-09-29
+date: 06-12-2024
 Description:
 This script generates JSON configuration files for different decay modes (DMs) in the context of Fake Factor derivation. 
 
@@ -165,7 +165,7 @@ base_data_config = {
 }
 
 # Create output directory if it doesn't exist
-output_dir = '/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/script_FF/fake_factor_derivation/inputs'
+output_dir = '/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/script_FF/fake_factor_derivation/inputs/inputs_json'
 os.makedirs(output_dir, exist_ok=True)
 
 # Save a separate JSON file for each DM
