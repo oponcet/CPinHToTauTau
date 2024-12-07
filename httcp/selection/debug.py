@@ -80,18 +80,6 @@ def get_object_eff(results, tag, key : Optional[str]=None):
 
 
 def debug_main(events, results, triggers, **kwargs):
-    cat_dict = kwargs.get("cat_dict")    
-    cats = list(cat_dict.keys())
-
-    #from IPython import embed; embed()
-
-    _channels = ["etau", "mutau", "tautau"]
-    for ch in _channels:
-        n = 0
-        for key, val in cat_dict.items():
-            if key.startswith(ch): n += val['nevents']
-        logger.info(f"nEvents in all {ch} category : {n}")
-
     
     logger.info(f"---> ################### Inspecting event selections ################### <---\n")
     get_event_level_eff(events, results)
