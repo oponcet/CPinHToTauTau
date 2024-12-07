@@ -88,6 +88,25 @@ def fit_fake_factor(h, usePol1=False, polOnly=None):
     if fit is None:
         raise RuntimeError("Fit did not converge after 100 iterations.")
 
+    # Get fit statistics and parameters
+    chi2 = fit.GetChisquare()
+    ndf = fit.GetNDF()
+
+    # Get parameter values and errors
+    parameters = []
+    for i in range(fit.GetNpar()):
+        parameters.append({
+            "p": fit.GetParameter(i),
+            "error": fit.GetParError(i)
+        })
+
+    # Fill the fit details dictionary
+    fit_details = {
+        "Chi2": chi2,
+        "NDf": ndf,
+        "Parameters": parameters
+    }
+
     # Name and return the fit
     fit.SetName(h.GetName() + '_fit')
-    return fit, h_uncert, h
+    return fit, h_uncert, h, fit_details
