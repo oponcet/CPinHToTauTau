@@ -1,21 +1,23 @@
 '''
 Author : @oponcet
-Date : 2021-06-01
+Date : 06-12-24
 Script to get the histograms from the pickle files and convert them to ROOT histograms and save them in a ROOT file per region
 
+Input: json file containing the paths to the pickle files, the list the datasets, categories and variables
+
 Output: Example 
-├── outputs/                    # Store the output JSON and ROOT files
+├── inputs/inputs_rootfile                    # Store the output JSON and ROOT files
 │   ├── pi_1/
 │   ├── pi_1_Oj.root 
 │       ├── A/
 │           ├── hcand_1_pt/
-│               ├── THStack hcand_1_pt                # THStack of the histograms for the variable pt1 with all datasets    
-│               ├── TH1D hcand_1_pt_data_tau_C        # TH1D of the histogram for the variable pt1 with the dataset tau_C
+│               ├── THStack hcand_1_pt                                # THStack of the histograms for the variable pt1 with all datasets    
+│               ├── TH1D hcand_1_pt_data_tau_C                        # TH1D of the histogram for the variable pt1 with the dataset tau_C
 │               ... 
-│               ├── TH1D hcand_1_pt_datasets          # TH1D of the histogram for the variable pt1 with all datasets     
+│               ├── TH1D hcand_1_pt_datasets                          # TH1D of the histogram for the variable pt1 with all datasets     
 │           ├── hcand_1_pt__met_var_qcd_h1/
 │               ├── TH2D hcand_1_pt__met_var_qcd_h1_data_tau_C        # TH1D of the histogram for the variable pt1 with the dataset tau_C
-                ... 
+│               ... 
 │               ├── TH2D hcand_1_pt__met_var_qcd_h1_datasets          # TH1D of the histogram for the variable pt1 with all datasets         
 │       ├── B # same for B
 │       ├── C
@@ -112,29 +114,6 @@ def create_th1d_histogram(dataset, var, bin_edges, bin_contents, bin_uncertainti
     return th1d
 
 
-# def save_histograms_to_root(hists_data, hists_mc, var, cat_dir):
-#     """
-#     Convert histograms to ROOT TH1D format and save them in the ROOT file.
-#     """
-#     # Save data histograms
-#     for dataset, hist_data in hists_data.items():
-#         if hist_data:
-#             bin_edges = hist_data.axes[0].edges
-#             bin_contents = hist_data.values()
-#             bin_uncertainties = hist_data.variances() ** 0.5
-#             th1d = create_th1d_histogram(dataset, var, bin_edges, bin_contents, bin_uncertainties)
-#             th1d.Write()
-
-#     # Save MC histograms
-#     for dataset, hist_mc in hists_mc.items():
-#         if hist_mc:
-#             bin_edges = hist_mc.axes[0].edges
-#             bin_contents = hist_mc.values()
-#             bin_uncertainties = hist_mc.variances() ** 0.5
-#             th1d = create_th1d_histogram(dataset, var, bin_edges, bin_contents, bin_uncertainties)
-#             th1d.Write()
-
-#     # Create stack of histograms for all datasets
 def save_histograms_to_root(hists_data, hists_mc, var, cat_dir):
     """
     Convert histograms to ROOT TH1D format, save them in the ROOT file,
@@ -143,6 +122,8 @@ def save_histograms_to_root(hists_data, hists_mc, var, cat_dir):
     # Create a list to store TH1D histograms for the stack plot
     mc_histograms = []
     data_histogram = None
+
+    mc_sum_histogram = None
     
     # Save data histograms and sum them
     for dataset, hist_data in hists_data.items():
@@ -170,6 +151,19 @@ def save_histograms_to_root(hists_data, hists_mc, var, cat_dir):
 
             # Add to the stack of MC histograms
             mc_histograms.append(th1d)
+
+            # Sum the MC histograms
+            if mc_sum_histogram is None:
+                mc_sum_histogram = th1d.Clone(f"{dataset}_mc")
+            else:
+                mc_sum_histogram.Add(th1d)
+
+    # Create data minus MC histogram
+    if data_histogram and mc_sum_histogram:
+        data_minus_mc = data_histogram.Clone(f"data_minus_mc")
+        data_minus_mc.Add(mc_sum_histogram, -1)
+        data_minus_mc.Write()
+
 
     # Create a stack plot and a summary plot
     create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir)
@@ -280,7 +274,7 @@ def prepare_output_directory(dm):
     """
     Prepare the output directory structure.
     """
-    output_path = f'script_FF/fake_factor_derivation/outputs/{dm}'
+    output_path = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}'
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     return output_path
@@ -355,5 +349,5 @@ if __name__ == "__main__":
     # dms = ['pi_1', 'rho_1', 'a1dm2_1', 'a1dm10_1', 'a1dm11_1']
     dms = ['pi_1']
     for dm in dms:
-        config_path = f'script_FF/fake_factor_derivation/inputs/fake_factors_{dm}.json'
+        config_path = f'script_FF/fake_factor_derivation/inputs/inputs_json/fake_factors_{dm}.json'
         main(config_path, dm)
