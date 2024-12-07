@@ -4,7 +4,7 @@ from columnflow.config_util import add_category
 
 import order as od
 
-from columnflow.columnar_util import EMPTY_FLOAT
+from columnflow.columnar_util import EMPTY_FLOAT,EMPTY_INT
 from columnflow.util import DotDict, maybe_import
 from columnflow.columnar_util import ColumnCollection
 
@@ -143,10 +143,18 @@ def add_jet_features(cfg: od.Config) -> None:
             x_title=r"Jet $\eta$",
         )
     cfg.add_variable(
-        name="ht",
-        expression=lambda events: ak.sum(events.Jet.pt, axis=1),
-        #expression="ht",
-        binning=(25, 0.0, 500.0),
+        name="hT",
+        expression="hT",
+        binning=(200, 0.0, 2500.0),
+        #null_value=EMPTY_FLOAT,
+        unit="GeV",
+        x_title="HT",
+    )
+    cfg.add_variable(
+        name="hT_binvar",
+        expression="hT",
+        binning=[0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 1000, 1500, 2500],
+        #null_value=EMPTY_FLOAT,
         unit="GeV",
         x_title="HT",
     )
@@ -253,6 +261,14 @@ def add_hcand_features(cfg: od.Config) -> None:
             x_title=f"hcand[{i+1}]" + r" $p_{T}$",
         )
         cfg.add_variable(
+            name=f"hcand_{i+1}_pt_binvar",
+            expression=f"hcand.pt[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=[20,25,30,35,40,45,50,55,60,65,70,80,90,100,120,140,200],
+            unit="GeV",
+            x_title=f"hcand[{i+1}]" + r" $p_{T}$",
+        )        
+        cfg.add_variable(
             name=f"hcand_{i+1}_phi",
             expression=f"hcand.phi[:,{i}]",
             null_value=EMPTY_FLOAT,
@@ -269,8 +285,8 @@ def add_hcand_features(cfg: od.Config) -> None:
         cfg.add_variable(
             name=f"hcand_{i+1}_decayMode",
             expression=f"hcand.decayMode[:,{i}]",
-            null_value=EMPTY_FLOAT,
-            binning=(12, 0, 12),
+            #null_value=EMPTY_INT,
+            binning=(12, -0.5, 11.5),
             x_title=f"hcand[{i+1}]" + r" $DM$",
         )
         cfg.add_variable(

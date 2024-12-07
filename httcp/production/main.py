@@ -17,12 +17,15 @@ from columnflow.production.cms.pdf import pdf_weights
 from columnflow.production.cms.seeds import deterministic_seeds
 from columnflow.production.cms.mc_weight import mc_weight
 
+from columnflow.production.util import attach_coffea_behavior
+
 from columnflow.selection.util import create_collections_from_masks
 from columnflow.util import maybe_import
 
 from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 from columnflow.columnar_util import optional_column as optional
 
+from columnflow.config_util import get_events_from_categories
 #from httcp.production.PhiCPNeutralPion import PhiCPNPMethod
 from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArrangeGenDecayProducts
 from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
@@ -37,6 +40,7 @@ from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO:
 #from httcp.production.weights import pu_weight, muon_weight, tau_weight
 #from httcp.production.weights import tau_weight
 from httcp.production.sample_split import split_dy
+from httcp.production.processes import build_abcd_masks
 
 #from httcp.production.angular_features import ProduceDetCosPsi, ProduceGenCosPsi
 
@@ -74,6 +78,7 @@ logger = law.logger.get_logger(__name__)
         #ProduceDetPhiCP, #ProduceDetCosPsi,
         "dphi_met_h1", "dphi_met_h2",
         "met_var_qcd_h1", "met_var_qcd_h2",
+        "hT",
     },
 )
 def hcand_features(
@@ -88,7 +93,6 @@ def hcand_features(
 
     met = ak.with_name(events.PuppiMET, "PtEtaPhiMLorentzVector")
 
-    
     mass = (hcand1 + hcand2).mass
     dr = hcand1.delta_r(hcand2)
 
@@ -97,7 +101,10 @@ def hcand_features(
     dphi_met_h2 = met.delta_phi(hcand2)
     met_var_qcd_h1 = met.pt * np.cos(dphi_met_h1)/hcand1.pt
     met_var_qcd_h2 = met.pt * np.cos(dphi_met_h2)/hcand2.pt
-    
+
+    hT = ak.sum(events.Jet.pt, axis=1) # scalar sum pt
+    events = set_ak_column_f32(events, "hT",  hT)
+
     events = set_ak_column_f32(events, "hcand_invm",  mass)
     events = set_ak_column_f32(events, "hcand_dr",    dr)
     events = set_ak_column_f32(events, "dphi_met_h1", np.abs(dphi_met_h1))
@@ -107,6 +114,7 @@ def hcand_features(
     
     events = set_ak_column_i32(events, "n_jet", ak.num(events.Jet.pt, axis=1))
 
+    
     """
     events, P4_dict     = self[reArrangeDecayProducts](events)
     events              = self[ProduceDetPhiCP](events, P4_dict)
@@ -124,7 +132,9 @@ def hcand_features(
 @producer(
     uses={
         ##deterministic_seeds,
+        attach_coffea_behavior,
         normalization_weights,
+        "hcand.decayMode",
         IF_ALLOW_STITCHING(stitched_normalization_weights),
         #split_dy,
         pu_weight,
@@ -145,10 +155,12 @@ def hcand_features(
         hcand_features,
         hcand_mass,
         category_ids,
+        build_abcd_masks,
         #ff_weight,
     },
     produces={
         ##deterministic_seeds,
+        attach_coffea_behavior,
         normalization_weights,
         IF_ALLOW_STITCHING(stitched_normalization_weights),
         #split_dy,
@@ -172,14 +184,17 @@ def hcand_features(
         "channel_id",
         "trigger_ids",
         category_ids,
+        build_abcd_masks,
         #ff_weight,
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
+    events = self[attach_coffea_behavior](events, **kwargs)
     # deterministic seeds
     ##events = self[deterministic_seeds](events, **kwargs)
-    ##events = self[category_ids](events, **kwargs)
+    events = self[build_abcd_masks](events, **kwargs)
+    events, category_ids_debug_dict = self[category_ids](events, **kwargs)
 
     #events = self[ff_weight](events, **kwargs)
     if self.dataset_inst.is_mc:
@@ -226,4 +241,8 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = self[hcand_mass](events, **kwargs)
     # events = self[mT](events, **kwargs)
 
+    #from IPython import embed; embed()
+    #events_cat = self[get_events_from_categories](events, ["tautau","real_1","hadD","has_1j","rho_1"], self.config_inst)
+    
+    
     return events
