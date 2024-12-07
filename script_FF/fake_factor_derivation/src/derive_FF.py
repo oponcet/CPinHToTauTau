@@ -60,7 +60,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     # Fit the fake factor histogram using `fit_functions.py`
     # fit_result = fit_fake_factor(fake_factor_hist)
-    fit_result, h_uncert, fake_factor_hist = fit_fake_factor(fake_factor_hist, usePol1=True)
+    fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, usePol1=True)
 
     # Save the fake factor and fit results to a ROOT file
     os.makedirs(os.path.dirname(output_root_file), exist_ok=True)
@@ -69,9 +69,10 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     fit_result.Write("FitResult")
     h_uncert.Write("Uncertainties")
 
+    #### CANVAS FULL PLOT #### 
+
     # Plot the uncertainties
     uncert_canvas = ROOT.TCanvas("Fake_Factor", "Fake Factor", 800, 600)
-
    
     # Draw the fake factor histogram
     fake_factor_hist.Draw("EP")
@@ -105,13 +106,36 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     output_image_path = output_root_file.replace(".root", "_FullPlot.png")
     uncert_canvas.SaveAs(output_image_path)
 
+    #### PNG FILE: FIT DETAIL #### uncert_canvas
+    # Create a text box to show the fit details
+    fit_details_text = ROOT.TPaveText(0.35, 0.69, 0.6, 0.89, "NDC") # x1, y1, x2, y2, option
+    fit_details_text.SetBorderSize(0)
+    fit_details_text.SetFillColor(0)
+    fit_details_text.SetTextAlign(12)
+    fit_details_text.SetTextSize(0.03)
+
+    # Add fit statistics and parameters to the text box
+    fit_details_text.AddText(f"Chi2 = {fit_details['Chi2']:.4f}")
+    fit_details_text.AddText(f"NDf = {fit_details['NDf']}")
+
+    # Add parameter values with their errors
+    for i, param in enumerate(fit_details['Parameters']):
+        fit_details_text.AddText(f"p{i} = {param['p']:.4f} \pm {param['error']:.4f}")
+
+    # Draw the text box
+    fit_details_text.Draw()
+
+    # Save the fit details canvas as a separate PNG file
+    output_details_image_path = output_root_file.replace(".root", "_FitDetails.png")
+    uncert_canvas.SaveAs(output_details_image_path)
+
     # Save the canvas to the ROOT file for later use
     uncert_canvas.Write("Flullplot")
 
-    
-
-
     output_file.Close()
+
+
+    #### JSON FILE ####
 
     # Save the fake factor to a JSON file
     os.makedirs(os.path.dirname(output_json_file), exist_ok=True)
