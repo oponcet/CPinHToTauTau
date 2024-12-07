@@ -534,7 +534,7 @@ def jet_selection(
         events, veto_result = self[jet_veto_map](events, **kwargs)
         results += veto_result
     
-    return events, results, bjet_veto, good_jet_indices
+    return events, results #, bjet_veto, good_jet_indices
 
 
 @jet_selection.init

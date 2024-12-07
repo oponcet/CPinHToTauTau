@@ -19,7 +19,7 @@ from columnflow.selection.cms.met_filters import met_filters
 from columnflow.production.processes import process_ids
 from columnflow.production.cms.mc_weight import mc_weight
 from columnflow.production.util import attach_coffea_behavior
-from columnflow.production.categories import category_ids
+#from columnflow.production.categories import category_ids
 
 from columnflow.util import maybe_import
 from columnflow.columnar_util import optional_column as optional
@@ -30,7 +30,7 @@ from httcp.selection.trigger import trigger_selection
 from httcp.selection.lepton_pair_etau import etau_selection
 from httcp.selection.lepton_pair_mutau import mutau_selection
 from httcp.selection.lepton_pair_tautau import tautau_selection
-from httcp.selection.event_category import get_categories, build_abcd_masks
+from httcp.selection.event_category import get_categories #, build_abcd_masks
 #from httcp.selection.match_trigobj import match_trigobj
 from httcp.selection.trigobject_matching import match_trigobj
 from httcp.selection.lepton_veto import *
@@ -142,8 +142,8 @@ def get_2n_pairs(etau_indices_pair,
         gentau_selection,
         higgscandprod,
         rel_charge,
-        category_ids,
-        build_abcd_masks,
+        #category_ids,
+        #build_abcd_masks,
     },
     produces={
         # selectors / producers whose newly created columns should be kept
@@ -165,7 +165,7 @@ def get_2n_pairs(etau_indices_pair,
         higgscandprod,
         gentau_selection,
         rel_charge,
-        category_ids,
+        #category_ids,
         increment_stats, 
         custom_increment_stats,
         "trigger_ids",
@@ -177,7 +177,7 @@ def get_2n_pairs(etau_indices_pair,
         "cross_mu_triggered",
         "cross_tau_triggered",
         "cross_tau_jet_triggered",
-        build_abcd_masks,
+        #build_abcd_masks,
     },
     exposed=True,
 )
@@ -360,17 +360,20 @@ def main(
     # this is moved here, because now the jets are
     # cleaned against the tau cadidates of hacnd
     # -------------------------------------------- #
-    events, bjet_veto_result, bjet_veto_mask, good_jet_indices = self[jet_selection](events,
-                                                                                     call_force=True, 
-                                                                                     **kwargs)
+    #events, bjet_veto_result, bjet_veto_mask, good_jet_indices = self[jet_selection](events,
+    #                                                                                 call_force=True, 
+    #                                                                                 **kwargs)
+    events, bjet_veto_result = self[jet_selection](events,
+                                                   call_force=True, 
+                                                   **kwargs)
     results += bjet_veto_result
     
 
-    events = self[build_abcd_masks](events,
-                                    good_jet_indices, # this is VERY Essential to make categories with njets
-                                    bjet_veto_mask,
-                                    call_force=True,
-                                    **kwargs)
+    #events = self[build_abcd_masks](events,
+    #                                good_jet_indices, # this is VERY Essential to make categories with njets
+    #                                bjet_veto_mask,
+    #                                call_force=True,
+    #                                **kwargs)
     
     # gen particles info
     # ############################################ #
@@ -412,7 +415,7 @@ def main(
         results += outliers_result_for_stitching
 
         
-    events, category_ids_debug_dict = self[category_ids](events, debug=True)
+    #events, category_ids_debug_dict = self[category_ids](events, debug=True)
 
 
     events, results = self[custom_increment_stats]( 
@@ -462,8 +465,7 @@ def main(
     if self.config_inst.x.verbose.selection.main:
         debug_main(events,
                    results,
-                   self.config_inst.x.triggers,
-                   cat_dict=category_ids_debug_dict)
+                   self.config_inst.x.triggers)
         
     return events, results
 
