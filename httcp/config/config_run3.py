@@ -1128,6 +1128,11 @@ def add_config (ana: od.Analysis,
                 "pt", "eta", "phi", "mass",
                 "btagDeepFlavB", "hadronFlavour"
             ]
+        } | {
+            f"bJet.{var}" for var in [
+                "pt", "eta", "phi", "mass",
+                "btagDeepFlavB", "hadronFlavour"
+            ]
         } | { # raw tau in events before any selection
             f"RawTau.{var}" for var in [
                 "pt","eta","phi","mass",
@@ -1270,6 +1275,6 @@ def add_config (ana: od.Analysis,
     cfg.x.is_channel_specific = False
     cfg.x.channel_specific_info = DotDict.wrap({
         "etau"   : False,
-        "mutau"  : True,
-        "tautau" : False,
+        "mutau"  : False,
+        "tautau" : True,
     })
