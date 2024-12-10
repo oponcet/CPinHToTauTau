@@ -230,6 +230,10 @@ def save_histograms_to_root2D(hists_data, hists_mc, var1, var2, cat_dir):
     """
     Convert histograms to ROOT TH2D format and save them in the ROOT file.
     """
+    # Sum of data histograms and mc 
+    data_sum_histogram = None
+    mc_sum_histogram = None
+
     # Save data histograms
     for dataset, hist_data in hists_data.items():
         if hist_data:
@@ -241,6 +245,11 @@ def save_histograms_to_root2D(hists_data, hists_mc, var1, var2, cat_dir):
 
             th2d = create_th2d_histogram(dataset, var1, var2, bin_edges_x, bin_edges_y, bin_contents, bin_uncertainties)
             th2d.Write()
+            # Add to sum 
+            if data_sum_histogram is None:
+                data_sum_histogram = th2d.Clone(f"{dataset}_data")
+            else:
+                data_sum_histogram.Add(th2d)
 
     # Save MC histograms
     for dataset, hist_mc in hists_mc.items():
@@ -253,6 +262,19 @@ def save_histograms_to_root2D(hists_data, hists_mc, var1, var2, cat_dir):
 
             th2d = create_th2d_histogram(dataset, var1, var2, bin_edges_x, bin_edges_y, bin_contents, bin_uncertainties)
             th2d.Write()
+            # Add to sum
+            if mc_sum_histogram is None:
+                mc_sum_histogram = th2d.Clone(f"{dataset}_mc")
+            else:
+                mc_sum_histogram.Add(th2d)
+
+    # Create data minus MC histogram
+    if data_sum_histogram and mc_sum_histogram:
+        data_minus_mc = data_sum_histogram.Clone(f"data_minus_mc")
+        data_minus_mc.Add(mc_sum_histogram, -1)
+        data_minus_mc.Write()
+
+    
 
 def create_th2d_histogram(dataset, var1, var2, bin_edges_x, bin_edges_y, bin_contents, bin_uncertainties):
     """
