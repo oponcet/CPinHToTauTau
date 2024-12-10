@@ -12,13 +12,13 @@ Output: Example
 │       ├── A/
 │           ├── hcand_1_pt/
 │               ├── THStack hcand_1_pt                                # THStack of the histograms for the variable pt1 with all datasets    
-│               ├── TH1D hcand_1_pt_data_tau_C                        # TH1D of the histogram for the variable pt1 with the dataset tau_C
+│               ├── TH1D data_tau_C                                   # TH1D of the histogram for the variable pt1 with the dataset tau_C
 │               ... 
-│               ├── TH1D hcand_1_pt_datasets                          # TH1D of the histogram for the variable pt1 with all datasets     
-│           ├── hcand_1_pt__met_var_qcd_h1/
-│               ├── TH2D hcand_1_pt__met_var_qcd_h1_data_tau_C        # TH1D of the histogram for the variable pt1 with the dataset tau_C
+│               ├── TH1D datasets                                     # TH1D of the histogram for the variable pt1 with all datasets     
+│           ├── met_var_qcd_h1_met_var_qcd_h1/
+│               ├── TH2D data_tau_C                                   # TH1D of the histogram for the variable pt1 with the dataset tau_C
 │               ... 
-│               ├── TH2D hcand_1_pt__met_var_qcd_h1_datasets          # TH1D of the histogram for the variable pt1 with all datasets         
+│               ├── TH2D datasets                                     # TH1D of the histogram for the variable pt1 with all datasets         
 │       ├── B # same for B
 │       ├── C
 │       ├── D
