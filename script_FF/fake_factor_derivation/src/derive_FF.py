@@ -164,40 +164,40 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 #     # Calculate fake factor
 #     calculate_fake_factor(input_file_a, input_file_b, output_root_file, output_json_file)
 
-def main(config_path, dm):
+# def main(config_path, dm):
 
-    # ROOT configuration
-    ROOT.gROOT.SetBatch(True) # Do not display canvas
+#     # ROOT configuration
+#     ROOT.gROOT.SetBatch(True) # Do not display canvas
 
-    # Load the JSON configuration
-    with open(config_path, 'r') as f:
-        config = json.load(f)
+#     # Load the JSON configuration
+#     with open(config_path, 'r') as f:
+#         config = json.load(f)
 
-    categories = config['categories']
-    variable = "hcand_1_pt"
+#     categories = config['categories']
+#     variable = "hcand_1_pt"
 
-    catA, catB = None, None  # Initialize to None
+#     catA, catB = None, None  # Initialize to None
 
-    for njet in config['categories'][dm]:
-        for cat in config['categories'][dm][njet]['ABCD']:
+#     for njet in config['categories'][dm]:
+#         for cat in config['categories'][dm][njet]['ABCD']:
 
-            if '_hadA__' in cat:
-                catA = cat
-            if '_hadB__' in cat:
-                catB = cat
+#             if '_hadA__' in cat:
+#                 catA = cat
+#             if '_hadB__' in cat:
+#                 catB = cat
             
-        if not catA or not catB:
-            raise ValueError(f"Categories _hadA__ or _hadB__ not found for {dm} in njet {njet}")   
+#         if not catA or not catB:
+#             raise ValueError(f"Categories _hadA__ or _hadB__ not found for {dm} in njet {njet}")   
         
-        # Define input file
-        input_file = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_{njet}.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
+#         # Define input file
+#         input_file = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_{njet}.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
 
-        # Calculate fake factor
-        calculate_fake_factor(input_file, catA, catB, dm, njet)
+#         # Calculate fake factor
+#         calculate_fake_factor(input_file, catA, catB, dm, njet)
 
-if __name__ == "__main__":
-    # dms = ['pi_1', 'rho_1', 'a1dm2_1', 'a1dm10_1', 'a1dm11_1']
-    dms = ['pi_1']
-    for dm in dms:
-        config_path = f'script_FF/fake_factor_derivation/inputs/inputs_json/fake_factors_{dm}.json'
-        main(config_path, dm)
+# if __name__ == "__main__":
+#     # dms = ['pi_1', 'rho_1', 'a1dm2_1', 'a1dm10_1', 'a1dm11_1']
+#     dms = ['pi_1']
+#     for dm in dms:
+#         config_path = f'script_FF/fake_factor_derivation/inputs/inputs_json/fake_factors_{dm}.json'
+#         main(config_path, dm)
