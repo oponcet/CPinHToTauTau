@@ -344,7 +344,7 @@ def add_config (ana: od.Analysis,
 
     # define inclusive datasets for the stitched process identification with corresponding leaf processes
     # drell-yan [NLO]
-    cfg.x.allow_dy_stitching = True
+    cfg.x.allow_dy_stitching = False
     cfg.x.dy_stitching = {
         "dy": {
             "inclusive_dataset": cfg.datasets.n.dy_lep_m50_madgraph,
@@ -526,11 +526,15 @@ def add_config (ana: od.Analysis,
         "pu_sf"             : (f"{json_mirror}/POG/LUM/{year}_Summer{year2}{year_postfix}/puWeights.json.gz",          "v1"), # PU
         "jet_jerc"          : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jet_jerc.json.gz",           "v1"), # JEC
         "muon_sf"           : (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/muon_Z.json.gz",             "v1"), # Mu POG SF
+        # https://gitlab.cern.ch/cclubbtautau/AnalysisCore/-/blob/main/data/TriggerScaleFactors/2022preEE/CrossMuTauHlt.json?ref_type=heads
         "muon_xtrig_sf"     : (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/CrossMuTauHlt.json",         "v1"), # Mu xTrig SF
         "electron_sf"       : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electron.json.gz",           "v1"), # Ele POG SF
         "electron_trig_sf"  : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electronHlt.json.gz",        "v1"), # Ele HLT SF
+        # https://gitlab.cern.ch/cclubbtautau/AnalysisCore/-/blob/main/data/TriggerScaleFactors/2022preEE/CrossEleTauHlt.json?ref_type=heads
         "electron_xtrig_sf" : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/CrossEleTauHlt.json",        "v1"), # Ele xTrig SF
         "tau_sf"            : (f"{json_mirror}/POG/TAU/{year}_{postfix}/tau_DeepTau2018v2p5_{year}_{postfix}.json.gz", "v1"), # TEC and ID SF
+        # https://gitlab.cern.ch/cclubbtautau/AnalysisCore/-/blob/main/data/TriggerScaleFactors/2022preEE/ditaujet_jetleg_SFs_preEE.json?ref_type=heads
+        "ditau_jet_trig_sf" : (f"{json_mirror}/POG/TAU/{year}_{postfix}/ditaujet_jetleg_SFs_preEE.json",               "v1"),
         "jet_veto_map"      : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz",        "v1"), # JetVeto
         "zpt_rewt_sf"       : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
         "tautau_ff"         : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # DUMMY !!!
@@ -1059,14 +1063,14 @@ def add_config (ana: od.Analysis,
     from httcp.config.categories import add_categories
     add_categories(cfg)
 
-    #cfg.x.ff_apply_id_map = DotDict.wrap({
-    #    #"etau"  : {},
-    #    #"mutau" : {},
-    #    "tautau" : {
-    #        "id"  : cfg.get_category("tautau__hadC").id,  # category_id for AR C 
-    #        "id0" : cfg.get_category("tautau__hadC0").id, # category_id for AR C0
-    #    },
-    #})
+    cfg.x.ff_apply_id_map = DotDict.wrap({
+        "etau"  : {},
+        "mutau" : {},
+        "tautau" : {
+            "id"  : [cfg.get_category("tautau").id, cfg.get_category("real_1").id, cfg.get_category("hadC").id],  # category_id for AR C 
+            "id0" : [cfg.get_category("tautau").id, cfg.get_category("real_1").id, cfg.get_category("hadC0").id], # category_id for AR C0
+        },
+    })
     
     #---------------------------------------------------------------------------------------------#
     # Add variables described in variables.py
@@ -1116,11 +1120,11 @@ def add_config (ana: od.Analysis,
                 "pt", "phi", "significance",
                 "covXX", "covXY", "covYY",
             ]
-        } | {
-            f"MET.{var}" for var in [
-                "pt", "phi", "significance",
-                "covXX", "covXY", "covYY",
-            ]
+            #} | {
+            #f"MET.{var}" for var in [
+            #    "pt", "phi", "significance",
+            #    "covXX", "covXY", "covYY",
+            #]
         } | {
             f"Jet.{var}" for var in [
                 "pt_no_corr", "eta_no_corr",
@@ -1243,7 +1247,25 @@ def add_config (ana: od.Analysis,
             "cutflow.*", "process_id", "category_ids",
         },
         "cf.UniteColumns": {
-            "*",
+            "run","luminosityBlock","event","LHEPdfWeight",
+            "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight",
+            "single_triggered", "cross_triggered",
+            "single_e_triggered", "cross_e_triggered",
+            "single_mu_triggered", "cross_mu_triggered",
+            "cross_tau_triggered", "cross_tau_jet_triggered",
+            # --- new for categorization --- #
+            "is_os", "is_iso_1", "is_iso_2", "is_low_mt", "is_b_veto",
+            "is_real_1", "is_real_2", "is_fake_1", "is_fake_2",
+            "is_lep_1", "is_pi_1", "is_pi_2", "is_rho_1", "is_rho_2",
+            "is_a1_1pr_2pi0_1", "is_a1_1pr_2pi0_2",
+            "is_a1_3pr_0pi0_1", "is_a1_3pr_0pi0_2",
+            "is_a1_3pr_1pi0_1", "is_a1_3pr_1pi0_2",
+            "is_ipsig_0to1_1",
+            "has_0jet", "has_1jet", "has_2jet",
+            "PuppiMET.*", "Jet.*",
+            "TauSpinner.*", "hcand.*", "hcandprod.*"
+            "GenTau.*", "GenTauProd.*",
+            "process_id", "category_ids"
         },
     })
 
