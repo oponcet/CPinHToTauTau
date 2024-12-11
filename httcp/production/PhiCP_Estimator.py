@@ -47,8 +47,7 @@ def GetPhiCP(
                                                method_leg2, 
                                                mode_leg1,
                                                mode_leg2)
-    phicp = ak.values_astype(ComputeAcopAngle(phicp_input_vec_dict),
-                             np.float32)
+    phicp = ak.values_astype(ComputeAcopAngle(phicp_input_vec_dict), np.float32)
     phicp = ak.enforce_type(phicp, "var * float32")
     
     return phicp
@@ -222,6 +221,7 @@ def ComputeAcopAngle(vecsdict):
     
     # Apply the shift if sign is negative
     acop  = ak.where(O_sign < 0.0, 2.*np.pi - acop, acop)
+
     acop  = ak.where(Y < 0.0, acop + np.pi, acop) # effective for DP method only
     
     #Map  angles into [0,2pi] interval
