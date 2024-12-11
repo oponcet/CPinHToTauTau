@@ -90,8 +90,8 @@ def add_ABCD_categories(config: od.Config) -> None:
     add_category(config,name="hadB0", id=7000,  selection="cat_ss_noniso1_noniso2_bveto", label="B0",  tags={"ss","noniso1","noniso2","bveto"})
     add_category(config,name="hadD0", id=9000,  selection="cat_os_iso1_noniso2_bveto",    label="D0",  tags={"os","iso1",   "noniso2","bveto"})
     add_category(config,name="hadC0", id=11000, selection="cat_os_noniso1_noniso2_bveto", label="C0",  tags={"os","noniso1","noniso2","bveto"})
-    add_category(config,name="hadD",  id=13000, selection="cat_os_iso1_iso2_bveto",       label="D",   tags={"os","iso1",   "iso2",   "bveto"})
-    add_category(config,name="hadC",  id=15000, selection="cat_os_noniso1_iso2_bveto",    label="C",   tags={"os","noniso1","iso2",   "bveto"})
+    add_category(config,name="hadD",  id=13000, selection="cat_os_iso1_iso2_bveto",       label="SR",  tags={"os","iso1",   "iso2",   "bveto"})
+    add_category(config,name="hadC",  id=15000, selection="cat_os_noniso1_iso2_bveto",    label="SB",  tags={"os","noniso1","iso2",   "bveto"})
     # leptonic
     add_category(config,name="lepA",  id=2000,  selection="cat_ss_iso2_bveto_lowmt",      label="A",   tags={"ss","iso2",   "bveto",  "lowmt" })
     add_category(config,name="lepB",  id=4000,  selection="cat_ss_noniso2_bveto_lowmt",   label="B",   tags={"ss","noniso2","bveto",  "lowmt" })
@@ -99,8 +99,8 @@ def add_ABCD_categories(config: od.Config) -> None:
     add_category(config,name="lepB0", id=8000,  selection="cat_os_noniso2_nobveto_lowmt", label="B0",  tags={"os","noniso2","nobveto","lowmt" })
     add_category(config,name="lepA1", id=10000, selection="cat_os_iso2_bveto_highmt",     label="A1",  tags={"os","iso2",   "bveto",  "highmt"})
     add_category(config,name="lepB1", id=12000, selection="cat_os_noniso2_bveto_highmt",  label="B1",  tags={"os","noniso2","bveto",  "highmt"}) 
-    add_category(config,name="lepD",  id=14000, selection="cat_os_iso2_bveto_lowmt",      label="D",   tags={"os","iso2",   "bveto",  "lowmt" })
-    add_category(config,name="lepC",  id=16000, selection="cat_os_noniso2_bveto_lowmt",   label="C",   tags={"os","noniso2","bveto",  "lowmt" })
+    add_category(config,name="lepD",  id=14000, selection="cat_os_iso2_bveto_lowmt",      label="SR",  tags={"os","iso2",   "bveto",  "lowmt" })
+    add_category(config,name="lepC",  id=16000, selection="cat_os_noniso2_bveto_lowmt",   label="SB",  tags={"os","noniso2","bveto",  "lowmt" })
 
 @call_once_on_config()
 def add_DM_categories(config: od.Config) -> None:
@@ -269,8 +269,8 @@ def add_categories(config: od.Config) -> None:
     add_DM_categories(config)
 
     add_etau_mutau_categories(config)
-    add_tautau_real_categories(config)
-    ###add_tautau_phiCP_categories(config)
+    #add_tautau_real_categories(config)
+    add_tautau_phiCP_categories(config)
     ###add_test_categories(config)
     
     #all_cats = [cat.name for cat, _, _ in config.walk_categories()]

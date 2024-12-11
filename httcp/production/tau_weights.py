@@ -149,7 +149,8 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
     args_vs_mu  = lambda mask, id_vs_m_wp, syst  : (abseta[mask], genmatch[mask], id_vs_m_wp, syst)    
     args_vs_jet = lambda mask, id_vs_j_wp, id_vs_e_wp, syst : (pt[mask], dm[mask], genmatch[mask], id_vs_j_wp, id_vs_e_wp, syst, "dm")
     
-    trig_eval_args = lambda mask, type, discr, syst: (pt[mask], dm[mask], type, discr, "sf", syst)
+    trig_eval_args     = lambda mask, type, discr, syst: (pt[mask], dm[mask], type, discr, "sf", syst)
+    trig_eff_eval_args = lambda mask, type, discr, node, syst: (pt[mask], dm[mask], type, discr, node, syst)
 
 
 
@@ -294,6 +295,7 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
                 events = set_ak_column(events, wt_name, reduce_mul(sf_values_dm[the_shift]), value_type=np.float32)
 
         # trig sf
+        """
         trig_tau_mask = (channel_id_flat == ch_tautau.id) & flat_np_view((dm_mask & (events.Tau.pt >= 40.0)), axis=1) & cross_tau_triggered & ~cross_tau_jet_triggered
         trig_sf_values[the_shift][trig_tau_mask] = self.trig_corrector.evaluate(*trig_eval_args(trig_tau_mask,
                                                                                                 'ditau',
@@ -304,7 +306,52 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
                                                                                                     'ditaujet',
                                                                                                     wp_config["vs_j"]["tautau"],
                                                                                                     the_shift))
-       
+        """
+        # Inclusive OR
+        #trig_tau_mask = (channel_id_flat == ch_tautau.id) & flat_np_view((dm_mask & (events.Tau.pt >= 40.0)), axis=1) & (cross_tau_triggered | cross_tau_jet_triggered)
+        #from IPython import embed; embed()
+
+        trig_tautau_mask = (channel_id_flat == ch_tautau.id) & flat_np_view((dm_mask & (events.Tau.pt >= 40.0)), axis=1) & cross_tau_triggered
+        trig_tautaujet_mask = (channel_id_flat == ch_tautau.id) & flat_np_view((dm_mask & (events.Tau.pt >= 40.0)), axis=1) & cross_tau_jet_triggered
+        trig_mask = (trig_tautau_mask | trig_tautaujet_mask)
+        
+
+        #from IPython import embed; embed()
+
+        
+        tautau_trig_eff_data = self.trig_corrector.evaluate(*trig_eff_eval_args(trig_mask,
+                                                                                'ditau',
+                                                                                wp_config["vs_j"]["tautau"],
+                                                                                "eff_data",
+                                                                                the_shift))
+        tautau_trig_eff_mc  = self.trig_corrector.evaluate(*trig_eff_eval_args(trig_mask,
+                                                                               'ditau',
+                                                                               wp_config["vs_j"]["tautau"],
+                                                                               "eff_mc",
+                                                                               the_shift))
+        tautaujet_trig_eff_data = self.trig_corrector.evaluate(*trig_eff_eval_args(trig_mask,
+                                                                                   'ditaujet',
+                                                                                   wp_config["vs_j"]["tautau"],
+                                                                                   "eff_data",
+                                                                                   the_shift))
+        tautaujet_trig_eff_mc  = self.trig_corrector.evaluate(*trig_eff_eval_args(trig_mask,
+                                                                                  'ditaujet',
+                                                                                  wp_config["vs_j"]["tautau"],
+                                                                                  "eff_mc",
+                                                                                  the_shift))
+        trig_tautau_mask_int = trig_tautau_mask.astype(int)[trig_mask]
+        trig_tautaujet_mask_int = trig_tautaujet_mask.astype(int)[trig_mask]
+
+        eff_data = trig_tautau_mask_int*tautau_trig_eff_data + trig_tautaujet_mask_int*tautaujet_trig_eff_data \
+            - (trig_tautau_mask_int * trig_tautaujet_mask_int * tautau_trig_eff_data * tautaujet_trig_eff_data)
+        eff_mc = trig_tautau_mask_int*tautau_trig_eff_mc + trig_tautaujet_mask_int*tautaujet_trig_eff_mc \
+            - (trig_tautau_mask_int * trig_tautaujet_mask_int * tautau_trig_eff_mc * tautaujet_trig_eff_mc)
+
+        sf = eff_data/eff_mc
+
+        trig_sf_values[the_shift][trig_mask] = sf
+
+        
         trig_wt_name = "tau_trigger_weight" if the_shift == "nom" else f"tau_trigger_weight_{the_shift}"
         events = set_ak_column(events, trig_wt_name, reduce_mul(trig_sf_values[the_shift]), value_type=np.float32)
         ##############################################################
