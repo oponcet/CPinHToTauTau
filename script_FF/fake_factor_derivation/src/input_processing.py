@@ -139,6 +139,8 @@ def save_histograms_to_root(hists_data, hists_mc, var, cat_dir):
                 data_histogram = th1d.Clone(f"{dataset}_data")
             else:
                 data_histogram.Add(th1d)
+            # rename the data histogram
+            data_histogram.SetName("data_hist")
 
     # Save MC histograms and add them to the stack
     for dataset, hist_mc in hists_mc.items():
