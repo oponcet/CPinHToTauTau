@@ -54,7 +54,7 @@ def main(config_path, dm):
         #########################################
         
         # Define input file
-        input_file_FF = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_{njet}.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
+        input_file_region = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_{njet}.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
 
         """
         # Calculate fake factor
@@ -70,7 +70,7 @@ def main(config_path, dm):
         #print(f"Variables 2D: {vars2D}")
 
         for var2D in vars2D:
-            apply_fake_factor(input_file_FF, catA, catB, dm, njet, var2D)
+            apply_fake_factor(input_file_region, catA, catB, dm, njet, var2D)
 
 
 
