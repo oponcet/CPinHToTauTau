@@ -105,8 +105,10 @@ def IF_ALLOW_STITCHING(
 ) -> Any | set[Any]:
     if getattr(func, "dataset_inst", None) is None:
         return self.get()
-    return None if not (func.dataset_inst.has_tag("is_w") | func.dataset_inst.has_tag("is_dy")) else self.get()
-    
+    allow_dy = func.dataset_inst.has_tag("is_dy") & func.config_inst.x.allow_dy_stitching
+    allow_w  = func.dataset_inst.has_tag("is_w") & func.config_inst.x.allow_w_stitching
+    #return None if not (func.dataset_inst.has_tag("is_w") | func.dataset_inst.has_tag("is_dy")) else self.get()
+    return None if not (allow_dy | allow_w) else self.get()
 
 def transverse_mass(lepton: ak.Array, met: ak.Array) -> ak.Array:
     dphi_lep_met = lepton.delta_phi(met)

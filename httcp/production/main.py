@@ -42,6 +42,8 @@ from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO:
 from httcp.production.sample_split import split_dy
 from httcp.production.processes import build_abcd_masks
 
+from httcp.production.columnvalid import make_column_valid
+
 #from httcp.production.angular_features import ProduceDetCosPsi, ProduceGenCosPsi
 
 from httcp.util import IF_DATASET_HAS_LHE_WEIGHTS, IF_DATASET_IS_DY, IF_DATASET_IS_W, IF_DATASET_IS_SIGNAL
@@ -64,18 +66,18 @@ logger = law.logger.get_logger(__name__)
         "hcand.*", optional("GenTau.*"), optional("GenTauProd.*"),
         "Jet.pt",
         "PuppiMET.pt", "PuppiMET.phi",
-        #reArrangeDecayProducts,
-        #reArrangeGenDecayProducts,
-        #ProduceGenPhiCP, #ProduceGenCosPsi, 
-        #ProduceDetPhiCP, #ProduceDetCosPsi,
+        reArrangeDecayProducts,
+        reArrangeGenDecayProducts,
+        ProduceGenPhiCP, #ProduceGenCosPsi, 
+        ProduceDetPhiCP, #ProduceDetCosPsi,
     },
     produces={
         # new columns
         "hcand_invm",
         "hcand_dr",
         "n_jet",
-        #ProduceGenPhiCP, #ProduceGenCosPsi,
-        #ProduceDetPhiCP, #ProduceDetCosPsi,
+        ProduceGenPhiCP, #ProduceGenCosPsi,
+        ProduceDetPhiCP, #ProduceDetCosPsi,
         "dphi_met_h1", "dphi_met_h2",
         "met_var_qcd_h1", "met_var_qcd_h2",
         "hT",
@@ -114,8 +116,7 @@ def hcand_features(
     
     events = set_ak_column_i32(events, "n_jet", ak.num(events.Jet.pt, axis=1))
 
-    
-    """
+
     events, P4_dict     = self[reArrangeDecayProducts](events)
     events              = self[ProduceDetPhiCP](events, P4_dict)
     #events              = self[ProduceDetCosPsi](events, P4_dict)
@@ -125,12 +126,13 @@ def hcand_features(
             events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
             events = self[ProduceGenPhiCP](events, P4_gen_dict)
             #events = self[ProduceGenCosPsi](events, P4_gen_dict)
-    """
+
     return events
 
 
 @producer(
     uses={
+        make_column_valid,
         ##deterministic_seeds,
         attach_coffea_behavior,
         normalization_weights,
@@ -159,6 +161,7 @@ def hcand_features(
         #ff_weight,
     },
     produces={
+        make_column_valid,
         ##deterministic_seeds,
         attach_coffea_behavior,
         normalization_weights,
@@ -190,6 +193,8 @@ def hcand_features(
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
+    events = self[make_column_valid](events, **kwargs)
+    
     events = self[attach_coffea_behavior](events, **kwargs)
     # deterministic seeds
     ##events = self[deterministic_seeds](events, **kwargs)
@@ -201,11 +206,13 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         # allow stitching is applicable only when datasets are DY or wjets, only if the stitching booleans are true in config
         allow_stitching = bool(ak.any([(self.dataset_inst.has_tag("is_dy") and self.config_inst.x.allow_dy_stitching),
                                        (self.dataset_inst.has_tag("is_w") and self.config_inst.x.allow_w_stitching)]))
+        #from IPython import embed; embed()
         if allow_stitching:
             events = self[stitched_normalization_weights](events, **kwargs)
         else:
             events = self[normalization_weights](events, **kwargs)
-
+        #events = self[stitched_normalization_weights](events, allow_stitching=allow_stitching, **kwargs)
+        
         # TODO : pileup weight is constrained to max value 10
         # TODO : check columnflow production/pileup
         events = self[pu_weight](events, **kwargs)
