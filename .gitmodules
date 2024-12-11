@@ -1,6 +1,6 @@
 [submodule "modules/columnflow"]
 	path = modules/columnflow
-	url = https://github.com/gsaha009/columnflow.git
+	url = https://github.com/IPHCTau/columnflow.git
 [submodule "modules/cmsdb"]
 	path = modules/cmsdb
-	url = https://github.com/gsaha009/cmsdb.git
+	url = https://github.com/IPHCTau/cmsdb.git
