@@ -60,7 +60,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     # Fit the fake factor histogram using `fit_functions.py`
     # fit_result = fit_fake_factor(fake_factor_hist)
-    fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, usePol1=True)
+    fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, 200, usePol1=True)
 
     # Save the fake factor and fit results to a ROOT file
     os.makedirs(os.path.dirname(output_root_file), exist_ok=True)
@@ -130,7 +130,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     uncert_canvas.SaveAs(output_details_image_path)
 
     # Save the canvas to the ROOT file for later use
-    uncert_canvas.Write("Flullplot")
+    uncert_canvas.Write("Fullplot")
 
     output_file.Close()
 

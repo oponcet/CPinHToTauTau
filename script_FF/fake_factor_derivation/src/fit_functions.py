@@ -7,7 +7,7 @@ Script with different useful function:
 
 import ROOT
 
-def fit_fake_factor(h, usePol1=False, polOnly=None):
+def fit_fake_factor(h, xmin, xmax, usePol1=False, polOnly=None):
     """
     Fit the fake factor with a Landau function and/or polynomial functions.
 
@@ -26,22 +26,24 @@ def fit_fake_factor(h, usePol1=False, polOnly=None):
     """
     if not h or h.GetNbinsX() == 0:
         raise ValueError("Input histogram is invalid or empty.")
+
+    print(f"Fitting histogram {h}")
     
     # Prepare an uncertainty histogram
     h_uncert = ROOT.TH1D(h.GetName() + '_uncert', "", 1000, h.GetBinLowEdge(1), h.GetBinLowEdge(h.GetNbinsX() + 1))
     
     # Define the fit functions
-    f1 = ROOT.TF1("f1", "landau", 40, 200)
-    f2 = ROOT.TF1("f2", "[0]*TMath::Landau(x,[1],[2])+[3]", 40, 200)
+    f1 = ROOT.TF1("f1", "landau", xmin, xmax)
+    f2 = ROOT.TF1("f2", "[0]*TMath::Landau(x,[1],[2])+[3]", xmin, xmax)
     if usePol1:
-        f2 = ROOT.TF1("f2", "[0]*TMath::Landau(x,[1],[2])+[3]+[4]*x", 40, 200)
+        f2 = ROOT.TF1("f2", "[0]*TMath::Landau(x,[1],[2])+[3]+[4]*x", xmin, xmax)
     
     if polOnly == 0:
-        f1 = ROOT.TF1("f1", "pol0", 20, 200)
-        f2 = ROOT.TF1("f2", "pol0", 20, 200)
+        f1 = ROOT.TF1("f1", "pol0", xmin, xmax)
+        f2 = ROOT.TF1("f2", "pol0", xmin, xmax)
     elif polOnly == 1:
-        f1 = ROOT.TF1("f1", "pol1", 20, 200)
-        f2 = ROOT.TF1("f2", "pol1", 20, 200)
+        f1 = ROOT.TF1("f1", "pol1", xmin, xmax)
+        f2 = ROOT.TF1("f2", "pol1", xmin, xmax)
     
     # Reset histogram, keeping only bins with content > 0
     h_clone = h.Clone()
@@ -65,14 +67,15 @@ def fit_fake_factor(h, usePol1=False, polOnly=None):
         f2.SetParameter(3, 0)  # Initial offset
         if usePol1:
             f2.SetParameter(4, 0)  # Initial slope
-
         # Iterative fitting
         rep = True
         count = 0
         while rep:
             fitresult = h.Fit("f2", 'SIR')
-            rep = int(fitresult) != 0  # Repeat if fit fails
+            rep = int(fitresult) != 0  # Repeat if fit fails      
             if not rep or count > 100:
+                print(f"Fit converged after {count} iterations.")
+                print(f"Fit result: {fitresult}")
                 # Generate confidence intervals for uncertainty
                 ROOT.TVirtualFitter.GetFitter().GetConfidenceIntervals(h_uncert, 0.68)
                 fit = f2
@@ -110,3 +113,29 @@ def fit_fake_factor(h, usePol1=False, polOnly=None):
     # Name and return the fit
     fit.SetName(h.GetName() + '_fit')
     return fit, h_uncert, h, fit_details
+
+
+def fit_correction(h, func='pol1'):
+    """
+    Fit the correction with a pol1 function.
+    """
+
+    # Prepare an uncertainty histogram
+    h_uncert = ROOT.TH1D(h.GetName()+'_uncert',"",1000,h.GetBinLowEdge(1),h.GetBinLowEdge(h.GetNbinsX()+1))
+    
+    # Define the fit functions
+    f1 = ROOT.TF1("f1",func)
+    #  fit with the full functions
+    # repeat fit up to 100 times until the fit converges properly
+    rep = True
+    count = 0
+    while rep:
+        fitresult = h.Fit("f1",'SI')
+        rep = int(fitresult) != 0
+        if not rep or count>100:
+            ROOT.TVirtualFitter.GetFitter().GetConfidenceIntervals(h_uncert, 0.68)
+            fit = f1
+            break
+        count+=1
+    fit.SetName(h.GetName()+'_fit')
+    return fit, h_uncert
