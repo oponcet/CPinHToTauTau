@@ -12,8 +12,8 @@ categories_to_check = [1,101,201,301]
 isMC = True
 campaign      = "run2_UL2018_nano_cp_tau_v09"
 version       = "Run2_2018_full_20240830_181952"
-cutflowpath   = "/eos/user/g/gsaha/cf_store/analysis_httcp/cf.CreateCutflowHistograms"
-mergehistpath = "/eos/user/g/gsaha/cf_store/analysis_httcp/cf.MergeHistograms"
+cutflowpath   = "/eos/user/o/oponcet2/analysis/CP_dev/cf_store/analysis_httcp/cf.CreateCutflowHistograms"
+mergehistpath = "/eos/user/o/oponcet2/analysis/CP_dev/cf.MergeHistograms"
 
 filesMC = {
     "signal"     : [f"{cutflowpath}/{campaign}/h_ggf_tautau_prod_cp_even_sm/nominal/calib__main/sel__main/{version}/cutflow_hist__event.pickle",
