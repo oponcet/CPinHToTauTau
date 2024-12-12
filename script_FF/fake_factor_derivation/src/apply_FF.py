@@ -26,8 +26,8 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     - njet: number of jets
     """
 
-    output_root_file_path = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/{dm}/{dm}_{njet}_hcand_1_pt_D.root'
-    output_png_file = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/{dm}/{dm}_{njet}_hcand_1_pt_D.png'
+    output_root_file_path = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/dm/{dm}/{dm}_{njet}_hcand_1_pt_D.root'
+    output_png_file = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/dm/{dm}/{dm}_{njet}_hcand_1_pt_D.png'
 
     # Ensure directories exist if not create them
     os.makedirs(os.path.dirname(output_root_file_path), exist_ok=True)
@@ -63,7 +63,7 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     FF_function = root_fake_factor_file.Get(f'FitResult')
 
     ## Detach the histograms from the ROOT file
-    FF_function.SetDirectory(0)
+    # FF_function.SetDirectory(0)
 
     root_fake_factor_file.Close()
 
@@ -125,7 +125,7 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     ratio.GetYaxis().SetTitle("Ratio")
     ratio.GetYaxis().SetNdivisions(505)
     # ratio.GetYaxis().SetRangeUser(0.5, 1.5)  # Adjust range as needed
-    ratio.GetXaxis().SetTitle(Variable)    # Replace with appropriate axis label
+    ratio.GetXaxis().SetTitle("p_{T} (GeV)")    # Replace with appropriate axis label
 
     print("creating canvas")
     # Create a new canvas and draw the plots
@@ -159,20 +159,6 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     ratio.SetDirectory(0)
 
     output_root_file.Close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -16,7 +16,7 @@ import json
 import ROOT
 
 from derive_FF import calculate_fake_factor
-from apply_FF_control import apply_fake_factor
+from apply_FF import *
 
 
 
@@ -60,17 +60,26 @@ def main(config_path, dm):
         # Calculate fake factor
         calculate_fake_factor(input_file_FF, catA, catB, dm, njet)
         """
+
+        #########################################
+        ###          APPLY FAKE FACTORS       ###
+        ###             FF x C -> D           ###
+        #########################################
+
+        apply_fake_factor_CD(input_file_region, catC, catD, dm, njet)
+
+
         #########################################
         ###          APPLY FAKE FACTORS       ###
         ###             FF x B -> A           ###
         #########################################
 
-        variables = config['variables']
-        vars2D = [[var['var1'], var['var2']] for var in variables]
-        #print(f"Variables 2D: {vars2D}")
+        # variables = config['variables']
+        # vars2D = [[var['var1'], var['var2']] for var in variables]
+        # #print(f"Variables 2D: {vars2D}")
 
-        for var2D in vars2D:
-            apply_fake_factor(input_file_region, catA, catB, dm, njet, var2D)
+        # for var2D in vars2D:
+        #     apply_fake_factor_AB(input_file_region, catA, catB, dm, njet, var2D)
 
 
 
