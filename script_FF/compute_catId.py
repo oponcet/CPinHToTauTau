@@ -74,8 +74,7 @@ data_config = {
             "dy_lep_m50_3j_madgraph", "dy_lep_m50_4j_madgraph", "tt_dl", "tt_sl", "tt_fh",
             "st_tchannel_t", "st_tchannel_tbar", "st_tw_t_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_tb_sl",
             "st_tw_tb_dl", "st_tw_tb_fh", "st_schannel_t", "st_schannel_tbar", "ww", "wz", "zz", "www", "wwz",
-            "wzz", "zzz", "h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay", 
-            "h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay", "h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay"
+            "wzz", "zzz"
         ]
     },
     "categories": categories,
