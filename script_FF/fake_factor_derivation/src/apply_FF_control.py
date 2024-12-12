@@ -21,6 +21,8 @@ import os
 import json
 import ROOT
 
+from fit_functions import fit_fake_factor
+
 def apply_fake_factor(input_file, catA, catB, dm, njet,var2D):
     """
     Parameters:
@@ -138,8 +140,6 @@ def apply_fake_factor(input_file, catA, catB, dm, njet,var2D):
     ratio = data_hist.Clone("ratio")
     ratio.Divide(mc_total)
 
-    print("ratio: ", ratio)
-
     # Customize the ratio plot
     # Don't show the ratio plot title
     ratio.SetTitle("")
@@ -177,11 +177,110 @@ def apply_fake_factor(input_file, catA, catB, dm, njet,var2D):
     # Save the canvas as a PNG file
     output_canvas_ratio.SaveAs(output_png_file)
 
-    # Also save the ratio in a TH1D
-    ratio_hist = ratio.Clone("ratio_hist")
-    ratio_hist.Write("ratio_hist")
+    # detatch the histograms from the ROOT file
+    ratio.SetDirectory(0)
 
     output_root_file.Close()
+
+
+    ### derive the closure correction for met_var_qcd_h1_hcand_1_pt
+
+    derive_corr_CR(ratio, "met_var_qcd", dm, njet)
+
+
+def derive_corr_CR(ratio_hist, variable, dm, njet):
+
+    # output file 
+    output_root_file_path = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/closure/dm/{dm}/{dm}_{njet}_{variable}.root'
+
+    # ensure directories exist if not create them
+    os.makedirs(os.path.dirname(output_root_file_path), exist_ok=True)
+
+    # Open the output ROOT file
+    output_file = ROOT.TFile(output_root_file_path, "RECREATE")
+
+    # Also save the ratio in a TH1D
+    ratio_hist.Write("ratio_hist")
+
+    fit_result, h_uncert, ratio_hist, fit_details = fit_fake_factor(ratio_hist, -1.5, 1.5, usePol1=True)
+
+    # Save the fake factor and fit results to a ROOT file
+
+    ratio_hist.Write("ClosureCorrection")
+    fit_result.Write("FitResult")
+    h_uncert.Write("Uncertainties")
+
+    #### CANVAS FULL PLOT #### 
+
+    # Plot the uncertainties
+    uncert_canvas = ROOT.TCanvas("Closure Correction", "Closure Correction", 800, 600)
+   
+    # Draw the fake factor histogram
+    ratio_hist.Draw("EP")
+    ratio_hist.SetLineColor(ROOT.kBlack)
+    ratio_hist.SetTitle("Fit Closure;MET_var_QCD ;Fake Factor")
+    ratio_hist.GetYaxis().SetRangeUser(0, 2.5)
+
+    # Draw the uncertainties as a filled area
+    h_uncert.Draw("E3 SAME")
+    h_uncert.SetFillColorAlpha(ROOT.kAzure + 7 , 0.3)
+    h_uncert.SetLineColor(ROOT.kAzure + 7)
+    h_uncert.SetLineWidth(2)
+
+    # Draw the fit result
+    fit_result.Draw("SAME")
+    fit_result.SetLineColor(ROOT.kAzure + 7)
+
+    # Add a legend for clarity
+    legend = ROOT.TLegend(0.15, 0.75, 0.35, 0.9) #  
+    legend.AddEntry(ratio_hist, "Fake Factor", "EP")
+    legend.AddEntry(fit_result, "Fit Result", "L")
+    legend.AddEntry(h_uncert, "95% CL (Uncertainties)", "F")
+    legend.SetBorderSize(0)
+    legend.SetFillStyle(0)
+    legend.Draw()
+
+    # remove stat box
+    ROOT.gStyle.SetOptStat(0)
+
+    # Save the canvas to an image file
+    output_image_path = output_root_file_path.replace(".root", "_FullPlot.png")
+    uncert_canvas.SaveAs(output_image_path)
+
+    #### PNG FILE: FIT DETAIL #### uncert_canvas
+    # Create a text box to show the fit details
+    fit_details_text = ROOT.TPaveText(0.35, 0.69, 0.6, 0.89, "NDC") # x1, y1, x2, y2, option
+    fit_details_text.SetBorderSize(0)
+    fit_details_text.SetFillColor(0)
+    fit_details_text.SetTextAlign(12)
+    fit_details_text.SetTextSize(0.03)
+
+    # Add fit statistics and parameters to the text box
+    fit_details_text.AddText(f"Chi2 = {fit_details['Chi2']:.4f}")
+    fit_details_text.AddText(f"NDf = {fit_details['NDf']}")
+
+    # Add parameter values with their errors
+    for i, param in enumerate(fit_details['Parameters']):
+        fit_details_text.AddText(f"p{i} = {param['p']:.4f} \pm {param['error']:.4f}")
+
+    # Draw the text box
+    fit_details_text.Draw()
+
+    # Save the fit details canvas as a separate PNG file
+    output_details_image_path = output_root_file_path.replace(".root", "_FitDetails.png")
+    uncert_canvas.SaveAs(output_details_image_path)
+
+    # Save the canvas to the ROOT file for later use
+    uncert_canvas.Write("Fullplot")
+
+    output_file.Close()
+
+
+
+
+
+
+
 
 
 
