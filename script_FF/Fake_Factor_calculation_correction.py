@@ -195,7 +195,7 @@ def plot_hist_cat(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
     colors = {
         'tt': "#9e9ac8",  # Violet
         'dy': "#feb24c",  # Orange
-        'diboson': "#a96b59",   # Brown for Diboson (WW)
+        'diboson + triboson': "#a96b59",   # Brown for Diboson (WW)
         'wj': "#d73027", # Red for W+jets
         'higgs': "#253494", # dark blue
         'fake': "#a1d99b" # green
@@ -234,8 +234,8 @@ def plot_hist_cat(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
         if dataset.startswith("st") or dataset.startswith("tt"):
             label = "t/tbar"
             color = colors['tt']
-        elif dataset in ["ww", "wz", "zz"]:
-            label = "Diboson"
+        elif dataset in ["ww", "wz", "zz", "www", "wwz", "wzz", "zzz"]:
+            label = "Diboson/Tribson"
             color = colors["diboson"]
         elif dataset.startswith('dy'):
             label = "Drell-Yan"
@@ -294,7 +294,8 @@ def plot_hist_cat(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_sub_):
     if hists_mc_data_sub is not None:
         plt.savefig(f"script_FF/plots/stacked_plot_cat_with_sub_{cat}.png", dpi=140)
     else:
-        plt.savefig(f"script_FF/plots/stacked_plot_cat_{cat}.png", dpi=140)
+        # plt.savefig(f"script_FF/plots/stacked_plot_cat_{cat}.png", dpi=140)
+        print("no plot")
 
 
 def calculate_data_MC_substraction(hists_data_cat_, hists_mc_cat_, cat,cat_title=""):
@@ -373,13 +374,13 @@ def calculate_data_MC_substraction(hists_data_cat_, hists_mc_cat_, cat,cat_title
     # print(f">>>>>>>>>>>>>>>>>>>>> Data - MC subtraction hist: \n{hists_data_mc_sub}")
     
 
-    fig, ax = plt.subplots()
-    ax.bar(hists_data_mc_sub.axes[0].centers, hists_data_mc_sub.values(), width=np.diff(hists_data_mc_sub.axes[0].edges), color='#f1b6da')
-    ax.set_ylabel("Events")
-    ax.set_title(f"Data - MC Subtraction - Category {cat_title}")
-    ax.legend()
-    plt.tight_layout()
-    plt.savefig(f"script_FF/plots/data_mc_subtraction_cat_{cat_title}.png", dpi=140)
+    # fig, ax = plt.subplots()
+    # ax.bar(hists_data_mc_sub.axes[0].centers, hists_data_mc_sub.values(), width=np.diff(hists_data_mc_sub.axes[0].edges), color='#f1b6da')
+    # ax.set_ylabel("Events")
+    # ax.set_title(f"Data - MC Subtraction - Category {cat_title}")
+    # ax.legend()
+    # plt.tight_layout()
+    # plt.savefig(f"script_FF/plots/data_mc_subtraction_cat_{cat_title}.png", dpi=140)
     # plt.show()
     return hists_data_mc_sub
 
@@ -594,7 +595,7 @@ def plot_hist_cat_with_ratio(hists_data_cat_, hists_mc_cat_, cat, hists_mc_data_
         if dataset.startswith("st") or dataset.startswith("tt"):
             label = "t/tbar"
             color = colors['tt']
-        elif dataset in ["ww", "wz", "zz"]:
+        elif dataset in ["ww", "wz", "zz", "www", "wwz", "wzz", "zzz"]:
             label = "Diboson"
             color = colors["diboson"]
         elif dataset.startswith('dy'):
@@ -877,8 +878,8 @@ def main(config_path):
                     print(f"catB: {catB}")
                     print(f"catC: {catC}")
                     print(f"catD: {catD}")
-                    cats_titleABC = ["A_"+dm_name, "B_"+dm_name, "C_"+dm_name]
-                    cats_titleD = "D_"+dm_name
+                    cats_titleABC = ["A_"+dm_name+njets_name, "B_"+dm_name+njets_name, "C_"+dm_name+njets_name]
+                    cats_titleD = "D_"+dm_name+njets_name
                 elif grouping_name == "A0B0C0D0":
                     # catA, catB, catC, catD = category_dict['A0'], category_dict['B0'], category_dict['C0'], category_dict['D0']
 
@@ -888,8 +889,8 @@ def main(config_path):
                                              [category_dict[key] for key in category_dict if 'hadD0' in key][0]
 
 
-                    cats_titleABC = ["A0_"+dm_name, "B0_"+dm_name, "C0_"+dm_name]
-                    cats_titleD = "D0_"+dm_name
+                    cats_titleABC = ["A0_"+dm_name+njets_name, "B0_"+dm_name+njets_name, "C0_"+dm_name+njets_name]
+                    cats_titleD = "D0_"+dm_name+njets_name
                 else:
                     raise ValueError(f"Invalid grouping name: {grouping_name}")
 
@@ -907,7 +908,7 @@ def main(config_path):
 
                 print("hists_mc_data_sub_ABC", hists_mc_data_sub_ABC)
                 # Derive Fake factors
-                title = grouping_name + "_"+ dm_name
+                title = grouping_name + "_"+ dm_name+njets_name
                 print(f"Processing Fake Factor for {title}")
                 fakefactor_values_ABCD, fakefactor_variance_ABCD, fakefactor_hist_ABCD = calculate_ratio_hist(hists_mc_data_sub_ABC[catA], hists_mc_data_sub_ABC[catB], title)   
             
@@ -945,12 +946,12 @@ def main(config_path):
                         # cat1, cat2 = category_dict['A'], category_dict['B']
                         cat1, cat2  = [category_dict[key] for key in category_dict if 'hadA' in key][0], \
                                       [category_dict[key] for key in category_dict if 'hadB' in key][0] 
-                        cat1_title = "A_"+dm_name
+                        cat1_title = "A_"+dm_name+njets_name
                     elif grouping_name == "A0B0C0D0":
                         #cat1, cat2 = category_dict['D0'], category_dict['C0']
                         cat1, cat2  = [category_dict[key] for key in category_dict if 'hadD0' in key][0], \
                                       [category_dict[key] for key in category_dict if 'hadC0' in key][0] 
-                        cat1_title = "D0_"+dm_name
+                        cat1_title = "D0_"+dm_name+njets_name
                     else:
                         raise ValueError(f"Invalid grouping name: {grouping_name}")
 
@@ -995,4 +996,4 @@ def main(config_path):
 
 
 if __name__ == "__main__":
-    main("script_FF/fake_factors_v3dec.json")
+    main("script_FF/fake_factors_v5dec.json")
