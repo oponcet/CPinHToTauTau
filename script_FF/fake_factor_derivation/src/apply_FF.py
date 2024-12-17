@@ -70,6 +70,8 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     # Apply the fake factor to the histograms
     hist_c_fake = hist_c.Clone()
 
+    # change range of hist_c_fake to 40-200
+
     for i in range(hist_c_fake.GetNbinsX()):
         pt = hist_c_fake.GetXaxis().GetBinCenter(i)
         fake_factor = FF_function.Eval(pt)
@@ -90,7 +92,10 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
 
     mc_stack = canvas_d_stack.GetPrimitive('mc_stack')
 
-    # Add the fake jets to the stack
+    # rename the fake jets histogram
+    hist_c_fake.SetName("fakes_jets")
+
+    # Add the fake jets to the stack 
     mc_stack.Add(hist_c_fake)
 
     # Save the canvas to the output file
@@ -124,7 +129,7 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     # ratio.SetTitle("Data / MC with Fake Jets")
     ratio.GetYaxis().SetTitle("Ratio")
     ratio.GetYaxis().SetNdivisions(505)
-    # ratio.GetYaxis().SetRangeUser(0.5, 1.5)  # Adjust range as needed
+    ratio.GetYaxis().SetRangeUser(0.5, 2.5)  # Adjust range as needed
     ratio.GetXaxis().SetTitle("p_{T} (GeV)")    # Replace with appropriate axis label
 
     print("creating canvas")
@@ -191,8 +196,8 @@ def apply_fake_factor_AB(input_file, catA, catB, dm, njet,var2D):
 
     hist_a_fake, hist_a_fake_proj = apply_fake_factor_var(input_file, catB, dm, njet,var2D)
 
-    print("hist_a_fake_proj",hist_a_fake_proj)
-    print("hist_a_fake",hist_a_fake)
+    # print("hist_a_fake_proj",hist_a_fake_proj)
+    # print("hist_a_fake",hist_a_fake)
 
     ##########################################################
     ### Build hist stack and data_minus_mc_wfake histogram ###
@@ -225,10 +230,6 @@ def apply_fake_factor_AB(input_file, catA, catB, dm, njet,var2D):
     # Compute the total MC histogram
     mc_total = mc_stack.GetStack().Last().Clone()  # Get the total MC histogram from the stack
 
-    # # Compute the "Data - MC with fake jets" histogram
-    # data_minus_mc_wfake = data_hist.Clone("data_minus_mc_wfake")
-    # data_minus_mc_wfake.Add(mc_total, -1)
-
 
     # Create a ratio plot
     ratio = data_hist.Clone("ratio")
@@ -240,7 +241,7 @@ def apply_fake_factor_AB(input_file, catA, catB, dm, njet,var2D):
     # ratio.SetTitle("Data / MC with Fake Jets")
     ratio.GetYaxis().SetTitle("Ratio")
     ratio.GetYaxis().SetNdivisions(505)
-    # ratio.GetYaxis().SetRangeUser(0.5, 1.5)  # Adjust range as needed
+    ratio.GetYaxis().SetRangeUser(0.5, 2.5)  # Adjust range as needed
     ratio.GetXaxis().SetTitle("Variable")    # Replace with appropriate axis label
 
     print("creating canvas")
@@ -279,10 +280,14 @@ def apply_fake_factor_AB(input_file, catA, catB, dm, njet,var2D):
 
     ### derive the closure correction for met_var_qcd_h1_hcand_1_pt
 
-    derive_corr_CC(ratio, "met_var_qcd", dm, njet)
+    print(f"var1: {var1}")
+
+    if var1 == "met_var_qcd_h1":
+        print(f"ratio: {ratio}")
+        derive_CCorr(ratio, "met_var_qcd_h1", dm, njet)
 
 
-def derive_corr_CC(ratio_hist, variable, dm, njet):
+def derive_CCorr(ratio_hist, variable, dm, njet):
 
     # output file 
     output_root_file_path = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/closure/dm/{dm}/{dm}_{njet}_{variable}.root'
@@ -435,13 +440,13 @@ def apply_fake_factor_var(input_file, cat, dm, njet,var2D):
     hist_2D_fake = hist_2D.Clone()
 
     for i in range(hist_2D_fake.GetNbinsX()):
+        var = hist_2D_fake.GetXaxis().GetBinCenter(i) # X axis is var
         for j in range(hist_2D_fake.GetNbinsY()):
-            pt = hist_2D_fake.GetYaxis().GetBinCenter(i)
-            eta = hist_2D_fake.GetXaxis().GetBinCenter(j)
+            pt = hist_2D_fake.GetYaxis().GetBinCenter(j) # Y axis is pt
             fake_factor = FF_function.Eval(pt)
             hist_2D_fake.SetBinContent(i,j,hist_2D_fake.GetBinContent(i,j)*fake_factor)
 
-    ## Project the 2D histogram ton the hcand_1_pt axis
+    ## Project the 2D histogram on the VAR axis
     hist_2D_fake_proj = hist_2D_fake.ProjectionX() 
 
     # set name of the histogram

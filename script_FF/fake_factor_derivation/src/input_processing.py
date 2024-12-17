@@ -164,6 +164,10 @@ def save_histograms_to_root(hists_data, hists_mc, var, cat_dir):
     if data_histogram and mc_sum_histogram:
         data_minus_mc = data_histogram.Clone(f"data_minus_mc")
         data_minus_mc.Add(mc_sum_histogram, -1)
+        # set to zero the negative values
+        for i in range(data_minus_mc.GetNbinsX()):
+            if data_minus_mc.GetBinContent(i + 1) < 0:
+                data_minus_mc.SetBinContent(i + 1, 0)
         data_minus_mc.Write()
 
 
@@ -183,16 +187,9 @@ def create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir):
     - cat_dir: Directory where the plot and ROOT file will be saved.
     - colors: Dictionary containing colors for different MC processes.
     """
-    # colors = {
-    # 'tt': "#9e9ac8",  # Violet
-    # 'dy': "#feb24c",  # Orange
-    # 'diboson + triboson': "#a96b59",   # Brown for Diboson (WW)
-    # 'wj': "#d73027",  # Red for W+jets
-    # 'higgs': "#253494", # dark blue
-    # 'fake': "#a1d99b"  # green
-    # }
-    # Create a list to store TH1D histograms for the stack plot
-
+    # Create a canvas for the Data vs MC plot
+    canvas = ROOT.TCanvas("canvas", "Data vs MC", 800, 600)
+    
     # Create stack for MC histograms
     stack = ROOT.THStack("mc_stack", "MC Stack")
     
@@ -200,31 +197,27 @@ def create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir):
     for hist in mc_histograms:
         # no line for the fill
         stack.Add(hist)
-
-    # Create a canvas for the Data vs MC plot
-    canvas = ROOT.TCanvas("canvas", "Data vs MC", 800, 600)
+        # Set fill color and style for the MC histograms
+        hist.SetLineColor(ROOT.kBlack)
+        hist.SetLineWidth(1)
+        
     
+    # Draw data histogram
     if data_histogram:
         data_histogram.SetLineColor(ROOT.kBlack)
         data_histogram.SetMarkerStyle(20)
         data_histogram.SetMarkerColor(ROOT.kBlack)
         data_histogram.Draw("E1")
 
-        stack.Draw("HIST SAME")
+    # Draw stack plot
+    stack.Draw("HIST SAME")
+    stack.GetXaxis().SetTitle(var)
+    stack.GetYaxis().SetTitle("Events")
 
-        # Add a legend
-        legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
-        legend.AddEntry(data_histogram, "Data", "p")
+    canvas.Modified()  # Ensure all modifications are applied
+    canvas.Update()
+    canvas.Write()
         
-        # Add entries for each MC histogram
-        for hist in mc_histograms:
-            legend.AddEntry(hist, hist.GetName(), "f")
-        
-        legend.Draw()
-
-        # Save the canvas
-        # canvas.SaveAs(f"{cat_dir}/{var}_data_vs_mc.png")
-        canvas.Write()
 
 
 
@@ -274,6 +267,12 @@ def save_histograms_to_root2D(hists_data, hists_mc, var1, var2, cat_dir):
     if data_sum_histogram and mc_sum_histogram:
         data_minus_mc = data_sum_histogram.Clone(f"data_minus_mc")
         data_minus_mc.Add(mc_sum_histogram, -1)
+        # set to zero the negative values
+        for i in range(data_minus_mc.GetNbinsX()):
+            for j in range(data_minus_mc.GetNbinsY()):
+                if data_minus_mc.GetBinContent(i + 1, j + 1) < 0:
+                    data_minus_mc.SetBinContent(i + 1, j + 1, 0)
+       
         data_minus_mc.Write()
 
     

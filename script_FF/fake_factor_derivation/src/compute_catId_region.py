@@ -45,21 +45,21 @@ import json
 import os
 
 # Define the categories and their IDs
-channel = [{"name": "tautau__real_1", "id": 50000}]
+channel = [{"name": "tautau__real_1", "id": 41000000}] # 1000000 real_1 and 40000000 tautau
 abcd = [
-    {"name": "hadA", "id": 100},
-    {"name": "hadB", "id": 300},
-    {"name": "hadA0", "id": 500},
-    {"name": "hadB0", "id": 700},
-    {"name": "hadC0", "id": 1100},
-    {"name": "hadD0", "id": 900},
-    {"name": "hadC", "id": 1500},
-    {"name": "hadD", "id": 1300},
+    {"name": "hadA", "id": 1000},
+    {"name": "hadB", "id": 3000},
+    {"name": "hadA0", "id": 5000},
+    {"name": "hadB0", "id": 7000},
+    {"name": "hadC0", "id": 11000},
+    {"name": "hadD0", "id": 9000},
+    {"name": "hadC", "id": 15000},
+    {"name": "hadD", "id": 13000},
 ]
 nj = [
-    {"name": "has_0j", "id": 51},
-    {"name": "has_1j", "id": 53},
-    {"name": "has_2j", "id": 55},
+    {"name": "has_0j", "id": 100000},
+    {"name": "has_1j", "id": 200000},
+    {"name": "has_2j", "id": 300000},
 ]
 dm = [
     {"name": "pi_1", "id": 1},
@@ -103,9 +103,9 @@ for combo in combinations:
 # Base JSON structure for each DM
 base_data_config = {
     "paths": {
-        "eos_path": "/eos/user/g/gsaha/CPinHToTauTauOutput/cf_store/analysis_httcp/cf.MergeHistograms/",
+        "eos_path": "/eos/user/g/gsaha/CPinHToTauTauOutput/cf_store/analysis_httcp/cf.MergeHistograms/", 
         "task": "run3_2022_preEE_nano_cp_tau_v14/",
-        "hist_path": "nominal/calib__main/sel__main/prod__main/weight__main/Run3_2022PreEE_full_20241130_190734/"
+        "hist_path": "nominal/calib__main/sel__main/prod__main/weight__main/Run3_2022PreEE_full_20241206_193602/"
     },
     "datasets": {
         "data": [
@@ -126,18 +126,6 @@ base_data_config = {
             "var2": "hcand_1_pt"
         },
         {
-            "var1": "hcand_1_eta",
-            "var2": "hcand_1_pt"
-        },
-        {
-            "var1": "hcand_1_phi",
-            "var2": "hcand_1_pt"
-        },
-        {
-            "var1": "hcand_dr",
-            "var2": "hcand_1_pt"
-        },
-        {
             "var1": "hcand_invm",
             "var2": "hcand_1_pt"
         },
@@ -154,11 +142,15 @@ base_data_config = {
             "var2": "hcand_1_pt"
         },
         {
-            "var1": "puppi_met_phi",
+            "var1": "hcand_2_pt",
             "var2": "hcand_1_pt"
         },
         {
-            "var1": "puppi_met_pt",
+            "var1": "hT",
+            "var2": "hcand_1_pt"
+        },
+        {
+            "var1": "n_jet",
             "var2": "hcand_1_pt"
         }
     ]

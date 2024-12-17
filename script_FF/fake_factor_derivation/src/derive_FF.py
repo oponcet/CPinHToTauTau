@@ -17,6 +17,8 @@ Output:
 import os
 import json
 import ROOT
+from correctionlib import schemav2 as cs
+
 
 from fit_functions import fit_fake_factor
 
@@ -139,21 +141,99 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     # Save the fake factor to a JSON file
     os.makedirs(os.path.dirname(output_json_file), exist_ok=True)
-    fake_factor_json = {
-        "bin_edges": list(fake_factor_hist.GetXaxis().GetXbins()),
-        "bin_values": [fake_factor_hist.GetBinContent(i) for i in range(1, fake_factor_hist.GetNbinsX() + 1)],
-        "bin_errors": [fake_factor_hist.GetBinError(i) for i in range(1, fake_factor_hist.GetNbinsX() + 1)]
+
+    fit_formula = str(fit_result.GetExpFormula("P"))  # Explicitly cast to a Python string
+
+
+    save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, [fit_result.GetParameter(i) for i in range(fit_result.GetNpar())])
+
+    # fake_factor_json = {
+    #     "bin_edges": list(fake_factor_hist.GetXaxis().GetXbins()),
+    #     "bin_values": [fake_factor_hist.GetBinContent(i) for i in range(1, fake_factor_hist.GetNbinsX() + 1)],
+    #     "bin_errors": [fake_factor_hist.GetBinError(i) for i in range(1, fake_factor_hist.GetNbinsX() + 1)]
+    # }
+
+    # with open(output_json_file, "w") as json_file:
+    #     json.dump(fake_factor_json, json_file, indent=4)
+
+    # # Close input files
+    # root_file.Close()
+
+    # print(f"Fake factor saved to {output_root_file} and {output_json_file}")
+
+   
+def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, fit_params):
+    """
+    Converts ROOT histogram with fake factors and a fit function into CorrectionLib JSON format.
+
+    Parameters:
+    - fake_factor_hist: ROOT.TH1D object containing fake factors.
+    - fit_result: ROOT.TF1 fit result.
+    - output_json_file: Path to save the CorrectionLib-compatible JSON file.
+    - dm: Decay mode.
+    - njet: Number of jets.
+    - fit_formula: Formula string of the fit (TF1.GetExpFormula()).
+    - fit_params: List of fit parameters (TF1.GetParameter()).
+    """
+    # Extract bin edges and values from the histogram
+    bin_edges = []
+    bin_values = []
+    uncertainties = []
+    
+    for i in range(1, fake_factor_hist.GetNbinsX() + 1):
+        bin_edges.append(fake_factor_hist.GetBinLowEdge(i))
+        bin_values.append(fake_factor_hist.GetBinContent(i))
+        uncertainties.append(fake_factor_hist.GetBinError(i))
+    
+    # Add the upper edge of the last bin
+    bin_edges.append(fake_factor_hist.GetBinLowEdge(fake_factor_hist.GetNbinsX() + 1))
+    
+    # Create CorrectionLib format with both binning and formula
+    correction_binned = {
+        "name": f"fake_factor_{dm}_{njet}_binned",
+        "description": f"Binned fake factor for decay mode {dm}, {njet} jets",
+        "version": 1,
+        "inputs": [{"name": "pt", "type": "real"}],
+        "output": {"name": "fake_factor", "type": "real"},
+        "data": {
+            "nodetype": "binning",
+            "inputs": ["pt"],
+            "edges": bin_edges,
+            "content": [{"value": val, "uncertainty": unc} for val, unc in zip(bin_values, uncertainties)],
+            "flow": "clamp"
+        }
+    }
+    
+    # Create CorrectionLib format with the formula
+    correction_fit = {
+        "name": f"fake_factor_{dm}_{njet}_fit",
+        "description": f"Fit fake factor for decay mode {dm}, {njet} jets",
+        "version": 1,
+        "inputs": [{"name": "pt", "type": "real"}],
+        "output": {"name": "fake_factor", "type": "real"},
+        "data": {
+            "nodetype": "formula",
+            "expression": fit_formula,
+            "parameters": [{"name": f"p{i}", "value": fit_params[i]} for i in range(len(fit_params))],
+            "variables": [{"name": "pt", "type": "real"}]
+        }
     }
 
-    with open(output_json_file, "w") as json_file:
-        json.dump(fake_factor_json, json_file, indent=4)
+    # Combine both corrections
+    correctionlib_json = {
+        "schema_version": 2,
+        "corrections": [correction_binned, correction_fit]
+    }
 
-    # Close input files
-    root_file.Close()
+    # Save to JSON file
+    with open(output_json_file, "w") as f:
+        json.dump(correctionlib_json, f, indent=4)
+    
+    print(f"CorrectionLib JSON with fit formula saved to {output_json_file}")
 
-    print(f"Fake factor saved to {output_root_file} and {output_json_file}")
 
-# # Example usage
+
+
 # if __name__ == "__main__":
 #     # Define input and output paths
 #     input_file_a = "inputs/inputs_rootfile/dm/region.root/A/pt1/data_minus_mc"
@@ -201,3 +281,5 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 #     for dm in dms:
 #         config_path = f'script_FF/fake_factor_derivation/inputs/inputs_json/fake_factors_{dm}.json'
 #         main(config_path, dm)
+
+
