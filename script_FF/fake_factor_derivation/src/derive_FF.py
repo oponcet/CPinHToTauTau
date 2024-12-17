@@ -144,7 +144,6 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     fit_formula = str(fit_result.GetExpFormula("P"))  # Explicitly cast to a Python string
 
-
     save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, [fit_result.GetParameter(i) for i in range(fit_result.GetNpar())])
 
     # fake_factor_json = {
