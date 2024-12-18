@@ -189,12 +189,15 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     upper_pad.SetPad(0, 0.3, 1, 1) # (xlow, ylow, xup, yup)
     upper_pad.SetBottomMargin(0.02)
     data_hist.SetMarkerStyle(20)
-    data_hist.Draw("E")
-    mc_stack.Draw("HIST SAME")
+    
+    mc_stack.Draw("HIST")
+    data_hist.Draw("E SAME")
 
     # remove x axis title and labels
-    data_hist.GetXaxis().SetTitle("")
-    data_hist.GetXaxis().SetLabelSize(0)
+    mc_stack.GetXaxis().SetTitle("")
+    mc_stack.GetXaxis().SetLabelSize(0)
+    mc_stack.GetXaxis().SetRangeUser(40, 200)
+    mc_stack.GetYaxis().SetTitle("Events/5 GeV")
     
 
     # legend
