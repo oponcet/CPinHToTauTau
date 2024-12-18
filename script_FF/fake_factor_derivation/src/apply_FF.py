@@ -10,7 +10,8 @@ Apply FF to B data_min_mc and use it in A region as Fake jets -> tau_h
 import os
 import json
 import ROOT
-
+from plotting import *
+import cmsstyle as CMS
 from fit_functions import fit_fake_factor
 
 def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
@@ -27,7 +28,7 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     """
 
     output_root_file_path = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/dm/{dm}/{dm}_{njet}_hcand_1_pt_D.root'
-    output_png_file = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/dm/{dm}/{dm}_{njet}_hcand_1_pt_D.png'
+    output_png_file = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/dm/{dm}/{dm}_{njet}_hcand_1_pt_D'
 
     # Ensure directories exist if not create them
     os.makedirs(os.path.dirname(output_root_file_path), exist_ok=True)
@@ -92,11 +93,52 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
 
     mc_stack = canvas_d_stack.GetPrimitive('mc_stack')
 
+    # Detach the histograms from the ROOT file
+    data_hist.SetDirectory(0)
+    hist_c_fake.SetDirectory(0)
+
+    # Close canvas and create a new one
+    canvas_d_stack.Close()
+    canvas_d_stack = CMS.cmsCanvas('Data-MC', 0, 1, 0, 1, '', '', square = CMS.kSquare, extraSpace=0.01, iPos=0)
+
+    
+
     # rename the fake jets histogram
     hist_c_fake.SetName("fakes_jets")
 
     # Add the fake jets to the stack 
     mc_stack.Add(hist_c_fake)
+
+    # Draw data
+    data_hist.Draw("E1")
+    mc_stack.Draw("HIST SAME")
+
+    ### STYLE THE PLOT ###
+
+    # legend
+    # Add a legend
+    legend = CMS.cmsLeg(0.7, 0.7, 0.9, 0.9, textSize=0.02)
+    # legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)  # Position can be adjusted
+    for hist in mc_stack:
+        # Get color and label for each histogram from the assign_color_and_label function
+        color, label = assign_color_and_label(hist.GetName())
+        hist.SetFillColor(ROOT.TColor.GetColor(color))
+        hist.SetLineColor(ROOT.kBlack)
+        hist.SetLineWidth(1)
+        hist.SetMarkerSize(0)
+        # add entry if label not already in the legend
+        if label not in [entry.GetLabel() for entry in legend.GetListOfPrimitives()]:
+            legend.AddEntry(hist, label, "f")
+    
+    if data_hist:
+        legend.AddEntry(data_hist, "Data", "lep")
+
+    # Axis
+    data_hist.GetYaxis().SetTitle("Events/5 GeV")
+    data_hist.GetXaxis().SetTitle("p_{T} (GeV)")
+    data_hist.GetXaxis().SetRangeUser(40, 200)
+    data_hist.GetYaxis().SetRangeUser(0, data_hist.GetMaximum()*1.2)
+    
 
     # Save the canvas to the output file
     output_root_file = ROOT.TFile(output_root_file_path, "RECREATE")
@@ -105,10 +147,10 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
 
 
     # Save the canvas as a PNG file
-    canvas_d_stack.SaveAs(output_png_file)
+    canvas_d_stack.SaveAs(f"{output_png_file}.pdf")
 
-    # Save the output ROOT file
-    output_root_file.Close()
+    # # Save the output ROOT file
+    # output_root_file.Close()
 
     #######################################################################
     ###   Create stack plot of D with hist_c_fake as fake with ratio    ###
@@ -116,7 +158,7 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     # Compute the total MC histogram
     mc_total = mc_stack.GetStack().Last().Clone()  # Get the total MC histogram from the stack
 
-    output_png_file_ratio = f'{output_png_file}_ratio.png'
+    output_png_file_ratio = f'{output_png_file}_ratio.pdf'
     
     
     # Create a ratio plot
@@ -134,24 +176,48 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
 
     print("creating canvas")
     # Create a new canvas and draw the plots
-    output_canvas_ratio = ROOT.TCanvas("output_canvas_ratio", "Data-MC Ratio", 800, 600)
-    output_canvas_ratio.Divide(1, 2)
+    # output_canvas_ratio = ROOT.TCanvas("output_canvas_ratio", "Data-MC Ratio", 800, 600)
+    # output_canvas_ratio = CMS.cmsCanvas('Data-MC Ratio', 0, 1, 0, 1, '', '', square = CMS.kSquare, extraSpace=0.01, iPos=0)
+    # cmsDiCanvas(canvName, x_min, x_max, y_min, y_max, r_min, r_max, nameXaxis, nameYaxis, nameRatio, square=kSquare, iPos=11, extraSpace=0, scaleLumi=None)
+    output_canvas_ratio = CMS.cmsDiCanvas('Data-MC Ratio', 40, 200, 0, 1, 0, 2.5, 'p_{T} (GeV)', 'Events/5 GeV', 'Data/MC', square = CMS.kSquare, iPos=0, extraSpace=0.01)
+
+    
+    # output_canvas_ratio.Divide(1, 2)
 
     # Upper pad for the histograms
     upper_pad = output_canvas_ratio.cd(1)
     upper_pad.SetPad(0, 0.3, 1, 1) # (xlow, ylow, xup, yup)
-    upper_pad.SetBottomMargin(0.04)
+    upper_pad.SetBottomMargin(0.02)
     data_hist.SetMarkerStyle(20)
     data_hist.Draw("E")
     mc_stack.Draw("HIST SAME")
-    data_hist.Draw("E SAME")
+
+    # remove x axis title and labels
+    data_hist.GetXaxis().SetTitle("")
+    data_hist.GetXaxis().SetLabelSize(0)
+    
+
+    # legend
+    # increase text size
+    legend.SetTextSize(0.02)
+    legend.Draw()
     
     # Lower pad for the ratio plot
     lower_pad = output_canvas_ratio.cd(2)
-    lower_pad.SetPad(0, 0, 1, 0.3)
-    lower_pad.SetTopMargin(0.02)
-    lower_pad.SetBottomMargin(0.3)
+    lower_pad.SetPad(0, 0, 1, 0.27)
+    lower_pad.SetTopMargin(0.036)
+    # lower_pad.SetBottomMargin(0.3)
+    # change label size
+    ratio.GetYaxis().SetLabelSize(0.1)
+    ratio.GetYaxis().SetTitleSize(0.1)
+    ratio.GetXaxis().SetLabelSize(0.1)
+    ratio.GetXaxis().SetTitleSize(0.1)
     ratio.Draw("E")
+
+    # Draw dash line at y=1
+    line = ROOT.TLine(40, 1, 200, 1)
+    line.SetLineStyle(2)
+    line.Draw()
 
 
     # Save the canvas to the output file
