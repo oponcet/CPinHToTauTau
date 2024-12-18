@@ -35,8 +35,10 @@ import numpy as np
 import scinum as sn
 import json
 import ROOT
+from ROOT import TCanvas, THStack, TLegend, TColor
 import os
-
+from plotting import *
+import cmsstyle as CMS
 
 def hist_to_num(h: hist.hist, unc_name=str(sn.DEFAULT)) -> sn.Number:
     """
@@ -175,33 +177,40 @@ def save_histograms_to_root(hists_data, hists_mc, var, cat_dir):
     create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir)
 
 
-def create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir):
+def create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir, colors=None):
     """
     Create a stack plot for the MC histograms and a summary plot for Data vs MC.
     Also allows customization of colors for different MC processes.
 
     Parameters:
-    - hists_data: Data histograms.
-    - hists_mc: MC histograms.
+    - mc_histograms: List of MC histograms.
+    - data_histogram: Data histogram.
     - var: Variable name to label the plot.
     - cat_dir: Directory where the plot and ROOT file will be saved.
-    - colors: Dictionary containing colors for different MC processes.
+    - colors: Dictionary containing colors for different MC processes (optional).
     """
     # Create a canvas for the Data vs MC plot
-    canvas = ROOT.TCanvas("canvas", "Data vs MC", 800, 600)
+    # canvas = ROOT.TCanvas("canvas", "Data vs MC", 800, 600)
+    CMS.SetExtraText("Private work")
+    CMS.SetCmsTextFont(52)
+    CMS.SetCmsTextSize(0.75*0.76)
     
+    # canvas = CMS.cmsCanvas('Data/MC',40,200,0,1,"Energy [GeV]","Events/5 GeV",square=CMS.kSquare,extraSpace=0.05,iPos=0)
+    canvas = CMS.cmsCanvas('', 0, 1, 0, 1, '', '', square = CMS.kSquare, extraSpace=0.01, iPos=0)
+
     # Create stack for MC histograms
     stack = ROOT.THStack("mc_stack", "MC Stack")
-    
+
     # Add each MC histogram to the stack with custom colors
-    for hist in mc_histograms:
-        # no line for the fill
-        stack.Add(hist)
-        # Set fill color and style for the MC histograms
-        hist.SetLineColor(ROOT.kBlack)
+    for i, hist in enumerate(mc_histograms):
+        # Set custom fill color based on the given dictionary
+        color, label = assign_color_and_label(hist.GetName()) 
+        hist.SetFillColor(ROOT.TColor.GetColor(color))
+        hist.SetLineColor(ROOT.kBlack)  # Set outline color to black
         hist.SetLineWidth(1)
-        
-    
+        # Add histogram to stack
+        stack.Add(hist)
+
     # Draw data histogram
     if data_histogram:
         data_histogram.SetLineColor(ROOT.kBlack)
@@ -209,16 +218,55 @@ def create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir):
         data_histogram.SetMarkerColor(ROOT.kBlack)
         data_histogram.Draw("E1")
 
-    # Draw stack plot
+    # Draw the stack on top of the data histogram
     stack.Draw("HIST SAME")
-    stack.GetXaxis().SetTitle(var)
-    stack.GetYaxis().SetTitle("Events")
+    
+    # Set axis titles
+    data_histogram.GetXaxis().SetTitle(var)
+    data_histogram.GetYaxis().SetTitle("Events/5 GeV")
 
-    canvas.Modified()  # Ensure all modifications are applied
-    canvas.Update()
-    canvas.Write()
+   # Add a legend
+    legend = CMS.cmsLeg(0.7, 0.7, 0.9, 0.9, textSize=0.02)
+    # legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)  # Position can be adjusted
+    for hist in mc_histograms:
+        # Get color and label for each histogram from the assign_color_and_label function
+        color, label = assign_color_and_label(hist.GetName())
+        # add entry if label not already in the legend
+        if label not in [entry.GetLabel() for entry in legend.GetListOfPrimitives()]:
+            legend.AddEntry(hist, label, "f")
+    
+    if data_histogram:
+        legend.AddEntry(data_histogram, "Data", "lep")
+    
+    legend.Draw()
+
+   
+
+    cat = cat_dir.GetName()
+    print("cat ", cat)  
+
+    if var == "hcand_1_pt":
+        # remove stat box
+        # ROOT.gStyle.SetOptStat(0)
+
+        data_histogram.GetXaxis().SetRangeUser(40, 200)
+        data_histogram.GetXaxis().SetTitle("p_{T}^{#tau} [GeV]")
+
+        # Update the canvas to ensure everything is rendered properly
+        stack.Modified() # Update the stack 
+        canvas.Modified()
+        canvas.Update()
         
 
+        
+        # Save the canvas to a file
+        outdir_plot = f"script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/plots"
+        if not os.path.exists(outdir_plot):
+            os.makedirs(outdir_plot)
+        canvas.SaveAs(f"{outdir_plot}/input_stack_hcand_1_pt_{cat}.pdf")
+
+    # Optionally, write the canvas to the ROOT file
+    canvas.Write()
 
 
 def save_histograms_to_root2D(hists_data, hists_mc, var1, var2, cat_dir):
