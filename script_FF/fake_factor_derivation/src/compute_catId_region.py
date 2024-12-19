@@ -152,6 +152,10 @@ base_data_config = {
         {
             "var1": "n_jet",
             "var2": "hcand_1_pt"
+        },
+        {
+            "var1": "hcand_dr",
+            "var2": "hcand_1_pt"
         }
     ]
 }
