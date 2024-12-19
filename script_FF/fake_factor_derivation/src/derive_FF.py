@@ -18,9 +18,10 @@ import os
 import json
 import ROOT
 from correctionlib import schemav2 as cs
-
+from array import array
 
 from fit_functions import fit_fake_factor
+
 
 def calculate_fake_factor(input_file, catA, catB, dm, njet):
     """
@@ -34,6 +35,11 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     - njet: number of jets
 
     """
+
+    # Reset the style of the canvas to use default style
+    ROOT.gROOT.SetStyle("Plain")
+    
+
     # Define output paths
     output_root_file = f'script_FF/fake_factor_derivation/outputs/FakeFactors/{dm}/{dm}_{njet}.root'
     output_json_file = f'script_FF/fake_factor_derivation/outputs/FakeFactors/{dm}/{dm}_{njet}.json'
@@ -60,6 +66,27 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     fake_factor_hist = hist_a.Clone("fake_factor")
     fake_factor_hist.Divide(hist_b)
 
+
+    # Rebin the fake factor histogram like this [40,45,55,60,65,70,80,90,100,120,140,200]
+    custom_bins = [40,45,50,55,60,65,70,80,90,100,120,140,200]
+    n_bins = len(custom_bins) - 1
+
+    # # print(array('d', custom_bins))
+
+    fake_factor_hist_rebinned = fake_factor_hist.Rebin(n_bins, "fake_factor_rebinned", array('d', custom_bins))
+
+    # normalize to the bin width
+    for i in range(1, fake_factor_hist_rebinned.GetNbinsX() + 1):
+        bin_width = fake_factor_hist_rebinned.GetBinWidth(i)/5. # divide by 5 because the bin width is 5 GeV
+        print(f"bin_width: {bin_width}")
+        bin_content = fake_factor_hist_rebinned.GetBinContent(i)
+        bin_error = fake_factor_hist_rebinned.GetBinError(i)
+        fake_factor_hist_rebinned.SetBinContent(i, bin_content / bin_width)
+        fake_factor_hist_rebinned.SetBinError(i, bin_error / bin_width)
+
+    fake_factor_hist = fake_factor_hist_rebinned
+
+
     # Fit the fake factor histogram using `fit_functions.py`
     # fit_result = fit_fake_factor(fake_factor_hist)
     fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, 200, usePol1=True)
@@ -75,6 +102,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     # Plot the uncertainties
     uncert_canvas = ROOT.TCanvas("Fake_Factor", "Fake Factor", 800, 600)
+    
    
     # Draw the fake factor histogram
     fake_factor_hist.Draw("EP")
@@ -103,6 +131,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     # remove stat box
     ROOT.gStyle.SetOptStat(0)
+    ROOT.gStyle.SetOptFit(0)
 
     # Save the canvas to an image file
     output_image_path = output_root_file.replace(".root", "_FullPlot.png")
@@ -144,7 +173,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     fit_formula = str(fit_result.GetExpFormula("P"))  # Explicitly cast to a Python string
 
-    save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, [fit_result.GetParameter(i) for i in range(fit_result.GetNpar())])
+    save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, [fit_result.GetParameter(i) for i in range(fit_result.GetNpar())], correction_name="fake_factor", variable_name="pt")
 
     # fake_factor_json = {
     #     "bin_edges": list(fake_factor_hist.GetXaxis().GetXbins()),
@@ -161,7 +190,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     # print(f"Fake factor saved to {output_root_file} and {output_json_file}")
 
    
-def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, fit_params):
+def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, fit_params, correction_name="fake_factor", variable_name="pt"):
     """
     Converts ROOT histogram with fake factors and a fit function into CorrectionLib JSON format.
 
@@ -205,7 +234,7 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
     
     # Create CorrectionLib format with the formula
     correction_fit = {
-        "name": f"fake_factor_{dm}_{njet}_fit",
+        "name": f"{correction_name}_{dm}_{njet}_fit",
         "description": f"Fit fake factor for decay mode {dm}, {njet} jets",
         "version": 1,
         "inputs": [{"name": "pt", "type": "real"}],
@@ -214,7 +243,7 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
             "nodetype": "formula",
             "expression": fit_formula,
             "parameters": [{"name": f"p{i}", "value": fit_params[i]} for i in range(len(fit_params))],
-            "variables": [{"name": "pt", "type": "real"}]
+            "variables": [{"name": variable_name, "type": "real"}]
         }
     }
 

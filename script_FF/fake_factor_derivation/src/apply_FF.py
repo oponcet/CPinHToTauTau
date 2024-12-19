@@ -13,6 +13,13 @@ import ROOT
 from plotting import *
 import cmsstyle as CMS
 from fit_functions import fit_fake_factor
+from derive_FF import save_to_correctionlib_with_fit
+
+def remove_TPaveText(canvas):
+    # Remove any existing TPave elements
+    for primitive in canvas.GetListOfPrimitives():
+        if isinstance(primitive, ROOT.TPaveText):  # Check if it's a TPaveText (or similar)
+            primitive.Delete()  # Remove the unwanted TPaveText
 
 def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     """
@@ -101,7 +108,6 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     canvas_d_stack.Close()
     canvas_d_stack = CMS.cmsCanvas('Data-MC', 0, 1, 0, 1, '', '', square = CMS.kSquare, extraSpace=0.01, iPos=0)
 
-    
 
     # rename the fake jets histogram
     hist_c_fake.SetName("fakes_jets")
@@ -110,8 +116,11 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     mc_stack.Add(hist_c_fake)
 
     # Draw data
-    data_hist.Draw("E1")
+    data_hist.Draw("E ")
     mc_stack.Draw("HIST SAME")
+    data_hist.Draw("E SAME")
+
+    data_hist.SetTitle("")
 
     ### STYLE THE PLOT ###
 
@@ -137,7 +146,6 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     data_hist.GetYaxis().SetTitle("Events/5 GeV")
     data_hist.GetXaxis().SetTitle("p_{T} (GeV)")
     data_hist.GetXaxis().SetRangeUser(40, 200)
-    data_hist.GetYaxis().SetRangeUser(0, data_hist.GetMaximum()*1.2)
     
 
     # Save the canvas to the output file
@@ -170,35 +178,35 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     ratio.SetTitle("")
     # ratio.SetTitle("Data / MC with Fake Jets")
     ratio.GetYaxis().SetTitle("Ratio")
-    ratio.GetYaxis().SetNdivisions(505)
-    ratio.GetYaxis().SetRangeUser(0.5, 2.5)  # Adjust range as needed
+    ratio.GetYaxis().SetRangeUser(0.5, 1.5)  # Adjust range as needed
+    ratio.GetYaxis().SetNdivisions(3)
     ratio.GetXaxis().SetTitle("p_{T} (GeV)")    # Replace with appropriate axis label
+    ratio.SetMarkerStyle(20)
 
     print("creating canvas")
     # Create a new canvas and draw the plots
-    # output_canvas_ratio = ROOT.TCanvas("output_canvas_ratio", "Data-MC Ratio", 800, 600)
-    # output_canvas_ratio = CMS.cmsCanvas('Data-MC Ratio', 0, 1, 0, 1, '', '', square = CMS.kSquare, extraSpace=0.01, iPos=0)
-    # cmsDiCanvas(canvName, x_min, x_max, y_min, y_max, r_min, r_max, nameXaxis, nameYaxis, nameRatio, square=kSquare, iPos=11, extraSpace=0, scaleLumi=None)
     output_canvas_ratio = CMS.cmsDiCanvas('Data-MC Ratio', 40, 200, 0, 1, 0, 2.5, 'p_{T} (GeV)', 'Events/5 GeV', 'Data/MC', square = CMS.kSquare, iPos=0, extraSpace=0.01)
 
-    
-    # output_canvas_ratio.Divide(1, 2)
+
 
     # Upper pad for the histograms
     upper_pad = output_canvas_ratio.cd(1)
     upper_pad.SetPad(0, 0.3, 1, 1) # (xlow, ylow, xup, yup)
     upper_pad.SetBottomMargin(0.02)
     data_hist.SetMarkerStyle(20)
-    
-    mc_stack.Draw("HIST")
+
+    data_hist.Draw("E ")
+    mc_stack.Draw("HIST SAME")
     data_hist.Draw("E SAME")
 
+    data_hist.SetTitle("")
+
     # remove x axis title and labels
-    mc_stack.GetXaxis().SetTitle("")
-    mc_stack.GetXaxis().SetLabelSize(0)
-    mc_stack.GetXaxis().SetRangeUser(40, 200)
-    mc_stack.GetYaxis().SetTitle("Events/5 GeV")
-    
+    data_hist.GetXaxis().SetTitle("")
+    data_hist.GetXaxis().SetLabelSize(0)
+    data_hist.GetXaxis().SetRangeUser(40, 200)
+    data_hist.GetYaxis().SetTitle("Events/5 GeV")
+
 
     # legend
     # increase text size
@@ -215,13 +223,23 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     ratio.GetYaxis().SetTitleSize(0.1)
     ratio.GetXaxis().SetLabelSize(0.1)
     ratio.GetXaxis().SetTitleSize(0.1)
+    ratio.GetYaxis().SetTitleOffset(0.5)  # Adjust this value to move the title to the right
+    ratio.GetYaxis().SetTitle("Data/MC")
+    ratio.GetYaxis().SetRangeUser(0.5, 1.5)
+    ratio.GetYaxis().SetNdivisions(3)
+    ratio.SetMarkerStyle(20)
+
+
     ratio.Draw("E")
+    ratio.SetTitle("")
 
     # Draw dash line at y=1
     line = ROOT.TLine(40, 1, 200, 1)
     line.SetLineStyle(2)
     line.Draw()
 
+    output_canvas_ratio.Update()
+    output_canvas_ratio.Modified()
 
     # Save the canvas to the output file
     output_canvas_ratio.Write()
@@ -256,7 +274,7 @@ def apply_fake_factor_AB(input_file, catA, catB, dm, njet,var2D):
 
     # Define output paths
     output_root_file_path = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/dm/{dm}/{dm}_{njet}_{var1}_A.root'
-    output_png_file = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/dm/{dm}/{dm}_{njet}_{var1}_A.png'
+    output_png_file = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/dm/{dm}/{dm}_{njet}_{var1}_A'
 
     # Ensure directories exist if not create them
     os.makedirs(os.path.dirname(output_root_file_path), exist_ok=True)
@@ -280,73 +298,139 @@ def apply_fake_factor_AB(input_file, catA, catB, dm, njet,var2D):
     root_file.Close()
 
     # Open the output ROOT file
-    output_root_file = ROOT.TFile(output_root_file_path, "UPDATE")
+    output_root_file = ROOT.TFile(output_root_file_path, "RECREATE")
     output_root_file.cd()
 
     # Get THStack mc_stacks in canvas and data
     data_hist = canvas_a_stack.GetPrimitive("data_hist")  # Ensure this matches your histogram name
     mc_stack = canvas_a_stack.GetPrimitive('mc_stack')
 
+    # Detach the histograms from the ROOT file
+    data_hist.SetDirectory(0)
+
+    # Close canvas and create a new one
+    canvas_a_stack.Close()
+    canvas_a_stack = CMS.cmsCanvas('Data-MC', 0, 1, 0, 1, '', '', square = CMS.kSquare, extraSpace=0.01, iPos=0)
+
     # Add the fake jets to the stack
     mc_stack.Add(hist_a_fake_proj)
+
+    # Draw 
+    data_hist.Draw("E1")
+    mc_stack.Draw("HIST SAME")
+    data_hist.Draw("E1 SAME")
+
+
+    ### STYLE THE PLOT ###
+    # Add a legend
+    legend = CMS.cmsLeg(0.7, 0.7, 0.9, 0.9, textSize=0.02)
+    for hist in mc_stack:
+        # Get color and label for each histogram from the assign_color_and_label function
+        color, label = assign_color_and_label(hist.GetName())
+        hist.SetFillColor(ROOT.TColor.GetColor(color))
+        hist.SetLineColor(ROOT.kBlack)
+        hist.SetLineWidth(1)
+        hist.SetMarkerSize(0)
+        # add entry if label not already in the legend
+        if label not in [entry.GetLabel() for entry in legend.GetListOfPrimitives()]:
+            legend.AddEntry(hist, label, "f")
+    
+    if data_hist:
+        legend.AddEntry(data_hist, "Data", "lep")
+
+    # Axis
+    data_hist.GetYaxis().SetTitle("Events/Bin GeV")
+    data_hist.GetXaxis().SetTitle(var1)
+
+
+    legend.SetTextSize(0.02)
+    legend.Draw()
 
     # Save the canvas to the output file
     canvas_a_stack.Write() 
 
-    ##########################################################
-    ### Build hist stack and data_minus_mc_wfake histogram ###
-    ##########################################################
+
+    #######################################################################
+    ###   Create stack plot of A with hist_B_fake as fake with ratio    ###
+    #######################################################################
     # Compute the total MC histogram
     mc_total = mc_stack.GetStack().Last().Clone()  # Get the total MC histogram from the stack
 
-
+    output_png_file_ratio = f'{output_png_file}_ratio.pdf'
+    
+    
     # Create a ratio plot
     ratio = data_hist.Clone("ratio")
     ratio.Divide(mc_total)
 
-    # Customize the ratio plot
-    # Don't show the ratio plot title
-    ratio.SetTitle("")
-    # ratio.SetTitle("Data / MC with Fake Jets")
-    ratio.GetYaxis().SetTitle("Ratio")
-    ratio.GetYaxis().SetNdivisions(505)
-    ratio.GetYaxis().SetRangeUser(0.5, 2.5)  # Adjust range as needed
-    ratio.GetXaxis().SetTitle("Variable")    # Replace with appropriate axis label
 
     print("creating canvas")
     # Create a new canvas and draw the plots
-    output_canvas_ratio = ROOT.TCanvas("output_canvas_ratio", "Data-MC Ratio", 800, 600)
-    output_canvas_ratio.Divide(1, 2)
+    output_canvas_ratio = CMS.cmsDiCanvas('Data-MC Ratio', 0, 1, 0, 1, 0, 2.5, 'p_{T} (GeV)', 'Events/5 GeV', 'Data/MC', square = CMS.kSquare, iPos=0, extraSpace=0.01)
+
 
     # Upper pad for the histograms
     upper_pad = output_canvas_ratio.cd(1)
     upper_pad.SetPad(0, 0.3, 1, 1) # (xlow, ylow, xup, yup)
-    upper_pad.SetBottomMargin(0.04)
+    upper_pad.SetBottomMargin(0.02)
     data_hist.SetMarkerStyle(20)
+    
     data_hist.Draw("E")
     mc_stack.Draw("HIST SAME")
     data_hist.Draw("E SAME")
+
+    # remove x axis title and labels
+    data_hist.GetXaxis().SetTitle("")
+    data_hist.GetXaxis().SetLabelSize(0)
+    data_hist.GetYaxis().SetTitle("Events/Bin GeV")
+    minx = data_hist.GetXaxis().GetXmin()
+    maxx = data_hist.GetXaxis().GetXmax()
+
+    # Set title
+    data_hist.SetTitle("")
+    
+
+    # legend
+    # increase text size
+    legend.SetTextSize(0.02)
+    legend.Draw()
     
     # Lower pad for the ratio plot
     lower_pad = output_canvas_ratio.cd(2)
-    lower_pad.SetPad(0, 0, 1, 0.3)
-    lower_pad.SetTopMargin(0.02)
-    lower_pad.SetBottomMargin(0.3)
+    lower_pad.SetPad(0, 0, 1, 0.27)
+    lower_pad.SetTopMargin(0.036)
+    # lower_pad.SetBottomMargin(0.3)
+    # change label size
+    ratio.GetYaxis().SetLabelSize(0.1)
+    ratio.GetYaxis().SetTitleSize(0.1)
+    ratio.GetXaxis().SetLabelSize(0.1)
+    ratio.GetXaxis().SetTitleSize(0.1)
+    ratio.GetYaxis().SetTitleOffset(0.5)  # Adjust this value to move the title to the right
+    ratio.GetYaxis().SetTitle("Data/MC")
+    ratio.GetYaxis().SetRangeUser(0.5, 1.5)
+    ratio.GetYaxis().SetNdivisions(3)
+    ratio.SetMarkerStyle(20)
     ratio.Draw("E")
+    ratio.SetTitle("")
+
+    # Draw dash line at y=1
+    line = ROOT.TLine(minx, 1, maxx, 1) # (x1, y1, x2, y2)
+    line.SetLineStyle(2)
+    line.Draw("SAME")
+
+    output_canvas_ratio.Update()
 
 
     # Save the canvas to the output file
     output_canvas_ratio.Write()
 
     # Save the canvas as a PNG file
-    output_canvas_ratio.SaveAs(output_png_file)
+    output_canvas_ratio.SaveAs(output_png_file_ratio)
 
     # detatch the histograms from the ROOT file
     ratio.SetDirectory(0)
 
     output_root_file.Close()
-
-
     ### derive the closure correction for met_var_qcd_h1_hcand_1_pt
 
     print(f"var1: {var1}")
@@ -357,6 +441,8 @@ def apply_fake_factor_AB(input_file, catA, catB, dm, njet,var2D):
 
 
 def derive_CCorr(ratio_hist, variable, dm, njet):
+
+    # ROOT.gROOT.SetStyle("Plain")
 
     # output file 
     output_root_file_path = f'script_FF/fake_factor_derivation/outputs/outputs_applyFF/closure/dm/{dm}/{dm}_{njet}_{variable}.root'
@@ -380,24 +466,24 @@ def derive_CCorr(ratio_hist, variable, dm, njet):
 
     #### CANVAS FULL PLOT #### 
 
-    # Plot the uncertainties
-    uncert_canvas = ROOT.TCanvas("Closure Correction", "Closure Correction", 800, 600)
+    # Plot the uncertainties as a filled area
+    CMS.SetCmsText("")
+    CMS.SetExtraText("Private Work")
+    CMS.SetLumi("")
+    CMS.SetEnergy(13.6, unit='TeV')
+    uncert_canvas = CMS.cmsCanvas('Closure Correction', -1.5, 1.4, 0, 2.5, 'MET_var_QCD', 'Closure Correction', square = CMS.kSquare, extraSpace=0.01, iPos=0)
    
-    # Draw the fake factor histogram
-    ratio_hist.Draw("EP")
-    ratio_hist.SetLineColor(ROOT.kBlack)
-    ratio_hist.SetTitle("Fit Closure;MET_var_QCD ;Fake Factor")
-    ratio_hist.GetYaxis().SetRangeUser(0, 2.5)
-
     # Draw the uncertainties as a filled area
-    h_uncert.Draw("E3 SAME")
-    h_uncert.SetFillColorAlpha(ROOT.kAzure + 7 , 0.3)
-    h_uncert.SetLineColor(ROOT.kAzure + 7)
-    h_uncert.SetLineWidth(2)
+    # Set label size for axes
+    h_uncert.GetXaxis().SetLabelSize(0.02)
+    h_uncert.GetYaxis().SetLabelSize(0.02)
+    CMS.cmsDraw(h_uncert, "E3", fcolor = ROOT.TColor.GetColor("#85D1FBff"), alpha = 0.8, lwidth = 0, lcolor = ROOT.kAzure + 7)
 
-    # Draw the fit result
-    fit_result.Draw("SAME")
-    fit_result.SetLineColor(ROOT.kAzure + 7)
+    # Draw the fake factor histogram
+    CMS.cmsDraw(ratio_hist, "Same P")
+    ratio_hist.SetLineColor(ROOT.kBlack)
+    ratio_hist.SetMarkerStyle(20)
+    ratio_hist.GetYaxis().SetRangeUser(0, 2.5)
 
     # Add a legend for clarity
     legend = ROOT.TLegend(0.15, 0.75, 0.35, 0.9) #  
@@ -406,42 +492,66 @@ def derive_CCorr(ratio_hist, variable, dm, njet):
     legend.AddEntry(h_uncert, "95% CL (Uncertainties)", "F")
     legend.SetBorderSize(0)
     legend.SetFillStyle(0)
+    legend.SetTextSize(0.03)
     legend.Draw()
 
-    # remove stat box
+
+    # remove stat box and fit box
     ROOT.gStyle.SetOptStat(0)
+    ROOT.gStyle.SetOptFit(0)
+
+
 
     # Save the canvas to an image file
-    output_image_path = output_root_file_path.replace(".root", "_FullPlot.png")
+    output_image_path = output_root_file_path.replace(".root", "_FullPlot.pdf")
     uncert_canvas.SaveAs(output_image_path)
 
-    #### PNG FILE: FIT DETAIL #### uncert_canvas
-    # Create a text box to show the fit details
-    fit_details_text = ROOT.TPaveText(0.35, 0.69, 0.6, 0.89, "NDC") # x1, y1, x2, y2, option
-    fit_details_text.SetBorderSize(0)
-    fit_details_text.SetFillColor(0)
-    fit_details_text.SetTextAlign(12)
-    fit_details_text.SetTextSize(0.03)
+    # #### PNG FILE: FIT DETAIL #### uncert_canvas
+    # # Create a text box to show the fit details
+    # fit_details_text = ROOT.TPaveText(0.35, 0.69, 0.6, 0.89, "NDC") # x1, y1, x2, y2, option
+    # fit_details_text.SetBorderSize(0)
+    # fit_details_text.SetFillColor(0)
+    # fit_details_text.SetTextAlign(12)
+    # fit_details_text.SetTextSize(0.02)
 
-    # Add fit statistics and parameters to the text box
-    fit_details_text.AddText(f"Chi2 = {fit_details['Chi2']:.4f}")
-    fit_details_text.AddText(f"NDf = {fit_details['NDf']}")
+    # # Add fit statistics and parameters to the text box
+    # fit_details_text.AddText(f"Chi2 = {fit_details['Chi2']:.4f}")
+    # fit_details_text.AddText(f"NDf = {fit_details['NDf']}")
 
-    # Add parameter values with their errors
-    for i, param in enumerate(fit_details['Parameters']):
-        fit_details_text.AddText(f"p{i} = {param['p']:.4f} \pm {param['error']:.4f}")
+    # # Add parameter values with their errors
+    # for i, param in enumerate(fit_details['Parameters']):
+    #     fit_details_text.AddText(f"p{i} = {param['p']:.4f} \pm {param['error']:.4f}")
 
-    # Draw the text box
-    fit_details_text.Draw()
+    # # Draw the text box
+    # fit_details_text.Draw()
+
+    # Add fit details to the canvas
+    ROOT.gStyle.SetOptFit(1)
+
 
     # Save the fit details canvas as a separate PNG file
-    output_details_image_path = output_root_file_path.replace(".root", "_FitDetails.png")
+    output_details_image_path = output_root_file_path.replace(".root", "_FitDetail.pdf")
     uncert_canvas.SaveAs(output_details_image_path)
 
     # Save the canvas to the ROOT file for later use
     uncert_canvas.Write("Fullplot")
 
+    # detacth the histograms from the ROOT file
+    ratio_hist.SetDirectory(0)
+
     output_file.Close()
+
+    #### JSON FILE ####
+    output_json_file = f'script_FF/fake_factor_derivation/outputs/ClosureCorrection/{dm}/{dm}_{njet}.json'
+
+
+    # Save the fake factor to a JSON file
+    os.makedirs(os.path.dirname(output_json_file), exist_ok=True)
+
+    fit_formula = str(fit_result.GetExpFormula("P"))  # Explicitly cast to a Python string
+
+    save_to_correctionlib_with_fit(ratio_hist, fit_result, output_json_file, dm, njet, fit_formula, [fit_result.GetParameter(i) for i in range(fit_result.GetNpar())], correction_name="closure_correction", variable_name="met_var_qcd_h1")
+
 
 
 def apply_fake_factor_var(input_file, cat, dm, njet,var2D):

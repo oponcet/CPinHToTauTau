@@ -196,7 +196,7 @@ def create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir, c
     CMS.SetCmsTextSize(0.75*0.76)
     
     # canvas = CMS.cmsCanvas('Data/MC',40,200,0,1,"Energy [GeV]","Events/5 GeV",square=CMS.kSquare,extraSpace=0.05,iPos=0)
-    canvas = CMS.cmsCanvas('', 0, 1, 0, 1, '', '', square = CMS.kSquare, extraSpace=0.01, iPos=0)
+    canvas = CMS.cmsCanvas('canvas', 0, 1, 0, 1, '', '', square = CMS.kSquare, extraSpace=0.01, iPos=0)
 
     # Create stack for MC histograms
     stack = ROOT.THStack("mc_stack", "MC Stack")
@@ -417,8 +417,8 @@ def main(config_path, dm):
 
 
 if __name__ == "__main__":
-    # dms = ['pi_1', 'rho_1', 'a1dm2_1', 'a1dm10_1', 'a1dm11_1']
-    dms = ['pi_1']
+    dms = ['pi_1', 'rho_1', 'a1dm2_1', 'a1dm10_1', 'a1dm11_1']
+    # dms = ['pi_1']
     for dm in dms:
         config_path = f'script_FF/fake_factor_derivation/inputs/inputs_json/fake_factors_{dm}.json'
         main(config_path, dm)
