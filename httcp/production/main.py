@@ -6,6 +6,7 @@ Column production methods related to higher-level features.
 import functools
 
 import law
+import order as od
 from typing import Optional
 from columnflow.production import Producer, producer
 from columnflow.production.categories import category_ids
@@ -33,7 +34,7 @@ from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 from httcp.production.extra_weights import zpt_reweight, ff_weight # ff_weight : dummy
 from httcp.production.muon_weights import muon_id_weights, muon_iso_weights, muon_trigger_weights, muon_xtrigger_weights
 from httcp.production.electron_weights import electron_idiso_weights, electron_trigger_weights, electron_xtrigger_weights
-from httcp.production.tau_weights import tau_weights, tauspinner_weights
+from httcp.production.tau_weights import tau_all_weights, tauspinner_weights
 
 
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
@@ -59,6 +60,7 @@ set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
 set_ak_column_i32 = functools.partial(set_ak_column, value_type=np.int32)
 
 logger = law.logger.get_logger(__name__)
+
 
 @producer(
     uses={
@@ -116,17 +118,21 @@ def hcand_features(
     
     events = set_ak_column_i32(events, "n_jet", ak.num(events.Jet.pt, axis=1))
 
-
-    events, P4_dict     = self[reArrangeDecayProducts](events)
-    events              = self[ProduceDetPhiCP](events, P4_dict)
-    #events              = self[ProduceDetCosPsi](events, P4_dict)
+    # ########################### #
+    # -------- For PhiCP -------- #
+    # ########################### #
+    events, P4_dict = self[reArrangeDecayProducts](events)
+    events   = self[ProduceDetPhiCP](events, P4_dict)
+    #events  = self[ProduceDetCosPsi](events, P4_dict) # for CosPsi only
     
     if self.config_inst.x.extra_tags.genmatch:
         if "is_signal" in list(self.dataset_inst.aux.keys()):
             events, P4_gen_dict = self[reArrangeGenDecayProducts](events)
-            events = self[ProduceGenPhiCP](events, P4_gen_dict)
-            #events = self[ProduceGenCosPsi](events, P4_gen_dict)
+            events = self[ProduceGenPhiCP](events, P4_gen_dict) 
+            #events = self[ProduceGenCosPsi](events, P4_gen_dict) # for CosPsi only
 
+    # ########################### #
+    
     return events
 
 
@@ -151,13 +157,14 @@ def hcand_features(
         electron_trigger_weights,
         electron_xtrigger_weights,
         # -- tau -- #
-        tau_weights,
+        tau_all_weights,
         IF_DATASET_IS_SIGNAL(tauspinner_weights),
         IF_DATASET_IS_DY(zpt_reweight),
         hcand_features,
         hcand_mass,
         category_ids,
         build_abcd_masks,
+        "channel_id",
         #ff_weight,
     },
     produces={
@@ -179,13 +186,13 @@ def hcand_features(
         electron_trigger_weights,
         electron_xtrigger_weights,
         # -- tau -- #
-        tau_weights,
+        tau_all_weights,
         IF_DATASET_IS_SIGNAL(tauspinner_weights),
         IF_DATASET_IS_DY(zpt_reweight),
         hcand_features,
         hcand_mass,
-        "channel_id",
-        "trigger_ids",
+        #"channel_id",
+        #"trigger_ids",
         category_ids,
         build_abcd_masks,
         #ff_weight,
@@ -198,8 +205,31 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = self[attach_coffea_behavior](events, **kwargs)
     # deterministic seeds
     ##events = self[deterministic_seeds](events, **kwargs)
+
     events = self[build_abcd_masks](events, **kwargs)
-    events, category_ids_debug_dict = self[category_ids](events, **kwargs)
+    # building category ids
+    events, category_ids_debug_dict = self[category_ids](events, debug=False, **kwargs)
+
+    # debugging categories
+    if self.config_inst.x.verbose.production.main:
+        from httcp.production.debug import category_flow
+        #print(category_ids_debug_dict)
+        od_cats_in_config = self.config_inst.categories
+        cat_etau = [cat for cat in od_cats_in_config if cat.name == "etau"][0]
+        etau_events = get_events_from_categories(events, cat_etau)
+        logger.info(f"Analysis : etau")
+        category_flow("etau", etau_events)
+
+        cat_mutau = [cat for cat in od_cats_in_config if cat.name == "mutau"][0]
+        mutau_events = get_events_from_categories(events, cat_mutau)
+        logger.info(f"Analysis : mutau")
+        category_flow("mutau", mutau_events)
+
+        cat_tautau = [cat for cat in od_cats_in_config if cat.name == "tautau"][0]
+        tautau_events = get_events_from_categories(events, cat_tautau)
+        logger.info(f"Analysis : tautau")
+        category_flow("tautau", tautau_events)
+        
 
     #events = self[ff_weight](events, **kwargs)
     if self.dataset_inst.is_mc:
@@ -228,7 +258,7 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         events = self[electron_trigger_weights](events, **kwargs)
         events = self[electron_xtrigger_weights](events, **kwargs)
         # ----------- Tau weights ----------- #        
-        events = self[tau_weights](events, do_syst=True, **kwargs)
+        events = self[tau_all_weights](events, do_syst=True, **kwargs)
 
         #from IPython import embed; embed()
         if self.has_dep(tauspinner_weights):
@@ -237,10 +267,10 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         if self.has_dep(zpt_reweight):
             events = self[zpt_reweight](events, **kwargs)
 
-        #processes = self.dataset_inst.processes.names()
-        #if ak.any(['dy_' in proc for proc in processes]):
-        #    logger.info("splitting (any) Drell-Yan dataset ... ")
-        #    events = self[split_dy](events,**kwargs)
+        processes = self.dataset_inst.processes.names()
+        if ak.any(['dy_' in proc for proc in processes]):
+            logger.info("splitting (any) Drell-Yan dataset ... ")
+            events = self[split_dy](events,**kwargs)
             
     events = self[hcand_features](events, **kwargs)       
 
