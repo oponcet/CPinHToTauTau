@@ -28,6 +28,7 @@ set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
         "cross_tau_triggered", "cross_tau_jet_triggered",
         # nano columns
         "Tau.pt", "Tau.eta", "Tau.genPartFlav", "Tau.decayModeHPS",
+        "Jet.pt", "Jet.eta",
     },
     produces={
         "tau_weight",
@@ -38,16 +39,13 @@ set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
                 "jet_dm0", "jet_dm1", "jet_dm10", "e_barrel", "e_endcap",
                 "mu_0p0To0p4", "mu_0p4To0p8", "mu_0p8To1p2", "mu_1p2To1p7", "mu_1p7To2p3",
         ]
-    } | {
-        "tau_trigger_weight"
-    } | {
-        f"tau_trigger_weight_{direction}"
-        for direction in ["up", "down"]
     },
     # only run on mc
     mc_only=True,
     # function to determine the correction file
     get_tau_file=(lambda self, external_files: external_files.tau_sf),
+    # for jet leg
+    get_jetleg_file=(lambda self, external_files: external_files.ditau_jet_trig_sf.path),
     # function to determine the tau tagger name
     get_tau_tagger=(lambda self: self.config_inst.x.deep_tau_tagger),
 )
@@ -93,6 +91,21 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
     dm = flat_np_view(events.Tau.decayModeHPS, axis=1)
     genmatch = flat_np_view(events.Tau.genPartFlav, axis=1)
 
+
+    jet_trigger_mask = events.Jet.pt > 60.0
+    jets_triggered = events.Jet[jet_trigger_mask]
+    
+    jet_1_pt  = ak.fill_none(ak.firsts(jets_triggered.pt, axis=1), 999.9)
+    jet_1_abs_eta = np.abs(ak.fill_none(ak.firsts(jets_triggered.eta, axis=1), 4.99))
+    
+    flat_jet_1_pt = ak.to_numpy(jet_1_pt)
+    flat_jet_1_abs_eta = ak.to_numpy(jet_1_abs_eta)
+
+    args_for_jetleg = lambda mask, syst, effkey : (flat_jet_1_pt[mask],
+                                                   flat_jet_1_abs_eta[mask],
+                                                   syst,
+                                                   effkey)
+    
     # define channel / trigger dependent masks
     single_triggered = events.single_triggered
     cross_triggered = events.cross_triggered
@@ -136,8 +149,9 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
   
     # start with ones
     sf_nom = np.ones_like(pt, dtype=np.float32)
+    sf_nom_evt = np.ones_like(flat_jet_1_pt, dtype=np.float32)
 
-
+    
     # helpers to create corrector arguments
     if self.id_vs_e_corrector.version == 0:
         args_vs_e   = lambda mask, id_vs_e_wp, syst  : (abseta[mask], genmatch[mask], id_vs_e_wp, syst)
@@ -153,7 +167,6 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
     trig_eff_eval_args = lambda mask, type, discr, node, syst: (pt[mask], dm[mask], type, discr, node, syst)
 
 
-
     shifts = ["nom"]
     if  do_syst:
         shifts=[*shifts,"up", "down"]
@@ -163,10 +176,30 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
     sf_values_e = {}
     sf_values_mu = {}
     trig_sf_values = {}
-
+    trig_eff_values = {
+        "ditau": {
+            "mc": {}, "data": {}
+        },
+        "ditaujet": {
+            "mc": {}, "data": {}
+        }
+    }
+    trig_jetleg_eff_values = {"mc": {}, "data": {}}
 
     
     for the_shift in shifts:
+        _cross_mask = (events.channel_id == ch_tautau.id) & events.cross_tau_jet_triggered
+        for eff_tag in ["mc", "data"]:
+            _temp = sf_nom_evt.copy()
+            _temp[_cross_mask] = ak.Array(self.trig_jetleg_corrector.evaluate(*args_for_jetleg(_cross_mask,
+                                                                                               the_shift,
+                                                                                               eff_tag)))
+            trig_jetleg_eff_values[eff_tag][the_shift] = ak.values_astype(_temp, np.float32)
+            #trig_jetleg_eff_values[eff_tag][the_shift] = sf_nom_evt.copy()
+            #trig_jetleg_eff_values[eff_tag][the_shift][_cross_mask] = self.trig_jetleg_corrector.evaluate(*args_for_jetleg(_cross_mask,
+            #                                                                                                               the_shift,
+            #                                                                                                               eff_tag))
+            
         sf_values[the_shift] = sf_nom.copy() # sf_values = {"nom": [ , , , , ...]}
         trig_sf_values[the_shift] = sf_nom.copy() # sf_values = {"nom": [ , , , , ...]}
         
@@ -313,12 +346,34 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
 
         trig_tautau_mask = (channel_id_flat == ch_tautau.id) & flat_np_view((dm_mask & (events.Tau.pt >= 40.0)), axis=1) & cross_tau_triggered
         trig_tautaujet_mask = (channel_id_flat == ch_tautau.id) & flat_np_view((dm_mask & (events.Tau.pt >= 40.0)), axis=1) & cross_tau_jet_triggered
+        _trig_mask = {"ditau": trig_tautau_mask, "ditaujet": trig_tautaujet_mask}
         trig_mask = (trig_tautau_mask | trig_tautaujet_mask)
-        
 
+        for trig_type in ["ditau", "ditaujet"]:
+            for eff_tag in ["mc", "data"]:
+                trig_eff_temp = sf_nom.copy()
+                #trig_eff_values[trig_type][eff_tag][the_shift] = sf_nom.copy()
+                _mask = _trig_mask[trig_type]
+                #trig_eff_values[trig_type][eff_tag][the_shift][_mask] = self.trig_corrector.evaluate(*trig_eff_eval_args(_mask,
+                #                                                                                                         trig_type,
+                #                                                                                                         wp_config["vs_j"]["tautau"],
+                #                                                                                                         f"eff_{eff_tag}",
+                #                                                                                                         the_shift))
+                trig_eff_temp[_mask] = self.trig_corrector.evaluate(*trig_eff_eval_args(_mask,
+                                                                                        trig_type,
+                                                                                        wp_config["vs_j"]["tautau"],
+                                                                                        f"eff_{eff_tag}",
+                                                                                        the_shift))
+                trig_eff_values[trig_type][eff_tag][the_shift] = ak.values_astype(reduce_mul(trig_eff_temp), np.float32)
+                
+                #eff_name = f"tau_trigger_eff_{trig_type}_{eff_tag}" if the_shift == "nom" else f"tau_trigger_eff_{trig_type}_{eff_tag}_{the_shift}"
+                #events = set_ak_column(events, eff_name, reduce_mul(trig_eff_values[trig_type][eff_tag][the_shift][_mask]), value_type=np.float32)
+                
+                
+        
         #from IPython import embed; embed()
 
-        
+        """
         tautau_trig_eff_data = self.trig_corrector.evaluate(*trig_eff_eval_args(trig_mask,
                                                                                 'ditau',
                                                                                 wp_config["vs_j"]["tautau"],
@@ -339,6 +394,9 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
                                                                                   wp_config["vs_j"]["tautau"],
                                                                                   "eff_mc",
                                                                                   the_shift))
+
+        
+
         trig_tautau_mask_int = trig_tautau_mask.astype(int)[trig_mask]
         trig_tautaujet_mask_int = trig_tautaujet_mask.astype(int)[trig_mask]
 
@@ -350,17 +408,17 @@ def tau_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak
         sf = eff_data/eff_mc
 
         trig_sf_values[the_shift][trig_mask] = sf
-
+        
         
         trig_wt_name = "tau_trigger_weight" if the_shift == "nom" else f"tau_trigger_weight_{the_shift}"
         events = set_ak_column(events, trig_wt_name, reduce_mul(trig_sf_values[the_shift]), value_type=np.float32)
         ##############################################################
-            
+        """
         wt_name = "tau_weight" if the_shift == "nom" else f"tau_weight_{the_shift}"
         events = set_ak_column(events, wt_name, reduce_mul(sf_values[the_shift]), value_type=np.float32)
 
         
-    return events
+    return events, trig_eff_values, trig_jetleg_eff_values
 
 
 
@@ -391,6 +449,11 @@ def tau_weights_setup(self: Producer, reqs: dict, inputs: dict, reader_targets: 
     # trigger
     self.trig_corrector = correction_set["tau_trigger"]
 
+    correction_set_jetleg = correctionlib.CorrectionSet.from_file(
+        self.get_jetleg_file(bundle.files),
+    )
+    self.trig_jetleg_corrector = correction_set_jetleg["jetlegSFs"]
+
     # check versions
     assert self.id_vs_jet_corrector.version in (0, 1, 2, 3)
     assert self.id_vs_e_corrector.version in (0, 1)
@@ -398,42 +461,49 @@ def tau_weights_setup(self: Producer, reqs: dict, inputs: dict, reader_targets: 
 
 
 
-# ------------------------------------------------- #
-# Calculate Tau-Spinner weights
-# ------------------------------------------------- #
 
-#@producer(
-#    uses={
-#        f"TauSpinner*" 
-#    },
-#    produces={
-#        "tauspinner_weight_up", "tauspinner_weight", "tauspinner_weight_down"
-#    },
-#    mc_only=True,
-#)
-#def tauspinner_weights(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
-#    """
-#    A simple function that sets tauspinner_weight according to the cp_hypothesis
-#    # https://github.com/hephysicist/CPinHToTauTau/blob/desy_dev/httcp/production/weigh#ts.py#L411
-#    """
-#    names = ["_up", "", "_down"]
-#
-#    for the_name in names:
-#        #if  "TauSpinner" in list(events.fields):
-#        if the_name == "_up": the_weight = events.TauSpinner.weight_cp_0
-#        #elif the_name == "":  the_weight = ak.ones_like(events.TauSpinner.weight_cp_0p#5)
-#        elif the_name == "":  the_weight =  (events.TauSpinner.weight_cp_0p5 + events.T#auSpinner.weight_cp_0)/2.
-#        elif the_name == "_down": the_weight = events.TauSpinner.weight_cp_0p5
-#        else:  raise NotImplementedError('CP hypothesis is not known to the tauspinner #weight producer!')   
-#        buf = ak.to_numpy(the_weight)
-#        if any(np.isnan(buf)):
-#            warn.warn("tauspinner_weight contains NaNs. Imputing them with zeros.")
-#            buf[np.isnan(buf)] = 0
-#            the_weight = buf
-#    
-#        events = set_ak_column_f32(events, f"tauspinner_weight{the_name}", the_weight)
-#    return events
 
+@producer(
+    uses={
+        "cross_tau_triggered", "cross_tau_jet_triggered",
+        tau_weights,
+    },
+    produces={
+        tau_weights,
+    } | {
+        f"tau_trigger_weight{direction}"
+        for direction in ["", "_up", "_down"]
+    },
+    # only run on mc
+    mc_only=True,
+)
+def tau_all_weights(self: Producer, events: ak.Array, do_syst: bool, **kwargs) -> ak.Array:
+    """
+    """
+    events, trig_eff_values, trig_jetleg_eff_values = self[tau_weights](events, do_syst, **kwargs)
+    
+    passDiTau = ak.values_astype(events.cross_tau_triggered, np.int32)
+    passDiTauJet = ak.values_astype(events.cross_tau_jet_triggered, np.int32)
+
+    getmin = lambda arr1, arr2 : ak.where(arr1 <= arr2, arr1, arr2)
+
+    
+    for the_shift in ["nom", "up", "down"]:
+        eff_data = (passDiTau * trig_eff_values["ditau"]["data"][the_shift]) \
+            - (passDiTau * passDiTauJet * getmin(trig_eff_values["ditau"]["data"][the_shift], trig_eff_values["ditaujet"]["data"][the_shift]) * trig_jetleg_eff_values["data"][the_shift]) \
+            + (passDiTauJet * trig_eff_values["ditaujet"]["data"][the_shift] * trig_jetleg_eff_values["data"][the_shift])
+        eff_mc = (passDiTau * trig_eff_values["ditau"]["mc"][the_shift]) \
+            - (passDiTau * passDiTauJet * getmin(trig_eff_values["ditau"]["mc"][the_shift], trig_eff_values["ditaujet"]["mc"][the_shift]) * trig_jetleg_eff_values["mc"][the_shift]) \
+            + (passDiTauJet * trig_eff_values["ditaujet"]["mc"][the_shift] * trig_jetleg_eff_values["mc"][the_shift])
+        sf_weight = ak.values_astype(eff_data/eff_mc, np.float32)
+        sf_weight = ak.where(eff_mc > 0.0, sf_weight, 1.0)
+
+        weight_name = f"tau_trigger_weight_{the_shift}" if the_shift != "nom" else "tau_trigger_weight"
+
+        events = set_ak_column(events, weight_name, sf_weight)
+
+    return events
+        
 
 @producer(
     uses={
