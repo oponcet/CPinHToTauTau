@@ -76,7 +76,7 @@ def muon_selection(
         "muon_dz_0p2"         : abs(muons.dz) < 0.2,
         "muon_iso_0p15"       : muons.pfRelIso04_all < 0.15,
         "muon_ipsig_safe"     : muons.IPsig > ipsig_dummy,
-        #"muon_ipsig_1p5"      : np.abs(muons.IPsig) > 1.5,
+        "muon_ipsig_1p0"      : np.abs(muons.IPsig) > 1.0,
     }
     single_veto_selections = {
         "muon_pt_10"          : muons.pt > 10,
@@ -212,12 +212,12 @@ def electron_selection(
 
     good_selections = {
         "electron_pt_25"          : electrons.pt > 25,
-        "electron_eta_2p1"        : abs(electrons.eta) < 2.1,
+        "electron_eta_2p5"        : abs(electrons.eta) < 2.5,
         "electron_dxy_0p045"      : abs(electrons.dxy) < 0.045,
         "electron_dz_0p2"         : abs(electrons.dz) < 0.2,
         "electron_mva_iso_wp80"   : mva_iso_wp80 == 1,
         "electron_ipsig_safe"     : electrons.IPsig > ipsig_dummy,
-        #"electron_ipsig_1p5"      : np.abs(electrons.IPsig) > 1.5,
+        "electron_ipsig_1p0"      : np.abs(electrons.IPsig) > 1.0,
     }
     single_veto_selections = {
         "electron_pt_10"          : electrons.pt > 10,
@@ -371,7 +371,7 @@ def tau_selection(
     
     good_selections = {
         "tau_pt_20"     : taus.pt > 20,
-        "tau_eta_2p3"   : abs(taus.eta) < 2.3,
+        "tau_eta_2p5"   : abs(taus.eta) < 2.5,
         "tau_dz_0p2"    : abs(taus.dz) < 0.2,
         # have to make them channel-specific later
         #                  e-tau  mu-tau  tau-tau     SafeHere
@@ -379,22 +379,20 @@ def tau_selection(
         #   DeepTauVSe   : Tight  VVLoose VVLoose --> VVLoose 
         #   DeepTauVSmu  : Loose  Tight   VLoose  --> VLoose  
         "tau_DeepTauVSjet"  : taus.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.VVVLoose, # for tautau fake region
-        #"tau_DeepTauVSjet"  : taus.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium,
         "tau_DeepTauVSe"    : taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose,
         "tau_DeepTauVSmu"   : taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose,
-        #"tau_DecayMode"     : ((taus.decayMode == 0) 
+        #"tau_DecayMode_IP" : (((taus.decayMode == 0) & (np.abs(taus.IPsig) >= 1.25)) 
         #                       | (taus.decayMode == 1)
         #                       | (taus.decayMode == 10)
         #                       | (taus.decayMode == 11)),
-        "tau_DecayMode"     : (
-            (  (taus.decayMode ==  0)
+        "tau_DecayMode_IP"  : (
+            (  ((taus.decayMode ==  0) & (np.abs(taus.IPsig) >= 1.25))
                | (((taus.decayMode ==  1)
                    | (taus.decayMode ==  2)
                    | (taus.decayMode == 10)
                    | (taus.decayMode == 11))
                   & (taus.decayModeHPS != 0)))), # decayMode is now decayModePNet
         "tau_ipsig_safe"    : taus.IPsig > ipsig_dummy,
-        #"tau_ipsig_1p5"     : (taus.decayModePNet ==  0) & (np.abs(taus.IPsig) > 1.5), # ipsig > 1.5 only for pion
     }
     
     tau_mask = ak.local_index(taus) >= 0
@@ -476,8 +474,10 @@ def jet_selection(
     # nominal selection
     good_selections = {
         "jet_pt_20"               : events.Jet.pt > 20.0,
-        "jet_eta_2.4"             : abs(events.Jet.eta) < 2.4,
-        #"jet_id"                  : events.Jet.jetId == 0b110,  # Jet ID flag: bit2 is tight, bit3 is tightLepVeto 
+        "jet_eta_4p7"             : abs(events.Jet.eta) < 4.7, # 2.4
+        "jet_id"                  : events.Jet.jetId >= 2,  # Jet ID flag: bit2 is tight, bit3 is tightLepVeto            
+                                                            # So, 0000010 : 2**1 = 2 : pass tight, fail lep-veto          
+                                                            #     0000110 : 2**1 + 2**2 = 6 : pass both tight and lep-veto
     }
     
     #if is_run2: 
@@ -500,7 +500,9 @@ def jet_selection(
 
     if "hcand" in events.fields:
         good_jets = ak.with_name(events.Jet[good_jet_indices], "PtEtaPhiMLorentzVector")
-        hcand = ak.with_name(events.hcand[events.hcand.decayMode >= 0], "PtEtaPhiMLorentzVector") # to make sure the presence of tauh only
+        # should we clean the jets wrt the tauh only or with e/mu/tauh?
+        #hcand = ak.with_name(events.hcand[events.hcand.decayMode >= 0], "PtEtaPhiMLorentzVector") # to make sure the presence of tauh only
+        hcand = ak.with_name(events.hcand, "PtEtaPhiMLorentzVector")
         dr_jets_hcand = good_jets.metric_table(hcand)
         jet_is_closed_to_hcand = ak.any(dr_jets_hcand < 0.4, axis=-1)
         selection_steps["jet_isclean"] = ~jet_is_closed_to_hcand
@@ -509,7 +511,7 @@ def jet_selection(
 
     # b-tagged jets, tight working point
     btag_wp = self.config_inst.x.btag_working_points.deepjet.medium
-    b_jet_mask = events.Jet[good_jet_indices].btagDeepFlavB >= btag_wp
+    b_jet_mask = (np.abs(events.Jet[good_jet_indices].eta) < 2.5) & (events.Jet[good_jet_indices].btagDeepFlavB >= btag_wp)
     b_jet_indices = good_jet_indices[b_jet_mask]
     selection_steps["jet_isbtag"] = ak.fill_none(b_jet_mask, False)
 
@@ -593,7 +595,7 @@ def gentau_selection(
         "genpart_status"          : events.GenPart.status == 2,
         "genpart_status_flags"    : events.GenPart.hasFlags(["isPrompt", "isFirstCopy"]),
         "genpart_pt_10"           : events.GenPart.pt > 10.0,
-        "genpart_eta_2p3"         : np.abs(events.GenPart.eta) < 2.5,
+        "genpart_eta_2p5"         : np.abs(events.GenPart.eta) < 2.5,
         "genpart_momid_25"        : events.GenPart[events.GenPart.distinctParent.genPartIdxMother].pdgId == 25,
         "genpart_mom_status_22"   : events.GenPart[events.GenPart.distinctParent.genPartIdxMother].status == 22,
     }
