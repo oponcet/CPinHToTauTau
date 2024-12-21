@@ -130,9 +130,12 @@ def match_trigobjs(
     new_eles = eles[el_trigobj_matched_mask]
     new_taus = taus[el_trigobj_matched_mask]
 
-    trigIds = ak.where(match_single, single_etau_trigger_ids, cross_etau_trigger_ids)
-    trigTypes = ak.where(match_single, single_etau_trigger_types, cross_etau_trigger_types)
+    #trigIds = ak.where(match_single, single_etau_trigger_ids, cross_etau_trigger_ids)
+    #trigTypes = ak.where(match_single, single_etau_trigger_types, cross_etau_trigger_types)
+
+    trigIds = ak.concatenate([single_etau_trigger_ids, cross_etau_trigger_ids], axis=1)
     ids = ak.values_astype(trigIds, 'int64')
+    trigTypes = ak.concatenate([single_etau_trigger_types, cross_etau_trigger_types], axis=1)
 
     
     leps_pair = ak.zip([new_eles, new_taus])
