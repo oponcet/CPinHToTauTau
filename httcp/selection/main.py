@@ -168,7 +168,7 @@ def get_2n_pairs(etau_indices_pair,
         #category_ids,
         increment_stats, 
         custom_increment_stats,
-        "trigger_ids",
+        #"trigger_ids",
         "single_triggered",
         "cross_triggered",
         "single_e_triggered",
@@ -304,7 +304,7 @@ def main(
                                                    tautau_pair.rawIdx)
     results += channel_results
 
-    
+    """
     trigger_types = ak.concatenate([etau_trig_types, mutau_trig_types, tautau_trig_types], axis=1)
     # save single_triggered and cross_triggered
     single_e_triggered = ak.any(ak.fill_none((trigger_types == 'single_e'), False), axis=1)
@@ -328,7 +328,41 @@ def main(
 
     # save the trigger_ids column
     events = set_ak_column(events, "trigger_ids", trigger_ids)
+    """
+    
+    trigger_types = ak.concatenate([etau_trig_types, mutau_trig_types, tautau_trig_types], axis=1)
 
+
+    # ele
+    single_e_triggered = ak.any(trigger_types == 'single_e', axis=1)
+    cross_e_triggered  = ak.any(trigger_types == 'cross_e_tau', axis=1)
+    # mu
+    single_mu_triggered = ak.any(trigger_types == 'single_mu', axis=1)
+    cross_mu_triggered = ak.any(trigger_types == 'cross_mu_tau', axis=1)
+    # tau
+    cross_tau_triggered = ak.any(trigger_types == 'cross_tau_tau', axis=1)
+    cross_tau_jet_triggered = ak.any(trigger_types == 'cross_tau_tau_jet', axis=1)
+
+    events = set_ak_column(events, "single_e_triggered", single_e_triggered)
+    events = set_ak_column(events, "single_mu_triggered", single_mu_triggered)
+    events = set_ak_column(events, "cross_e_triggered", cross_e_triggered)
+    events = set_ak_column(events, "cross_mu_triggered", cross_mu_triggered)
+    events = set_ak_column(events, "cross_tau_triggered", cross_tau_triggered)
+    events = set_ak_column(events, "cross_tau_jet_triggered", cross_tau_jet_triggered)
+    
+    events = set_ak_column(events, "single_triggered", (single_e_triggered | single_mu_triggered))
+    events = set_ak_column(events, "cross_triggered", (cross_e_triggered | cross_mu_triggered | cross_tau_triggered | cross_tau_jet_triggered))
+
+    trigger_ids = ak.concatenate([etau_trig_ids, mutau_trig_ids, tautau_trig_ids], axis=1)
+
+    #from IPython import embed; embed()
+
+    #trigger_ids = ak.values_astype(ak.fill_none(ak.firsts(trigger_ids, axis=1), 999), np.uint64)
+
+    # save the trigger_ids column
+    #events = set_ak_column(events, "trigger_ids", trigger_ids)
+
+    
 
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
@@ -460,7 +494,6 @@ def main(
         **kwargs,
     )
     
-
     # inspect cuts
     if self.config_inst.x.verbose.selection.main:
         debug_main(events,

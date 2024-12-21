@@ -13,12 +13,31 @@ from columnflow.columnar_util import EMPTY_FLOAT, Route, set_ak_column
 from httcp.util import enforce_hcand_type, IF_RUN2, IF_RUN3
 
 from httcp.calibration.tau import insert_calibrated_taus
+from httcp.production.ReArrangeHcandProds import getphotons, getpions, presel_decay_pis, presel_decay_pi0s, reconstructPi0
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
 coffea = maybe_import("coffea")
 
 logger = law.logger.get_logger(__name__)
+
+
+def get_energy_split(h, pions, pizeros):
+    pi  = pions[:,:1]
+    pi0 = pizeros[:,:1]
+
+    has_both = (ak.num(pi, axis=1) == 1) & (ak.num(pi0, axis=1) == 1)
+    
+    dummy = pi.energy[:,:0]
+    dm_mask = ak.fill_none(ak.firsts(((h.decayMode == 1) | (h.decayMode == 2)), axis=1), False)
+    E_pi = ak.where(dm_mask & has_both, pi.energy, dummy)
+    E_pi0 = ak.where(dm_mask & has_both, pi0.energy, dummy)
+    
+    E_split = np.abs((E_pi - E_pi0)/(E_pi + E_pi0))
+
+    return E_split
+
+
 
 @selector(
     uses={
@@ -59,9 +78,9 @@ def higgscand(
                                           "eta"           : "float64",
                                           "phi"           : "float64",
                                           "mass"          : "float64",
-                                          "charge"        : "int64",
-                                          "decayMode"     : "int64",
-                                          "rawIdx"        : "int64",
+                                          "charge"        : "int32",
+                                          "decayMode"     : "int32",
+                                          "rawIdx"        : "int32",
                                           "IPx"           : "float64",
                                           "IPy"           : "float64",
                                           "IPz"           : "float64",
@@ -76,9 +95,9 @@ def higgscand(
                                           "eta"           : "float64",
                                           "phi"           : "float64",
                                           "mass"          : "float64",
-                                          "charge"        : "int64",
-                                          "decayMode"     : "int64",
-                                          "rawIdx"        : "int64",
+                                          "charge"        : "int32",
+                                          "decayMode"     : "int32",
+                                          "rawIdx"        : "int32",
                                           "idVsJet"       : "int32",
                                           "genPartFlav"   : "int32",
                                           }
@@ -136,10 +155,14 @@ def assign_tauprod_mass_charge(
                                0.0)
                   )
 
+    charge = ak.values_astype(charge, np.int32)
+    mass   = ak.values_astype(mass, np.float32)
+    
     events = set_ak_column(events, "TauProd.mass", mass)
-    events = set_ak_column(events, "TauProd.charge", charge)    
+    events = set_ak_column(events, "TauProd.charge", charge)
 
     return events
+
 
 def build_hcand_mask(hcand, hcandprods, dummy):
     is_pion         = lambda prods : ((np.abs(prods.pdgId) == 211) | (np.abs(prods.pdgId) == 321))
@@ -175,6 +198,7 @@ def build_hcand_mask(hcand, hcandprods, dummy):
     produces={
         "hcand.pt", "hcand.eta", "hcand.phi", "hcand.mass",
         "hcand.charge", "hcand.rawIdx", "hcand.decayMode",
+        "hcand.energy_split",
         IF_RUN3("hcand.IPx", "hcand.IPy", "hcand.IPz"), "hcand.IPsig",
         "hcand.idVsJet", "hcand.genPartFlav",
         "hcandprod.pt", "hcandprod.eta", "hcandprod.phi", "hcandprod.mass",
@@ -197,13 +221,9 @@ def higgscandprod(
     events   = self[assign_tauprod_mass_charge](events)
 
     tauprods = events.TauProd
-    #hcand    = hcand_array
     hcand    = hcand_array[:,0]
-    #hcand1 = ak.firsts(hcand[:,:,0:1], axis=1)
-    #hcand2 = ak.firsts(hcand[:,:,1:2], axis=1)
     hcand1 = hcand[:,0:1]
     hcand2 = hcand[:,1:2]
-    #hcand_concat = ak.concatenate([hcand1, hcand2], axis=1)
         
     hcand1_idx = hcand1.rawIdx
     hcand2_idx = hcand2.rawIdx
@@ -221,7 +241,42 @@ def higgscandprod(
     hcand2_mask = ak.fill_none(build_hcand_mask(hcand2, hcand2prods, dummy), False)
 
     hcand_prod_mask = ak.concatenate([hcand1_mask, hcand2_mask], axis=1)
+
+    # reconstruct pi-zeros here
+    # save those in the hcand prods instead of photons
+
+    hcand1prod_photons = getphotons(hcand1prods)
+    hcand2prod_photons = getphotons(hcand2prods)
     
+    hcand1prod_pions = getpions(hcand1prods)
+    hcand2prod_pions = getpions(hcand2prods)
+
+    # hcand1 and its decay products
+    p4_hcand1     = ak.with_name(hcand1, "PtEtaPhiMLorentzVector")
+    p4_hcand1_pi  = ak.with_name(hcand1prod_pions, "PtEtaPhiMLorentzVector")
+    p4_hcand1_pi  = presel_decay_pis(p4_hcand1, p4_hcand1_pi) # safe
+    p4_hcand1_pi0 = reconstructPi0(p4_hcand1, hcand1prod_photons, method="simpleIC") # simpleIC, simpleMB
+    p4_hcand1_pi0 = presel_decay_pi0s(p4_hcand1, p4_hcand1_pi0) # safe
+
+    # hcand2 and its decay products
+    p4_hcand2     = ak.with_name(hcand2, "PtEtaPhiMLorentzVector")
+    p4_hcand2_pi  = ak.with_name(hcand2prod_pions, "PtEtaPhiMLorentzVector")
+    p4_hcand2_pi  = presel_decay_pis(p4_hcand2, p4_hcand2_pi)	# safe 
+    p4_hcand2_pi0 = reconstructPi0(p4_hcand2, hcand2prod_photons, method="simpleIC") # simpleIC, simpleMB
+    p4_hcand2_pi0 = presel_decay_pi0s(p4_hcand2, p4_hcand2_pi0)	# safe  
+
+    # energy split
+    hcand1_E_split = get_energy_split(p4_hcand1, p4_hcand1_pi, p4_hcand1_pi0)
+    hcand1_pass_E_split_mask = ak.fill_none(ak.firsts(hcand1_E_split > 0.2, axis=1), True)
+    hcand1_E_split = ak.fill_none(ak.firsts(hcand1_E_split, axis=1), -1.0)[:,None] # to wrap it in the hcand array
+
+    hcand2_E_split = get_energy_split(p4_hcand2, p4_hcand2_pi, p4_hcand2_pi0)
+    hcand2_pass_E_split_mask = ak.fill_none(ak.firsts(hcand2_E_split > 0.2, axis=1), True)
+    hcand2_E_split = ak.fill_none(ak.firsts(hcand2_E_split, axis=1), -1.0)[:,None] # to wrap it in the hcand array
+
+    hcand1prods = ak.concatenate([p4_hcand1_pi, p4_hcand1_pi0], axis=1)
+    hcand2prods = ak.concatenate([p4_hcand2_pi, p4_hcand2_pi0], axis=1)
+
     hcand_prods = ak.concatenate([hcand1prods[:,None], hcand2prods[:,None]], axis=1)
 
     hcand_prods_array = enforce_hcand_type(ak.from_regular(hcand_prods),
@@ -229,25 +284,34 @@ def higgscandprod(
                                             "eta"           : "float64",
                                             "phi"           : "float64",
                                             "mass"          : "float64",
-                                            "charge"        : "int64",
+                                            "charge"        : "int32",
                                             "pdgId"         : "int64",
-                                            "tauIdx"        : "int64"}
+                                            "tauIdx"        : "int32"}
                                        )
+
+    # saving hcand
+    events = set_ak_column(events, "hcand", hcand)
+    # saving hcand E split
+    hcand_E_split = ak.from_regular(ak.concatenate([hcand1_E_split, hcand2_E_split], axis=1), axis=1)
+    hcand_E_split_dummy = ak.from_regular(hcand_E_split[:,:0], axis=1)
+    _mask = ak.num(events.hcand.decayMode, axis=1) == 2
+    hcand_E_split = ak.where(_mask, hcand_E_split, hcand_E_split_dummy)    
+    events = set_ak_column(events, "hcand.energy_split", hcand_E_split)
+
+    # saving hcandprods
+    events = set_ak_column(events, "hcandprod", hcand_prods_array)
 
     #FOR DEBUGGING
     if self.config_inst.x.verbose.selection.higgscand:
         for i in range(1000):
             if not events.channel_id[i] > 0: continue
-            print(f"channel_id: {events.channel_id[i]}")
-            print(f"h1 == DM : {hcand1.decayMode[i]}, PROD: {hcand1prods.pdgId[i]}, MASK: {hcand1_mask[i]}")
-            print(f"h2 == DM : {hcand2.decayMode[i]}, PROD: {hcand2prods.pdgId[i]}, MASK: {hcand2_mask[i]}")
-            print(f"Comb Mask: {hcand_prod_mask[i]}")
-            print("\n")
+            logger.info(f"channel_id: {events.channel_id[i]}")
+            logger.info("hcand : [X,X], hcandprod : [ [y,z], [y,y] ]")
+            logger.info(f"h DecayMode --- hprod pdgId --- hprod pt --- hcand mask")
+            logger.info(f"{events.hcand.decayMode[i]} --- {events.hcandprod.pdgId[i]} --- {events.hcandprod.pt[i]} --- {hcand_prod_mask[i]}\n")
 
+    #from IPython import embed; embed()
     
-    events = set_ak_column(events, "hcand",     hcand)
-    events = set_ak_column(events, "hcandprod", hcand_prods_array)
-
     if self.dataset_inst.is_mc:
         events = self[insert_calibrated_taus](events)
     
@@ -269,9 +333,12 @@ def higgscandprod(
                                        )
                               )
 
+    #from IPython import embed; embed()
+    
     result = SelectionResult(
         steps={
-            "has_proper_tau_decay_products": ak.sum(hcand_prod_mask, axis=1) == 2,
+            "has_proper_tau_decay_products" : ak.sum(hcand_prod_mask, axis=1) == 2,
+            "pass_energy_split_for_DM_1_2"  : (hcand1_pass_E_split_mask & hcand2_pass_E_split_mask),
         },
         objects={
             "Muon": {
@@ -301,3 +368,6 @@ def higgscandprod(
         result += ch_mask_result
             
     return events, result
+
+
+
