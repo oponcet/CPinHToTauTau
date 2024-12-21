@@ -217,8 +217,8 @@ def add_config (ana: od.Analysis,
                              "data_tau_C", "data_tau_D"]
 
         elif postfix == "postEE":
-            datasets_data = ["data_e_E",   "data_e_G",
-                             "data_mu_E",  "data_mu_G",
+            datasets_data = ["data_e_E",   "data_e_F",   "data_e_G",
+                             "data_mu_E",  "data_mu_F",  "data_mu_G",
                              "data_tau_E", "data_tau_F", "data_tau_G"]
         else:
             raise RuntimeError(f"Wrong postfix: {campaign.x.postfix}")
@@ -283,7 +283,7 @@ def add_config (ana: od.Analysis,
     cfg.x.default_categories      = ("incl",)
     #cfg.x.default_variables = ("n_jet", "jet1_pt")
     cfg.x.default_variables       = ("event","channel_id")
-    cfg.x.default_weight_producer = "main"
+    cfg.x.default_weight_producer = "main" # "normalization_only"
     
     # process groups for conveniently looping over certain processs
     # (used in wrapper_factory and during plotting)
@@ -375,7 +375,7 @@ def add_config (ana: od.Analysis,
     }
     """
     # w+jets [NLO]
-    cfg.x.allow_w_stitching = True
+    cfg.x.allow_w_stitching = False
     cfg.x.w_stitching = {
         "wj": {
             "inclusive_dataset": cfg.datasets.n.wj_incl_madgraph,
