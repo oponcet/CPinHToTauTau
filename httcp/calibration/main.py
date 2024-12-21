@@ -12,6 +12,7 @@ from columnflow.production.cms.seeds import deterministic_seeds
 from columnflow.util import maybe_import
 from columnflow.columnar_util import set_ak_column
 
+from httcp.calibration.electron import electron_smearing_scaling
 from httcp.calibration.tau import tau_energy_scale
 from httcp.util import IF_RUN2, IF_RUN3
 
@@ -30,13 +31,16 @@ set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
         "RawPuppiMET.*",
         "PuppiMET.*",
         jets,
+        electron_smearing_scaling,
         tau_energy_scale,
     },
     produces={
         deterministic_seeds,
         "Jet.pt_no_corr", "Jet.phi_no_corr", "Jet.eta_no_corr", "Jet.mass_no_corr",
         "PuppiMET.pt_no_corr", "PuppiMET.phi_no_corr",
+        "Electron.pt_no_ss",
         jets,
+        electron_smearing_scaling,
         tau_energy_scale,
     },
 )
@@ -70,5 +74,8 @@ def main(self: Calibrator, events: ak.Array, **kwargs) -> ak.Array:
         ##Apply tau energy scale correction
         events = self[tau_energy_scale](events, **kwargs)
 
-
+    # electron scale and smearing correction
+    events = set_ak_column_f32(events, "Electron.pt_no_ss", events.Electron.pt)
+    events = self[electron_smearing_scaling](events, **kwargs)
+        
     return events

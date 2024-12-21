@@ -530,6 +530,7 @@ def add_config (ana: od.Analysis,
         "muon_xtrig_sf"     : (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/CrossMuTauHlt.json",         "v1"), # Mu xTrig SF
         "electron_sf"       : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electron.json.gz",           "v1"), # Ele POG SF
         "electron_trig_sf"  : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electronHlt.json.gz",        "v1"), # Ele HLT SF
+        "electron_ss"       : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electronSS.json.gz",         "v1"), # Ele Scale Smearing
         # https://gitlab.cern.ch/cclubbtautau/AnalysisCore/-/blob/main/data/TriggerScaleFactors/2022preEE/CrossEleTauHlt.json?ref_type=heads
         "electron_xtrig_sf" : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/CrossEleTauHlt.json",        "v1"), # Ele xTrig SF
         "tau_sf"            : (f"{json_mirror}/POG/TAU/{year}_{postfix}/tau_DeepTau2018v2p5_{year}_{postfix}.json.gz", "v1"), # TEC and ID SF
@@ -835,8 +836,17 @@ def add_config (ana: od.Analysis,
             "tau_weight": "tau_weight_{direction}",
         },
     )
-    #cfg.add_shift(name=f"tes_up", id=52, type="shape")
-    #cfg.add_shift(name=f"tes_down", id=53, type="shape")
+    cfg.add_shift(name=f"tau_trig_up", id=52, type="shape")
+    cfg.add_shift(name=f"tau_trig_down", id=53, type="shape")
+    add_shift_aliases(
+        cfg,
+        "tau_trig",
+        {
+            "tau_trigger_weight": "tau_trigger_weight_{direction}",
+        },
+    )
+    #cfg.add_shift(name=f"tes_up", id=54, type="shape")
+    #cfg.add_shift(name=f"tes_down", id=55, type="shape")
     #add_shift_aliases(
     #    cfg,
     #    "tes",
@@ -985,6 +995,7 @@ def add_config (ana: od.Analysis,
         "muon_IsoMu24_trigger_weight"           : [], #get_shifts("mu_trig"),
         "muon_xtrig_weight"                     : [], #get_shifts("mu_xtrig"),
         "tau_weight"                            : [], #get_shifts("tau"),
+        "tau_trigger_weight"                    : [], #get_shifts("tau_trig"),
         #"ff_weight"                             : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
         "tauspinner_weight"                     : get_shifts("tauspinner"),
@@ -1090,7 +1101,7 @@ def add_config (ana: od.Analysis,
             # general event info
             "run", "luminosityBlock", "event", "LHEPdfWeight",
             "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-            "trigger_ids",
+            #"trigger_ids",
             "single_triggered", "cross_triggered",
             "single_e_triggered", "cross_e_triggered",
             "single_mu_triggered", "cross_mu_triggered",
@@ -1220,7 +1231,8 @@ def add_config (ana: od.Analysis,
             ]
         } | { # electrons from hcand
             f"Electron.{var}" for var in [
-                "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
+                "pt_no_ss", "pt","eta","phi","mass",
+                "dxy","dz", "charge", "IPx", "IPy", "IPz",
                 "decayMode", "pfRelIso03_all", "mT", "rawIdx",
                 "deltaEtaSC",
             ]
@@ -1285,12 +1297,15 @@ def add_config (ana: od.Analysis,
             "extra_lep_veto"          : False,
             "dilep_veto"              : False,
             "higgscand"               : False,
-        },        
+        },
+        "production": {
+            "main"                    : False,
+        },
     })
 
 
     cfg.x.extra_tags = DotDict.wrap({
-        "genmatch"       : False,
+        "genmatch"       : True,
     })
 
 
