@@ -371,7 +371,7 @@ def tau_selection(
     
     good_selections = {
         "tau_pt_20"     : taus.pt > 20,
-        "tau_eta_2p5"   : abs(taus.eta) < 2.5,
+        "tau_eta_2p5"   : abs(taus.eta) < 2.5, # 2.3
         "tau_dz_0p2"    : abs(taus.dz) < 0.2,
         # have to make them channel-specific later
         #                  e-tau  mu-tau  tau-tau     SafeHere
@@ -474,7 +474,7 @@ def jet_selection(
     # nominal selection
     good_selections = {
         "jet_pt_20"               : events.Jet.pt > 20.0,
-        "jet_eta_4p7"             : abs(events.Jet.eta) < 4.7, # 2.4
+        "jet_eta_4p7"             : abs(events.Jet.eta) <= 4.7,  # 2.4
         "jet_id"                  : events.Jet.jetId >= 2,  # Jet ID flag: bit2 is tight, bit3 is tightLepVeto            
                                                             # So, 0000010 : 2**1 = 2 : pass tight, fail lep-veto          
                                                             #     0000110 : 2**1 + 2**2 = 6 : pass both tight and lep-veto
