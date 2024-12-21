@@ -722,6 +722,7 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
     ** Tau Trigger: https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauTrigger#Trigger_Table_for_2022
     ** Electron Trigger: https://twiki.cern.ch/twiki/bin/view/CMS/EgHLTRunIIISummary
     ** Muon Trigger: https://twiki.cern.ch/twiki/bin/view/CMS/MuonHLT2022
+    ** HiggsDNA : https://gitlab.cern.ch/dwinterb/HiggsDNA/-/blob/NewProduction_Run3-2022/higgs_dna/metaconditions/Era2022_ditau.json?ref_type=heads
     PreEE:
       /afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/yamls/HLTlog_2022PreEE.log
     PostEE:
@@ -754,18 +755,18 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     min_pt=25.0, # 26 -> Imperial
                     max_abseta=2.1,
                     # filter names:
-                    # hltOverlapFilterIsoEle24IsoTau30WPTightGsfCaloJet5 # TODO Twiki has no matches
-                    trigger_bits=2**3,
+                    # hltOverlapFilterIsoEle24IsoTau30WPTightGsfCaloJet5
+                    # hltHpsOverlapFilterIsoEle24WPTightGsfLooseETauWPDeepTauPFTau30
+                    trigger_bits=2**7,
                 ),
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=35.0,
                     max_abseta=2.1,
                     # filter names:
-                    # (DeepTau + HPS) # TODO Twiki sugests 8 + 32 + 256
-                    # hltHpsOverlapFilterIsoEle24WPTightGsfLooseETauWPDeepTauPFTau30 (OverlapFilter) # TODO Twiki sugests 8 + 64  # noqa
+                    # hltOverlapFilterIsoEle24IsoTau30WPTightGsfCaloJet5
                     # hltHpsOverlapFilterIsoEle24WPTightGsfLooseETauWPDeepTauPFTau30
-                    trigger_bits=2**3 + 2**5,
+                    trigger_bits=2**12,
                 ),
             ],
             tags={"cross_trigger", "cross_e_tau", "channel_e_tau"},
@@ -788,6 +789,10 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
             tags={"single_trigger", "single_mu", "channel_mu_tau"},
         ),
         ## ===>>> mu-tauh
+        # https://cmshltinfo.app.cern.ch/path/HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1_v
+        # mu : https://github.com/cms-sw/cmssw/blob/CMSSW_13_0_X/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L118C66-L118C74
+        # tau : https://github.com/cms-sw/cmssw/blob/CMSSW_13_0_X/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L143
+        # https://cms-nanoaod-integration.web.cern.ch/autoDoc/NanoAODv14/2024Prompt/doc_EGamma1_Run2024D-PromptReco-v1.html#TrigObj
         Trigger(
             name="HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1",
             id=13151,
@@ -797,24 +802,24 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     min_pt=21.0,
                     max_abseta=2.4,
                     # filter names:
-                    # hltL3crIsoBigORMu18erTauXXer2p1L1f0L2f10QL3f20QL3trkIsoFiltered  # TODO Twiki sugests 2
-                    # hltHpsOverlapFilterIsoMu20LooseMuTauWPDeepTauPFTau27L1Seeded (OverlapFilter PFTau) # TODO Twiki sugests 4 + 64  # noqa
-                    trigger_bits=2**2,
+                    # 
+                    trigger_bits=2**6,
                 ),
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=32.0,
                     max_abseta=2.1,
                     # filter names:
-                    # (DeepTau + HPS) # TODO Twiki sugests 8 + 32 + 512 + 262144
                     # hltHpsOverlapFilterIsoMu20LooseMuTauWPDeepTauPFTau27L1Seeded
-                    trigger_bits=2**3 + 2**5,
+                    trigger_bits=2**13,
                 ),
             ],
             tags={"cross_trigger", "cross_mu_tau", "channel_mu_tau"},
         ),
-        ## https://cmshltinfo.app.cern.ch/summary?search=HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1&year=2022&paths=true&prescaled=false&stream-types=Physics,Scouting,Parking
         ## ===>>> tauh-tauh
+        # https://cmshltinfo.app.cern.ch/path/HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1_v
+        # https://github.com/cms-sw/cmssw/blob/CMSSW_13_0_X/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L141C73-L141C87
+        # https://cms-nanoaod-integration.web.cern.ch/autoDoc/NanoAODv14/2024Prompt/doc_EGamma1_Run2024D-PromptReco-v1.html#TrigObj
         Trigger(
             name="HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
             id=15151,
@@ -825,8 +830,10 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     min_pt=40.0,
                     max_abseta=2.1,
                     # filter names:
-                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02 (Deeptau + HPS)
-                    trigger_bits=2**3 + 2**5,
+                    # hltHpsSelectedPFTausMediumDitauWPDeepTau
+                    # hltHpsDoublePFTau35MediumDitauWPDeepTauL1HLTMatched
+                    # 3 => DeepTau no spec WP, 11 => di-tau
+                    trigger_bits=2**3 + 2**11,
                ),
                 TriggerLeg(
                     pdg_id=15,
@@ -834,17 +841,17 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     max_abseta=2.1,
                     # filter names:
                     # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02 (Deeptau + HPS)
-                    trigger_bits=2**3 +	2**5,
+                    # 3 => DeepTau no spec WP, 11 => di-tau 
+                    trigger_bits=2**3 + 2**11,
                 ),
             ],
             tags={"cross_trigger", "cross_tau_tau", "channel_tau_tau"},
         ),
         # ==> diTau + Jet
         # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauTrigger#Trigger_Table_for_2022
-        # bits mentioned : 3, 14
-        # 14 is found in https://cms-nanoaod-integration.web.cern.ch/autoDoc/NanoAODv14/2024Prompt/doc_EGamma1_Run2024D-PromptReco-v1.html#TrigObj,
-        # reference taken from https://github.com/cms-sw/cmssw/blob/583e1a68e97c446b7f53098725e97747790c6a70/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L127-L154
-        # but 3 means DeepTau no spec WP, which is not specified in triggerObjects_cff.py
+        # https://github.com/cms-sw/cmssw/blob/CMSSW_13_0_X/PhysicsTools/NanoAOD/python/triggerObjects_cff.py#L148
+        # https://cms-nanoaod-integration.web.cern.ch/autoDoc/NanoAODv14/2024Prompt/doc_EGamma1_Run2024D-PromptReco-v1.html#TrigObj
+        # same as https://gitlab.cern.ch/dwinterb/HiggsDNA/-/blob/NewProduction_Run3-2022/higgs_dna/metaconditions/Era2022_ditau.json?ref_type=heads#L146
         Trigger(
             name="HLT_DoubleMediumDeepTauPFTauHPS30_L2NN_eta2p1_PFJet60",
             id=15152,
@@ -855,17 +862,18 @@ def add_triggers_run3_2022(config: od.Config, postfix: str) -> None:
                     min_pt=35.0,
                     max_abseta=2.1,
                     # filter names:
-                    # (TightOOSCPhotons + di-tau + PFJet) # TODO Twiki sugests 8 + 32 + 16384
                     # hltHpsOverlapFilterDeepTauDoublePFTau30PFJet60
-                    trigger_bits=2**4 + 2**14,
+                    # 14 => di-tau + PFJet
+                    trigger_bits=2**14,
                 ),
                 TriggerLeg(
                     pdg_id=15,
                     min_pt=35.0,
                     max_abseta=2.1,
                     # filter names:
-                    # hltHpsDoublePFTau35MediumDitauWPDeepTauDz02
-                    trigger_bits=2**4 + 2**14,
+                    # hltHpsOverlapFilterDeepTauDoublePFTau30PFJet60
+                    # 14 => di-tau + PFJet
+                    trigger_bits=2**14,
                 ),
             ],
             tags={"cross_trigger", "cross_tau_tau_jet", "channel_tau_tau"},
