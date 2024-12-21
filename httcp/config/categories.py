@@ -138,6 +138,7 @@ def add_DM_categories(config: od.Config) -> None:
 def add_etau_mutau_categories(config: od.Config) -> None:
     categories = {
         "channel": [config.get_category("etau"), config.get_category("mutau")],
+        #"RorF"   : [config.get_category("real_2")],
         "abcd"   : [config.get_category("lepA"),  config.get_category("lepB"),
                     config.get_category("lepA0"), config.get_category("lepB0"),
                     config.get_category("lepA1"), config.get_category("lepB1"),

@@ -137,6 +137,8 @@ def ProduceCosPsi(
     p  = p4h_m.pvec.unit
     n  = n.pvec.unit
     ez = ez.pvec.unit
+
+    #from IPython import embed; embed()
     
     # calculate angle
     num    = (ez.cross(p)).dot(n.cross(p))

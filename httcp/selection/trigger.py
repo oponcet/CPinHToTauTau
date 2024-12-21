@@ -96,7 +96,7 @@ def trigger_selection(
 
         
         # get trigger objects for fired events per leg
-        leg_matched_trigobj_idxs_shallow = []
+        #leg_matched_trigobj_idxs_shallow = []
         leg_matched_trigobj_idxs         = []
         leg_matched_trigobjs             = []
         leg_min_pt                       = []
@@ -128,7 +128,7 @@ def trigger_selection(
                     # https://github.com/uhh-cms/hh2bbww/blob/master/hbw/selection/trigger.py#L94
                     leg_mask = leg_mask & ((events.TrigObj.filterBits & bits) == bits)
 
-            leg_matched_trigobj_idxs_shallow.append(index[leg_mask])         # O L D
+            #leg_matched_trigobj_idxs_shallow.append(index[leg_mask])         # O L D
             leg_matched_trigobj_idxs.append(index[leg_mask][:,None])         # N E W
             leg_matched_trigobjs.append(get_objs_p4(events.TrigObj[index[leg_mask]])[:,None])
 
