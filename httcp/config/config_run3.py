@@ -535,7 +535,7 @@ def add_config (ana: od.Analysis,
         "electron_xtrig_sf" : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/CrossEleTauHlt.json",        "v1"), # Ele xTrig SF
         "tau_sf"            : (f"{json_mirror}/POG/TAU/{year}_{postfix}/tau_DeepTau2018v2p5_{year}_{postfix}.json.gz", "v1"), # TEC and ID SF
         # https://gitlab.cern.ch/cclubbtautau/AnalysisCore/-/blob/main/data/TriggerScaleFactors/2022preEE/ditaujet_jetleg_SFs_preEE.json?ref_type=heads
-        "ditau_jet_trig_sf" : (f"{json_mirror}/POG/TAU/{year}_{postfix}/ditaujet_jetleg_SFs_preEE.json",               "v1"),
+        "ditau_jet_trig_sf" : (f"{json_mirror}/POG/TAU/{year}_{postfix}/ditaujet_jetleg_SFs_{postfix}.json",           "v1"),
         "jet_veto_map"      : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz",        "v1"), # JetVeto
         "zpt_rewt_sf"       : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
         "tautau_ff"         : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # DUMMY !!!
@@ -1305,7 +1305,7 @@ def add_config (ana: od.Analysis,
 
 
     cfg.x.extra_tags = DotDict.wrap({
-        "genmatch"       : True,
+        "genmatch"       : False,
     })
 
 
