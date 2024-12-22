@@ -65,7 +65,7 @@ add_config_run2_2018(
 # ------------------------------------------------------------- #
 
 # ===>>> 2022 PreEE
-"""
+
 from httcp.config.config_run3 import add_config as add_config_run3_2022_preEE
 from cmsdb.campaigns.run3_2022_preEE_nano_cp_tau_v14 import campaign_run3_2022_preEE_nano_cp_tau_v14
 add_config_run3_2022_preEE(
@@ -81,7 +81,7 @@ add_config_run3_2022_preEE(
     config_id=int(f"{campaign_run3_2022_preEE_nano_cp_tau_v14.id}{2}"),
     limit_dataset_files=1
 )
-"""
+
 # ===>>> 2022 PostEE
 from httcp.config.config_run3 import add_config as add_config_run3_2022_postEE
 from cmsdb.campaigns.run3_2022_postEE_nano_cp_tau_v14 import campaign_run3_2022_postEE_nano_cp_tau_v14
