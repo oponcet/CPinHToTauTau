@@ -515,7 +515,8 @@ def add_config (ana: od.Analysis,
 
     #print(f"GoldenJSON           : {goldenjson}")
     #print(f"NormtagJSON          : {normtagjson}")
-
+    #print(f"sdcsdcs sdcascascsd cscsdc : {external_path}/Zpt/myZptCorrections.json.gz")
+    
     cfg.x.external_files = DotDict.wrap({
         # lumi files
         "lumi": {
@@ -537,12 +538,16 @@ def add_config (ana: od.Analysis,
         # https://gitlab.cern.ch/cclubbtautau/AnalysisCore/-/blob/main/data/TriggerScaleFactors/2022preEE/ditaujet_jetleg_SFs_preEE.json?ref_type=heads
         "ditau_jet_trig_sf" : (f"{json_mirror}/POG/TAU/{year}_{postfix}/ditaujet_jetleg_SFs_{postfix}.json",           "v1"),
         "jet_veto_map"      : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz",        "v1"), # JetVeto
-        "zpt_rewt_sf"       : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
+        # https://gitlab.cern.ch/dwinterb/HiggsDNA/-/tree/master/higgs_dna/systematics/ditau/ROOT/Zpt?ref_type=heads
+        "zpt_rewt_v1_sf"    : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
+        # https://indico.cern.ch/event/1360909/contributions/6000616/attachments/2875911/5036473/HLepRare_24.06.12.pdf
+        # https://indico.cern.ch/event/489921/contributions/2000259/attachments/1248156/1839106/Recoil_20160323.pdf
+        # /afs/cern.ch/user/d/dmroy/public/DY_pTll_recoil_corrections.json.gz
+        "zpt_rewt_v2_sf"    : (f"{external_path_parent}/Run3/Zpt/DY_pTll_recoil_corrections.json.gz",                  "v1"), # Zpt Rewt
         "tautau_ff"         : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # DUMMY !!!
         #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz",                "v1"),
         #"met_phi_corr": (f"{json_mirror}/POG/JME/2018_UL/met.json.gz",                                                "v1"), #met phi, unavailable Run3
     })
-
 
     # --------------------------------------------------------------------------------------------- #
     # electron settings
@@ -996,11 +1001,11 @@ def add_config (ana: od.Analysis,
         "muon_xtrig_weight"                     : [], #get_shifts("mu_xtrig"),
         "tau_weight"                            : [], #get_shifts("tau"),
         "tau_trigger_weight"                    : [], #get_shifts("tau_trig"),
-        #"ff_weight"                             : [],
+        #"ff_weight"                            : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
         "tauspinner_weight"                     : get_shifts("tauspinner"),
         "pdf_weight"                            : [],
-        "zpt_reweight"                          : [],
+        "zpt_reweight"                          : [], #get_shifts("zpt"), 
     })
 
     #---------------------------------------------------------------------------------------------#

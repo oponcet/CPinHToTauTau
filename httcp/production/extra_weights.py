@@ -1,3 +1,4 @@
+import re
 import functools
 from columnflow.production import Producer, producer
 from columnflow.util import maybe_import, safe_div, InsertableDict
@@ -56,7 +57,7 @@ def scale_mc_weight(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         "GenZ.pt", "GenZ.mass",
     },
     produces={
-        "zpt_reweight",
+        "zpt_reweight", "zpt_reweight_up", "zpt_reweight_down",
     },
     mc_only=True,
 )
@@ -83,6 +84,11 @@ def zpt_reweight(
                       self.zpt_corrector.evaluate(zm,zpt))
 
     events = set_ak_column(events, "zpt_reweight", sf_nom, value_type=np.float32)
+
+    sf_up   = ak.where(is_outside_range, 1.0, 1.67 * sf_nom)
+    events = set_ak_column(events, "zpt_reweight_up", sf_up, value_type=np.float32)
+    sf_down = ak.where(is_outside_range, 1.0, 0.33 * sf_nom)
+    events = set_ak_column(events, "zpt_reweight_down", sf_down, value_type=np.float32)    
     
     return events
 
@@ -107,9 +113,81 @@ def zpt_reweight_setup(
     correctionlib.highlevel.Correction.__call__ = correctionlib.highlevel.Correction.evaluate
     
     correction_set = correctionlib.CorrectionSet.from_string(
-        bundle.files.zpt_rewt_sf.load(formatter="gzip").decode("utf-8"),
+        bundle.files.zpt_rewt_v1_sf.load(formatter="gzip").decode("utf-8"),
     )
     self.zpt_corrector    = correction_set["zptreweight"]
+
+
+
+# ------------------------------------------------- #
+# Calculate Zpt weights (Dennis)
+# ------------------------------------------------- #
+
+@producer(
+    uses={
+        "GenZ.pt", "GenZ.mass",
+    },
+    produces={
+        "zpt_reweight", "zpt_reweight_up", "zpt_reweight_down",
+    },
+    mc_only=True,
+)
+def zpt_reweight_v2(
+        self: Producer,
+        events: ak.Array,
+        **kwargs,
+) :
+    # if no gen particle found, all fields of GenZ will be zero
+    # Those events will have nominal zpt rewt = 1.0
+    # the same will be applied also for the evnts outside the range
+
+    is_outside_range = (
+        (events.GenZ.pt == 0.0) & (events.GenZ.mass == 0.0)
+    )
+
+    zpt = events.GenZ.pt
+
+    dataset_type = "LO" if "madgraph" in self.dataset_inst.name else "NLO"
+    era = f"{self.config_inst.campaign.x.year}{self.config_inst.campaign.x.postfix}_{dataset_type}"
+    
+    for syst in ["nom", "up1", "down1"]:
+        tag = re.match(r'([a-zA-Z]+)\d*', syst).group(1)
+        name = "zpt_reweight" if syst=="nom" else f"zpt_reweight_{tag}"
+        sf = ak.where(is_outside_range,
+                      1.0,
+                      self.zpt_corrector.evaluate(era,
+                                                  zpt,
+                                                  syst)
+                      )
+        
+        events = set_ak_column(events, name, sf, value_type=np.float32)
+    
+    return events
+
+
+@zpt_reweight_v2.requires
+def zpt_reweight_v2_requires(self: Producer, reqs: dict) -> None:
+    if "external_files" in reqs:
+        return
+    
+    from columnflow.tasks.external import BundleExternalFiles
+    reqs["external_files"] = BundleExternalFiles.req(self.task)
+
+@zpt_reweight_v2.setup
+def zpt_reweight_v2_setup(
+    self: Producer,
+    reqs: dict,
+    inputs: dict,
+    reader_targets: InsertableDict,
+) -> None:
+    bundle = reqs["external_files"]
+    import correctionlib
+    correctionlib.highlevel.Correction.__call__ = correctionlib.highlevel.Correction.evaluate
+    
+    correction_set = correctionlib.CorrectionSet.from_string(
+        bundle.files.zpt_rewt_v2_sf.load(formatter="gzip").decode("utf-8"),
+    )
+    self.zpt_corrector    = correction_set["DY_pTll_reweighting"]
 
 
 

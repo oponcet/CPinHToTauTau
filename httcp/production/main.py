@@ -31,7 +31,7 @@ from columnflow.config_util import get_events_from_categories
 from httcp.production.ReArrangeHcandProds import reArrangeDecayProducts, reArrangeGenDecayProducts
 from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 #from httcp.production.weights import tauspinner_weight
-from httcp.production.extra_weights import zpt_reweight, ff_weight # ff_weight : dummy
+from httcp.production.extra_weights import zpt_reweight, zpt_reweight_v2, ff_weight # ff_weight : dummy
 from httcp.production.muon_weights import muon_id_weights, muon_iso_weights, muon_trigger_weights, muon_xtrigger_weights
 from httcp.production.electron_weights import electron_idiso_weights, electron_trigger_weights, electron_xtrigger_weights
 from httcp.production.tau_weights import tau_all_weights, tauspinner_weights
@@ -144,7 +144,7 @@ def hcand_features(
         normalization_weights,
         "hcand.decayMode",
         IF_ALLOW_STITCHING(stitched_normalization_weights),
-        #split_dy,
+        split_dy,
         pu_weight,
         IF_DATASET_HAS_LHE_WEIGHTS(pdf_weights),
         # -- muon -- #
@@ -159,7 +159,8 @@ def hcand_features(
         # -- tau -- #
         tau_all_weights,
         IF_DATASET_IS_SIGNAL(tauspinner_weights),
-        IF_DATASET_IS_DY(zpt_reweight),
+        #IF_DATASET_IS_DY(zpt_reweight),
+        IF_DATASET_IS_DY(zpt_reweight_v2),
         hcand_features,
         hcand_mass,
         category_ids,
@@ -173,7 +174,7 @@ def hcand_features(
         attach_coffea_behavior,
         normalization_weights,
         IF_ALLOW_STITCHING(stitched_normalization_weights),
-        #split_dy,
+        split_dy,
         pu_weight,
         IF_DATASET_HAS_LHE_WEIGHTS(pdf_weights),
         # -- muon -- #
@@ -188,7 +189,8 @@ def hcand_features(
         # -- tau -- #
         tau_all_weights,
         IF_DATASET_IS_SIGNAL(tauspinner_weights),
-        IF_DATASET_IS_DY(zpt_reweight),
+        #IF_DATASET_IS_DY(zpt_reweight),
+        IF_DATASET_IS_DY(zpt_reweight_v2),
         hcand_features,
         hcand_mass,
         #"channel_id",
@@ -264,8 +266,11 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         if self.has_dep(tauspinner_weights):
             events = self[tauspinner_weights](events, **kwargs)
 
-        if self.has_dep(zpt_reweight):
-            events = self[zpt_reweight](events, **kwargs)
+        #if self.has_dep(zpt_reweight):
+        #events = self[zpt_reweight](events, **kwargs)
+        if self.has_dep(zpt_reweight_v2):
+            #events = self[zpt_reweight](events, **kwargs)
+            events = self[zpt_reweight_v2](events, **kwargs)
 
         processes = self.dataset_inst.processes.names()
         if ak.any(['dy_' in proc for proc in processes]):
