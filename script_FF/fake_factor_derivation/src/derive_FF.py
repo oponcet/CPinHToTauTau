@@ -89,7 +89,25 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     # Fit the fake factor histogram using `fit_functions.py`
     # fit_result = fit_fake_factor(fake_factor_hist)
-    fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, 200, usePol1=True)
+    #fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, 200, usePol1=True) # polOnly = None
+
+    # if last bin = 0 
+    if fake_factor_hist.GetBinContent(fake_factor_hist.GetNbinsX()) == 0:
+        print("Last bin is 0")
+        xmax = 140
+        ff_last_bin = fake_factor_hist.GetBinContent(fake_factor_hist.GetNbinsX() - 1)
+    else:
+        ff_last_bin = fake_factor_hist.GetBinContent(fake_factor_hist.GetNbinsX())
+        xmax = 200
+
+    print(f"dms: {dm}, njet: {njet}")
+    if dm == 'a1dm2_1' and njet == "has_2j":
+        fit_method = 3
+    else:
+        fit_method = 2
+
+    fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, xmax, usePol1=False, polOnly=fit_method) # polOnly = None
+
 
     # Save the fake factor and fit results to a ROOT file
     os.makedirs(os.path.dirname(output_root_file), exist_ok=True)
@@ -173,7 +191,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     fit_formula = str(fit_result.GetExpFormula("P"))  # Explicitly cast to a Python string
 
-    save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, [fit_result.GetParameter(i) for i in range(fit_result.GetNpar())], correction_name="fake_factor", variable_name="pt")
+    save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, [fit_result.GetParameter(i) for i in range(fit_result.GetNpar())], correction_name="fake_factor", variable_name="pt", pt_max=xmax, pt_default=ff_last_bin, range_speficied=False)
 
     # fake_factor_json = {
     #     "bin_edges": list(fake_factor_hist.GetXaxis().GetXbins()),
@@ -190,7 +208,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     # print(f"Fake factor saved to {output_root_file} and {output_json_file}")
 
    
-def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, fit_params, correction_name="fake_factor", variable_name="pt"):
+def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_file, dm, njet, fit_formula, fit_params, correction_name="fake_factor", variable_name="pt", pt_max=200, pt_default=1.0, range_speficied=False):
     """
     Converts ROOT histogram with fake factors and a fit function into CorrectionLib JSON format.
 
@@ -216,32 +234,39 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
     # Add the upper edge of the last bin
     bin_edges.append(fake_factor_hist.GetBinLowEdge(fake_factor_hist.GetNbinsX() + 1))
     
-    # Create CorrectionLib format with both binning and formula
-    correction_binned = {
-        "name": f"fake_factor_{dm}_{njet}_binned",
-        "description": f"Binned fake factor for decay mode {dm}, {njet} jets",
-        "version": 1,
-        "inputs": [{"name": "pt", "type": "real"}],
-        "output": {"name": "fake_factor", "type": "real"},
-        "data": {
-            "nodetype": "binning",
-            "inputs": ["pt"],
-            "edges": bin_edges,
-            "content": [{"value": val, "uncertainty": unc} for val, unc in zip(bin_values, uncertainties)],
-            "flow": "clamp"
-        }
-    }
+    # # Create CorrectionLib format with both binning and formula
+    # correction_binned = {
+    #     "name": f"fake_factor_{dm}_{njet}_binned",
+    #     "description": f"Binned fake factor for decay mode {dm}, {njet} jets",
+    #     "version": 1,
+    #     "inputs": [{"name": "pt", "type": "real"}],
+    #     "output": {"name": "fake_factor", "type": "real"},
+    #     "data": {
+    #         "nodetype": "binning",
+    #         "inputs": ["pt"],
+    #         "edges": bin_edges,
+    #         "content": [{"value": val, "uncertainty": unc} for val, unc in zip(bin_values, uncertainties)],
+    #         "flow": "clamp"
+    #     }
+    # }
+
+    if range_speficied:
+        fit_expression = f"""
+            if(pt > {pt_max}) {{ fake_factor = {pt_default}; }}
+            else {{ fake_factor = {fit_formula}; }}"""
+    else:
+        fit_expression = fit_formula
     
     # Create CorrectionLib format with the formula
     correction_fit = {
         "name": f"{correction_name}_{dm}_{njet}_fit",
         "description": f"Fit fake factor for decay mode {dm}, {njet} jets",
         "version": 1,
-        "inputs": [{"name": "pt", "type": "real"}],
-        "output": {"name": "fake_factor", "type": "real"},
+        "inputs": [{"name": "pt", "type": "real", "description": "Transverse momentum of the hadronic tau"}],
+        "output": {"name": "fake_factor", "type": "real", "description": "Fake factor for the hadronic tau"},
         "data": {
             "nodetype": "formula",
-            "expression": fit_formula,
+            "expression": fit_expression,
             "parameters": [{"name": f"p{i}", "value": fit_params[i]} for i in range(len(fit_params))],
             "variables": [{"name": variable_name, "type": "real"}]
         }
@@ -250,7 +275,8 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
     # Combine both corrections
     correctionlib_json = {
         "schema_version": 2,
-        "corrections": [correction_binned, correction_fit]
+        "description": f"Fake factor for decay mode {dm}, {njet} jets for 2022_preEE",
+        "corrections": [correction_fit]
     }
 
     # Save to JSON file

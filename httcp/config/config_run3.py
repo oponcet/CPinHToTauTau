@@ -137,18 +137,18 @@ def add_config (ana: od.Analysis,
         "wj_2j_amcatnlo",
         ##Drell-Yan
         # --- LO --- #
-        #"dy_lep_m10to50_madgraph",
-        #"dy_lep_m50_madgraph",
-        #"dy_lep_m50_1j_madgraph",
-        #"dy_lep_m50_2j_madgraph",
-        #"dy_lep_m50_3j_madgraph",
-        #"dy_lep_m50_4j_madgraph",
+        "dy_lep_m10to50_madgraph",
+        "dy_lep_m50_madgraph",
+        "dy_lep_m50_1j_madgraph",
+        "dy_lep_m50_2j_madgraph",
+        "dy_lep_m50_3j_madgraph",
+        "dy_lep_m50_4j_madgraph",
         # --- NLO --- #
-        "dy_lep_m10to50_amcatnlo",
-        "dy_lep_m50_amcatnlo",
-        "dy_lep_m50_0j_amcatnlo",
-        "dy_lep_m50_1j_amcatnlo",
-        "dy_lep_m50_2j_amcatnlo",
+        # "dy_lep_m10to50_amcatnlo",
+        # "dy_lep_m50_amcatnlo",
+        # "dy_lep_m50_0j_amcatnlo",
+        # "dy_lep_m50_1j_amcatnlo",
+        # "dy_lep_m50_2j_amcatnlo",
         #"dy_lep_m50_1j_pt0to40_amcatnlo",
         #"dy_lep_m50_2j_pt0to40_amcatnlo",
         "dy_lep_m50_1j_pt40to100_amcatnlo",
@@ -335,21 +335,21 @@ def add_config (ana: od.Analysis,
     # define inclusive datasets for the stitched process identification with corresponding leaf processes
     # drell-yan [NLO]
     cfg.x.allow_dy_stitching = False
-    cfg.x.dy_stitching = {
-        "dy": {
-            "inclusive_dataset": cfg.datasets.n.dy_lep_m50_amcatnlo,
-            "leaf_processes": [
-                # the following processes cover the full njet and pt phasespace
-                procs.n.dy_m50toinf_0j,
-                *(
-                    procs.get(f"dy_m50toinf_{nj}j_pt{pt}")
-                    for nj in [1, 2]
-                    for pt in ["0to40", "40to100", "100to200", "200to400", "400to600", "600toinf"]
-                ),
-                #procs.n.dy_m50toinf_ge3j,
-            ],
-        },
-    }
+    # cfg.x.dy_stitching = {
+    #     "dy": {
+    #         "inclusive_dataset": cfg.datasets.n.dy_lep_m50_amcatnlo,
+    #         "leaf_processes": [
+    #             # the following processes cover the full njet and pt phasespace
+    #             procs.n.dy_m50toinf_0j,
+    #             *(
+    #                 procs.get(f"dy_m50toinf_{nj}j_pt{pt}")
+    #                 for nj in [1, 2]
+    #                 for pt in ["0to40", "40to100", "100to200", "200to400", "400to600", "600toinf"]
+    #             ),
+    #             #procs.n.dy_m50toinf_ge3j,
+    #         ],
+    #     },
+    # }
     # w+jets [NLO]
     cfg.x.allow_w_stitching = False
     cfg.x.w_stitching = {
@@ -885,13 +885,13 @@ def add_config (ana: od.Analysis,
     # --- >>> tau spinner weight <<< --- #
     cfg.add_shift(name="tauspinner_up",   id=150, type="shape") # cp-even
     cfg.add_shift(name="tauspinner_down", id=151, type="shape") # cp-odd
-    add_shift_aliases(
-        cfg,
-        "tauspinner",
-        {
-            "tauspinner_weight": "tauspinner_weight_{direction}",
-        },
-    )
+    # add_shift_aliases(
+    #     cfg,
+    #     "tauspinner",
+    #     {
+    #         "tauspinner_weight": "tauspinner_weight_{direction}",
+    #     },
+    # )
 
     # --- >>> zpt weight <<< --- #    
     cfg.add_shift(name="zpt_up", id=160, type="shape")
@@ -945,7 +945,7 @@ def add_config (ana: od.Analysis,
         "tau_weight"                            : [], #get_shifts("tau"),
         #"ff_weight"                             : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
-        "tauspinner_weight"                    : get_shifts("tauspinner"),
+        # "tauspinner_weight"                    : get_shifts("tauspinner"),
         #"pdf_weight"                            : [],
         #"zpt_reweight"                          : [],
     })

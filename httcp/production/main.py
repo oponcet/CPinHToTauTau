@@ -30,7 +30,7 @@ from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 from httcp.production.extra_weights import zpt_reweight, ff_weight # ff_weight : dummy
 from httcp.production.muon_weights import muon_id_weights, muon_iso_weights, muon_trigger_weights, muon_xtrigger_weights
 from httcp.production.electron_weights import electron_idiso_weights, electron_trigger_weights, electron_xtrigger_weights
-from httcp.production.tau_weights import tau_weights, tauspinner_weights
+from httcp.production.tau_weights import tau_weights# , tauspinner_weights
 
 
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
@@ -142,7 +142,7 @@ def hcand_features(
         electron_xtrigger_weights,
         # -- tau -- #
         tau_weights,
-        IF_DATASET_IS_SIGNAL(tauspinner_weights),
+        # IF_DATASET_IS_SIGNAL(tauspinner_weights),
         IF_DATASET_IS_DY(zpt_reweight),
         hcand_features,
         hcand_mass,
@@ -167,7 +167,7 @@ def hcand_features(
         electron_xtrigger_weights,
         # -- tau -- #
         tau_weights,
-        IF_DATASET_IS_SIGNAL(tauspinner_weights),
+        # IF_DATASET_IS_SIGNAL(tauspinner_weights),
         IF_DATASET_IS_DY(zpt_reweight),
         hcand_features,
         hcand_mass,
@@ -210,8 +210,8 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         events = self[tau_weights](events, do_syst=True, **kwargs)
 
         #from IPython import embed; embed()
-        if self.has_dep(tauspinner_weights):
-            events = self[tauspinner_weights](events, **kwargs)
+        # if self.has_dep(tauspinner_weights):
+        #     events = self[tauspinner_weights](events, **kwargs)
 
         if self.has_dep(zpt_reweight):
             events = self[zpt_reweight](events, **kwargs)

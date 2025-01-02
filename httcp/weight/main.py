@@ -60,13 +60,13 @@ def main_init(self: WeightProducer) -> None:
                 if not self.dataset_inst.has_tag("is_dy"):
                     continue
 
-            is_tauspinner_weight = any(
-                shift_inst.has_tag("tauspinner_weight")
-                for shift_inst in self.config_inst.x.event_weights[weight_name] 
-            )
-            if is_tauspinner_weight:
-                if not (self.dataset_inst.has_tag("is_ggf_signal") | self.dataset_inst.has_tag("is_vh_signal")):
-                    continue
+            # is_tauspinner_weight = any(
+                # shift_inst.has_tag("tauspinner_weight")
+                # for shift_inst in self.config_inst.x.event_weights[weight_name] 
+            # )
+            # if is_tauspinner_weight:
+                # if not (self.dataset_inst.has_tag("is_ggf_signal") | self.dataset_inst.has_tag("is_vh_signal")):
+                    # continue
 
         self.weight_columns.append(weight_name)
         self.uses.add(weight_name)

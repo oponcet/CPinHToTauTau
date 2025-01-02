@@ -17,6 +17,7 @@ fake_factor_derivation/
 │       ├── final_control_plots/
 │
 ├── src/
+|   ├── compute_catId_region.py   # Script to create the input json file that contains the id and path to the pck files 
 │   ├── __init__.py
 │   ├── input_processing.py       # Script to convert all needed pck file in ROOT files by region
 │   ├── derive_FF.py              # Script to caclulate Fake factors and error (FF and FF0). Call fit_function.py and save results in json.
@@ -166,4 +167,6 @@ fake_factor_derivation/
 | handling, data operations |
 +---------------------------+
 
-```plaintext
+```
+
+

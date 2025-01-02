@@ -364,6 +364,10 @@ def process_categories(categories, dm, output_file, vars1D, vars2D, eos_path, ta
                 print(f"Processing category: {cat} with id {cat_id}")
                 
                 for var1D in vars1D:
+                    # if var1D already processed, skip
+                    if cat_dir.GetListOfKeys().Contains(var1D):
+                        continue
+                    
                     var1D_dir = cat_dir.mkdir(var1D)
                     var1D_dir.cd()
 

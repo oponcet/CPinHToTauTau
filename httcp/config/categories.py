@@ -70,8 +70,8 @@ def add_hadr_cp_categories(config: od.Config) -> None:
     add_category(config, name="rho_a1dm10",    id=25, selection="cat_rho_a1dm10",      label=r"$\rho-a_{1}(3p0\pi^{0})$",              tags={"rho","a1DM10"   })  # 
     add_category(config, name="rho_a1dm11",    id=27, selection="cat_rho_a1dm11",      label=r"$\rho-a_{1}(3p1\pi^{0})$",              tags={"rho","a1DM11"   })  # 
     # add_category(config, name="a1dm2_a1dm2",   id=29, selection="cat_a1dm2_a1dm2",     label=r"$a_{1}-a_{1}(2p2\pi^{0})$",             tags={"a1DM2","a1DM2"  })  # 
-    add_category(config, name="a1dm2_a1dm10",  id=31, selection="cat_a1dm2_a1dm10",    label=r"$a_{1}(2p2\pi^{0})-a_{1}(3p0\pi^{0})$", tags={"a1DM2","a1DM10" })  # 
-    add_category(config, name="a1dm2_a1dm11",  id=33, selection="cat_a1dm2_a1dm11",    label=r"$a_{1}(2p2\pi^{0})-a_{1}(3p1\pi^{0})$", tags={"a1DM2","a1DM11" })  # 
+    # add_category(config, name="a1dm2_a1dm10",  id=31, selection="cat_a1dm2_a1dm10",    label=r"$a_{1}(2p2\pi^{0})-a_{1}(3p0\pi^{0})$", tags={"a1DM2","a1DM10" })  # 
+    # add_category(config, name="a1dm2_a1dm11",  id=33, selection="cat_a1dm2_a1dm11",    label=r"$a_{1}(2p2\pi^{0})-a_{1}(3p1\pi^{0})$", tags={"a1DM2","a1DM11" })  # 
     add_category(config, name="a1dm10_a1dm10", id=35, selection="cat_a1dm10_a1dm10",   label=r"$a_{1}-a_{1}(3p0\pi^{0})$",             tags={"a1DM10","a1DM10"})  # 
     add_category(config, name="a1dm10_a1dm11", id=37, selection="cat_a1dm10_a1dm11",   label=r"$a_{1}(3p0\pi^{0})-a_{1}(3p1\pi^{0})$", tags={"a1DM10","a1DM11"})  # 
     add_category(config, name="a1dm11_a1dm11", id=39, selection="cat_a1dm11_a1dm11",   label=r"$a_{1}(3p1\pi^{0})-a_{1}(3p1\pi^{0})$", tags={"a1DM11","a1DM11"})  # 
@@ -107,7 +107,7 @@ def add_tautau_real_categories(config: od.Config) -> None:
             config.get_category("rho_a1dm10"),
             config.get_category("rho_a1dm11"),
             # config.get_category("a1dm2_a1dm10"),
-            config.get_category("a1dm2_a1dm11"),
+            # config.get_category("a1dm2_a1dm11"),
             config.get_category("a1dm10_a1dm10"),
             config.get_category("a1dm10_a1dm11"),
             config.get_category("a1dm11_a1dm11"),
@@ -193,12 +193,12 @@ def add_etau_mutau_real_categories(config: od.Config) -> None:
         #            config.get_category("lepA0"), config.get_category("lepB0"),
         #            config.get_category("lepA1"), config.get_category("lepB1"),
         #            config.get_category("lepC"),  config.get_category("lepD")],
-        "abcd"   : [config.get_category("lepC"),  config.get_category("lepD")],
-        #"cp"     : [config.get_category("pi_2"),
+        # "abcd"   : [config.get_category("lepC"),  config.get_category("lepD")],
+        # "cp"     : [config.get_category("pi_2"),
         #            config.get_category("rho_2"),
-        #            config.get_category("a1dm2_2"),
-        #            config.get_category("a1dm10_2"),
-        #            config.get_category("a1dm11_2")],
+        #          config.get_category("a1dm2_2"),
+                #    config.get_category("a1dm10_2"),
+                #    config.get_category("a1dm11_2")],
     }
     logger.info("etau_mutau_real_categories")
     create_nested_categories(config, categories)
@@ -214,7 +214,8 @@ def add_etau_mutau_fake_categories(config: od.Config) -> None:
         #            config.get_category("lepA0"), config.get_category("lepB0"),
         #            config.get_category("lepA1"), config.get_category("lepB1"),
         #            config.get_category("lepC"),  config.get_category("lepD")],
-        "abcd"   : [config.get_category("lepC"),  config.get_category("lepD")],
+        "abcd"   : [#config.get_category("lepC"),
+                    config.get_category("lepD")],
         #"cp"     : [config.get_category("pi_2"),
         #            config.get_category("rho_2"),
         #            config.get_category("a1dm2_2"),

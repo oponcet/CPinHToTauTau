@@ -17,6 +17,8 @@ def fit_fake_factor(h, xmin, xmax, usePol1=False, polOnly=None):
     - polOnly: int, optional, default=None. If specified, fit only with pol0 or pol1 function:
         - 0: Use pol0 function only.
         - 1: Use pol1 function only.
+        - 2: Use pol2 function only.
+        - 3: Use pol3 function only.
         - None: Use Landau or Landau+pol1 by default.
 
     Returns:
@@ -44,6 +46,12 @@ def fit_fake_factor(h, xmin, xmax, usePol1=False, polOnly=None):
     elif polOnly == 1:
         f1 = ROOT.TF1("f1", "pol1", xmin, xmax)
         f2 = ROOT.TF1("f2", "pol1", xmin, xmax)
+    elif polOnly == 2:
+        f1 = ROOT.TF1("f1", "pol2", xmin, xmax)
+        f2 = ROOT.TF1("f2", "pol2", xmin, xmax)
+    elif polOnly == 3:
+        f1 = ROOT.TF1("f1", "pol3", xmin, xmax)
+        f2 = ROOT.TF1("f2", "pol3", xmin, xmax)
     
     # Reset histogram, keeping only bins with content > 0
     h_clone = h.Clone()
