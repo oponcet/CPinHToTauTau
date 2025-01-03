@@ -344,7 +344,7 @@ def add_config (ana: od.Analysis,
 
     # define inclusive datasets for the stitched process identification with corresponding leaf processes
     # drell-yan [NLO]
-    cfg.x.allow_dy_stitching = False
+    cfg.x.allow_dy_stitching = True
     cfg.x.dy_stitching = {
         "dy": {
             "inclusive_dataset": cfg.datasets.n.dy_lep_m50_madgraph,
@@ -375,7 +375,7 @@ def add_config (ana: od.Analysis,
     }
     """
     # w+jets [NLO]
-    cfg.x.allow_w_stitching = False
+    cfg.x.allow_w_stitching = True
     cfg.x.w_stitching = {
         "wj": {
             "inclusive_dataset": cfg.datasets.n.wj_incl_madgraph,
@@ -1310,7 +1310,7 @@ def add_config (ana: od.Analysis,
 
 
     cfg.x.extra_tags = DotDict.wrap({
-        "genmatch"       : False,
+        "genmatch"       : True,
     })
 
 

@@ -266,8 +266,8 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         if self.has_dep(tauspinner_weights):
             events = self[tauspinner_weights](events, **kwargs)
 
+        # -- Z-pT reweighting with corrections from Imperial (Danny) and Kansas (Dennis : v2)
         #if self.has_dep(zpt_reweight):
-        #events = self[zpt_reweight](events, **kwargs)
         if self.has_dep(zpt_reweight_v2):
             #events = self[zpt_reweight](events, **kwargs)
             events = self[zpt_reweight_v2](events, **kwargs)

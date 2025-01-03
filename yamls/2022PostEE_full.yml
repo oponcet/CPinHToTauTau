@@ -64,7 +64,9 @@ args:
   processes :
     - data
     - w_lnu
-    - dy
+    - dy_m50toinf_lep
+    - dy_m50toinf_tau
+    - dy_m50toinf_jet
     - tt
     - st
     - vv
