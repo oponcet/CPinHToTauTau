@@ -158,7 +158,7 @@ def hcand_features(
         hcand_mass,
         category_ids,
         build_abcd_masks,
-        #ff_weight,
+        ff_weight,
     },
     produces={
         make_column_valid,
@@ -188,7 +188,7 @@ def hcand_features(
         "trigger_ids",
         category_ids,
         build_abcd_masks,
-        #ff_weight,
+        ff_weight,
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
@@ -201,7 +201,7 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = self[build_abcd_masks](events, **kwargs)
     events, category_ids_debug_dict = self[category_ids](events, **kwargs)
 
-    #events = self[ff_weight](events, **kwargs)
+    events = self[ff_weight](events, **kwargs)
     if self.dataset_inst.is_mc:
         # allow stitching is applicable only when datasets are DY or wjets, only if the stitching booleans are true in config
         allow_stitching = bool(ak.any([(self.dataset_inst.has_tag("is_dy") and self.config_inst.x.allow_dy_stitching),

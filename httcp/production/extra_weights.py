@@ -128,40 +128,62 @@ def zpt_reweight_setup(
     produces={
         "ff_weight",
     },
-    mc_only=True,
+    mc_only=False,
 )
 def ff_weight(
         self: Producer,
         events: ak.Array,
         **kwargs,
 ) :
+    # from IPython import embed; embed()
     hcand1 = events.hcand[:,0]
-    target_id = self.config_inst.x.ff_apply_id_map.tautau["id"]
-    print(f"target_id : {target_id}")
-    is_AR_id = ak.fill_none(ak.any(events.category_ids == target_id, axis=1), False)
-    is_AR_id = flat_np_view(is_AR_id[:,None])
 
-    is_outside_range = (
-        ((hcand1.pt == 0.0) & (hcand1.mass == 0.0))
-        | ((hcand1.pt >= 600.0) | (hcand1.mass >= 1000.0))
+    # If events.is_os, events.is_real_1, events.is_iso_2 are True and events.is_iso_1 is False, then is_C_category is True
+    
+    is_C_category = (
+    events.is_os &        # All of these conditions must be True
+    # events.is_real_1 &
+    events.is_iso_2 &
+    ~events.is_iso_1      # This must be False (negate with ~)
     )
-    #from IPython import embed; embed()
-    is_outside_range = flat_np_view(is_outside_range[:,None])
+
+
+    
+
+    # # range of fake taus
+    # is_outside_range = (
+    #     ((hcand1.pt == 0.0) & (hcand1.mass == 0.0))
+    #     | ((hcand1.pt >= 600.0) | (hcand1.mass >= 1000.0))
+    # )
+    # #from IPython import embed; embed()
+    # is_outside_range = flat_np_view(is_outside_range[:,None])
     # for safety
-    zm  = ak.where(hcand1.mass > 1000.0, 999.99, hcand1.mass)
-    zpt = ak.where(hcand1.pt > 600.0, 599.99, hcand1.pt)
+    pt1 = ak.where(hcand1.pt > 600.0, 599.99, hcand1.pt)
 
-    zm = flat_np_view(zm[:,None])
-    zpt = flat_np_view(zpt[:,None])
+    pt1 = flat_np_view(pt1[:,None])
 
-    sf_nom_temp = 0.8*self.ff_corrector.evaluate(np.abs(zm), zpt)
+    # sf_nom_temp = 0.8*self.ff_corrector.evaluate(np.abs(mass), pt) ### To be change with pt only
 
-    #from IPython import embed; embed()
+    dms = ["a1dm11_1", "pi_1", "rho_1"]  # Decay modes
+    njets = ["has_0j", "has_1j", "has_2j"]  # Jet status
+
+    for dm in dms:
+        for njet in njets:
+            fake_factors_nom = self.ff_corrector.evaluate(
+                pt1,
+                dm,
+                njet
+            )
+
     
     #sf_nom = np.where(is_outside_range, 1.0, np.where(is_AR_id, self.ff_corrector.evaluate(zm,zpt), 1.0))
-    sf_nom = np.where(is_outside_range, 1.0, np.where(is_AR_id, sf_nom_temp, 1.0))
+    # sf_nom = np.where(is_outside_range, 1.0, np.where(is_AR_id, sf_nom_temp, 1.0))
+    # ff_nom = np.where(is_C_category, fake_factors_nom, 1.0))
+    ff_nom = fake_factors_nom
 
-    events = set_ak_column(events, "ff_weight", sf_nom, value_type=np.float32)
+
+
+    events = set_ak_column(events, "ff_weight", ff_nom, value_type=np.float32)
     
     return events
 
@@ -184,8 +206,9 @@ def ff_weight_setup(
     bundle = reqs["external_files"]
     import correctionlib
     correctionlib.highlevel.Correction.__call__ = correctionlib.highlevel.Correction.evaluate
-    
-    correction_set = correctionlib.CorrectionSet.from_string(
-        bundle.files.tautau_ff.load(formatter="gzip").decode("utf-8"),
-    )
-    self.ff_corrector    = correction_set["zptreweight"]
+
+    correction_set = correctionlib.CorrectionSet.from_file(
+        bundle.files.tautau_ff.path,
+    ) 
+
+    self.ff_corrector    = correction_set["fake_factors_fit"]

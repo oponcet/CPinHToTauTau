@@ -32,7 +32,8 @@ logger = law.logger.get_logger(__name__)
 ak = maybe_import("awkward")
 
 #thisdir = os.path.dirname(os.path.abspath(__file__))
-thisdir = "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/httcp/config"
+# thisdir = "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/httcp/config"
+thisdir = "/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/config"
 #print(f"thisdir: {thisdir}")
 corrdir = os.path.join(os.path.dirname(thisdir), "data")
 #print(f"corrdir: {corrdir}")
@@ -473,6 +474,12 @@ def add_config (ana: od.Analysis,
     else:
         raise RuntimeError(f"Wrong year: {year}. Check __init__.py in cmsdb campaign")
 
+    # --------------------------------------------------------------------------------------------- #
+    # Adding hist hooks
+    # --------------------------------------------------------------------------------------------- #
+
+    from httcp.config.hist_hooks import add_hist_hooks
+    add_hist_hooks(cfg)
 
     # --------------------------------------------------------------------------------------------- #
     # Adding met filters
@@ -537,7 +544,7 @@ def add_config (ana: od.Analysis,
         "ditau_jet_trig_sf" : (f"{json_mirror}/POG/TAU/{year}_{postfix}/ditaujet_jetleg_SFs_preEE.json",               "v1"),
         "jet_veto_map"      : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz",        "v1"), # JetVeto
         "zpt_rewt_sf"       : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
-        "tautau_ff"         : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # DUMMY !!!
+        "tautau_ff"         : ("/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/fakes/FakeFactors/json/fake_factor_2022_preEE.json",                                        "v1"), # DUMMY !!!
         #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz",                "v1"),
         #"met_phi_corr": (f"{json_mirror}/POG/JME/2018_UL/met.json.gz",                                                "v1"), #met phi, unavailable Run3
     })
@@ -985,7 +992,7 @@ def add_config (ana: od.Analysis,
         "muon_IsoMu24_trigger_weight"           : [], #get_shifts("mu_trig"),
         "muon_xtrig_weight"                     : [], #get_shifts("mu_xtrig"),
         "tau_weight"                            : [], #get_shifts("tau"),
-        #"ff_weight"                             : [],
+        "ff_weight"                             : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
         "tauspinner_weight"                     : get_shifts("tauspinner"),
         "pdf_weight"                            : [],
