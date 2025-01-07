@@ -268,9 +268,9 @@ def add_categories(config: od.Config) -> None:
     add_ABCD_categories(config)
     add_DM_categories(config)
 
-    add_etau_mutau_categories(config)
-    #add_tautau_real_categories(config)
-    add_tautau_phiCP_categories(config)
+    # add_etau_mutau_categories(config)
+    add_tautau_real_categories(config)
+    # add_tautau_phiCP_categories(config)
     ###add_test_categories(config)
     
     #all_cats = [cat.name for cat, _, _ in config.walk_categories()]
