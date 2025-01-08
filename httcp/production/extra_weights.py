@@ -147,6 +147,7 @@ def ff_weight(
     ~events.is_iso_1      # This must be False (negate with ~)
     )
 
+    is_C_category = flat_np_view(is_C_category)
 
     
 
@@ -158,14 +159,14 @@ def ff_weight(
     # #from IPython import embed; embed()
     # is_outside_range = flat_np_view(is_outside_range[:,None])
     # for safety
-    pt1 = ak.where(hcand1.pt > 600.0, 599.99, hcand1.pt)
+    # pt1 = ak.where(hcand1.pt > 600.0, 599.99, hcand1.pt)
 
-    pt1 = flat_np_view(pt1[:,None])
+    pt1 = flat_np_view(hcand1.pt[:,None])
 
     # sf_nom_temp = 0.8*self.ff_corrector.evaluate(np.abs(mass), pt) ### To be change with pt only
 
-    dms = ["a1dm11_1", "pi_1", "rho_1"]  # Decay modes
-    njets = ["has_0j", "has_1j", "has_2j"]  # Jet status
+    dms = ["a1dm11_1", "a1dm10_1", "a1dm2_1", "pi_1", "rho_1"]  # Decay modes
+    njets = ["has_0j", "has_1j", "has_2j"]  # Jet multiplicity
 
     for dm in dms:
         for njet in njets:
@@ -178,8 +179,8 @@ def ff_weight(
     
     #sf_nom = np.where(is_outside_range, 1.0, np.where(is_AR_id, self.ff_corrector.evaluate(zm,zpt), 1.0))
     # sf_nom = np.where(is_outside_range, 1.0, np.where(is_AR_id, sf_nom_temp, 1.0))
-    # ff_nom = np.where(is_C_category, fake_factors_nom, 1.0))
-    ff_nom = fake_factors_nom
+    ff_nom = np.where(is_C_category, fake_factors_nom, 1.0)
+    # ff_nom = fake_factors_nom
 
 
 
