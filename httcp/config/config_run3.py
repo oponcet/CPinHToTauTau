@@ -95,17 +95,27 @@ def add_config (ana: od.Analysis,
         "h_ggf_htt",
         "zh_htt",
         "wh_htt",
+        # QCD
+        "qcd",
     ]
 
     for process_name in process_names:
         # development switch in case datasets are not _yet_ there
-        if process_name not in procs:
+        if process_name == "qcd":
+            # qcd is not part of procs since there is no dataset registered for it
+            from cmsdb.processes.qcd import qcd
+            proc = cfg.add_process(qcd)
+        elif process_name not in procs:
             logger.warning(f"WARNING: {process_name} not in cmsdb processes")
             continue
+       
         # add the process
         #if process_name == "h_ggf_tautau":
         #    procs.get(process_name).is_signal = True
-        proc = cfg.add_process(procs.get(process_name))
+        else:
+            proc = cfg.add_process(procs.get(process_name))
+        
+        
         #print(procs.get(process_name))
         #if proc.name == "h_ggf_tautau":
         #    proc.is_signal = True
