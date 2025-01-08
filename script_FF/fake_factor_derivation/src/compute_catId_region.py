@@ -69,6 +69,7 @@ dm = [
     {"name": "a1dm11_1", "id": 9},
 ]
 
+# 41000000 + 15000 + 100000 + rho_1 = 4215150
 # Generate all combinations
 combinations = itertools.product(channel, abcd, nj, dm)
 

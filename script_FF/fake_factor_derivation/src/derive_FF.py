@@ -222,64 +222,31 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
     - fit_formula: Formula string of the fit (TF1.GetExpFormula()).
     - fit_params: List of fit parameters (TF1.GetParameter()).
     """
-    # # Extract bin edges and values from the histogram
-    # bin_edges = []
-    # bin_values = []
-    # uncertainties = []
-    
-    # for i in range(1, fake_factor_hist.GetNbinsX() + 1):
-    #     bin_edges.append(fake_factor_hist.GetBinLowEdge(i))
-    #     bin_values.append(fake_factor_hist.GetBinContent(i))
-    #     uncertainties.append(fake_factor_hist.GetBinError(i))
-    
-    # # Add the upper edge of the last bin
-    # bin_edges.append(fake_factor_hist.GetBinLowEdge(fake_factor_hist.GetNbinsX() + 1))
-    
-
-    # if range_speficied:
-    #     fit_expression = f"""
-    #         if(pt > {pt_max}) {{ fake_factor = {pt_default}; }}
-    #         else {{ fake_factor = {fit_formula}; }}"""
-    # else:
-    #     fit_expression = fit_formula
-
-    
-    # # Create CorrectionLib format with the formula
-    # correction_fit = {
-    #     "name": f"{correction_name}_{dm}_{njet}_fit",
-    #     "description": f"Fit fake factor for decay mode {dm}, {njet} jets",
-    #     "version": 1,
-    #     "inputs": [{"name": "pt", "type": "real", "description": "Transverse momentum of the hadronic tau"}],
-    #     "output": {"name": "fake_factor", "type": "real", "description": "Fake factor for the hadronic tau"},
-    #     "data": {
-    #         "nodetype": "formula",
-    #         "expression": fit_expression,
-    #         "parameters": [{"name": f"p{i}", "value": fit_params[i]} for i in range(len(fit_params))],
-    #         "variables": [{"name": variable_name, "type": "real"}]
-    #     }
-    # }
-
-    # # Combine both corrections
-    # correctionlib_json = {
-    #     "schema_version": 2,
-    #     "description": f"Fake factor for decay mode {dm}, {njet} jets for 2022_preEE",
-    #     "corrections": [correction_fit]
-    # }
 
     fit_formula_converted = convert_fit_formula_to_correctionlib(fit_formula, min_value=pt_min, max_value=pt_max)
+
+    if correction_name == "fake_factor":
+        main_description = "Fake factors for the httcp analysis"
+        name = "fake_factor"
+        output_description = "Fake factor to apply to data-MC"
+    else:
+        main_description = "Closure correction for the httcp analysis"
+        name = "closure_correction"
+        output_description = "Closure correction to apply to data-MC"
+
 
 
     correctionlib_json = {
         "schema_version": 2,
-        "description": "Fake factors for the httcp analysis",
+        "description": main_description,
         "corrections": [
             {
-                "name": "fake_factor_a1dm2_1_has_0j_fit",
-                "description": "Fit fake factor for decay mode a1dm2_1, has_0j jets",
+                "name": name,
+                "description": main_description,
                 "version": 1,
                 "inputs": [
                     {
-                        "name": "pt",
+                        "name": variable_name,
                         "type": "real",
                         "description": "Transverse momentum of the tau"
                     },
@@ -295,9 +262,9 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
                     }
                 ],
                 "output": {
-                    "name": "fake_factor",
+                    "name": name,
                     "type": "real",
-                    "description": "Fake factor to apply to data-MC"
+                    "description": output_description
                 },
                 "data": {
                     "nodetype": "category",
@@ -315,7 +282,7 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
                                         "nodetype": "formula",
                                         "expression": fit_formula_converted,
                                         "parser": "TFormula",
-                                        "variables": ["pt"]
+                                        "variables": [variable_name]
                                     }
                                 }
                             ]
@@ -409,11 +376,13 @@ def convert_fit_formula_to_correctionlib(fit_formula, min_value=None, max_value=
         "TMath::Sqrt(x)": "sqrt(x)",
         "TMath::Power(x,": "pow(x,",
         "TMath::Exp(x)": "exp(x)",
-        "TMath::Log(x)": "log(x)"
+        "TMath::Log(x)": "log(x)",
+        "TMath::Landau(x": "landau(x"
     }
     print("min_value: ", min_value)
     print("max_value: ", max_value)
     
+    print(f"Original fit formula: {fit_formula}")
     for key, value in replacements.items():
         fit_formula = fit_formula.replace(key, value)
 

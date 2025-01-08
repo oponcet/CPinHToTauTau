@@ -5,6 +5,10 @@ Date : 10-12-2024
 Main script calling the function of Fake Factor derivation, closure and extrapolation 
 correction, control plots ... 
 
+CPPYY_BACKEND_LIBRARY=/cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.30.04/x86_64-centosstream9-gcc113-opt/lib/libcppyy_backend3_9.so
+source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.30.04/x86_64-centosstream9-gcc113-opt/bin/thisroot.sh 
+
+
 Input: 
     - inputs/inputs_json/region.json (json file with the region configuration)
 

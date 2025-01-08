@@ -550,7 +550,7 @@ def derive_CCorr(ratio_hist, variable, dm, njet):
 
     fit_formula = str(fit_result.GetExpFormula("P"))  # Explicitly cast to a Python string
 
-    save_to_correctionlib_with_fit(ratio_hist, fit_result, output_json_file, dm, njet, fit_formula, [fit_result.GetParameter(i) for i in range(fit_result.GetNpar())], correction_name="closure_correction", variable_name="met_var_qcd_h1")
+    save_to_correctionlib_with_fit(ratio_hist, fit_result, output_json_file, dm, njet, fit_formula, [fit_result.GetParameter(i) for i in range(fit_result.GetNpar())], correction_name="closure_correction", variable_name="met_var_qcd_h1", pt_min= -1.5, pt_max=1.5)
 
 
 
