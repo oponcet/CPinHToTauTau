@@ -21,7 +21,7 @@ logger = law.logger.get_logger(__name__)
 # if mentioned                                                    #
 # ############################################################### #
 def name_fn(root_categories):
-    catlist = [cat.name for cat in root_categories.values() if cat]
+    # catlist = [cat.name for cat in root_categories.values() if cat]
     catname = "__".join(cat.name for cat in root_categories.values() if cat)
     return catname
 
@@ -30,6 +30,11 @@ def kwargs_fn(root_categories):
         "id": sum([c.id for c in root_categories.values()]),
         "label": ",".join([c.label for c in root_categories.values()]),
         "tags": set.union(*[cat.tags for cat in root_categories.values() if cat]),
+        # auxiliary information
+        "aux": {
+            # the qcd group name
+            "qcd_group": name_fn({name: cat for name, cat in root_categories.items() if name not in {"sign", "tau2"}}),
+        },
     }
 
 @call_once_on_config()
@@ -133,7 +138,6 @@ def add_DM_categories(config: od.Config) -> None:
     add_category(config, name="a1dm10_2",      id=8,  selection="cat_a1dm10_2",        label=r"$\tau_{h}\to a_{1}(3\pi-0\pi^{0})$",                  tags={"tau2a1DM10"}) # h2 -> a1
     add_category(config, name="a1dm11_2",      id=10, selection="cat_a1dm11_2",        label=r"$\tau_{h}\to a_{1}(3\pi-1\pi^{0})$",                  tags={"tau2a1DM11"}) # h2 -> a1
 
-    
 @call_once_on_config()
 def add_etau_mutau_categories(config: od.Config) -> None:
     categories = {
@@ -281,3 +285,4 @@ def add_categories(config: od.Config) -> None:
     add_category(config, name="test2", id=9999, selection="cat_tautau_2j", label=r"test2", tags={"test2"})
     """
     #add_category(config, name="tautau_test11", id=9999, selection="cat_tautau_test11", label=r"test1", tags={"test1"})
+
