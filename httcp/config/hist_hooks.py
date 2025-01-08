@@ -727,12 +727,15 @@ def add_hist_hooks(config: od.Config) -> None:
    
 
     def apply_fake_factor(task, hists):
+        # Check if histograms are available
         if not hists:
+            print("no hists")
             return hists
 
-        # get dummy processes
-        fake_process = config.get_process("dy", default=None)
-        if not fake_process:
+        # Get the qcd process
+        qcd_proc = config.get_process("qcd", default=None)
+        if not qcd_proc:
+            print("no qcd") 
             return hists
 
         # extract all unique category ids and verify that the axis order is exactly
@@ -751,127 +754,89 @@ def add_hist_hooks(config: od.Config) -> None:
 
         # create qcd groups
         qcd_groups: dict[str, dict[str, od.Category]] = defaultdict(DotDict)
-        for cat_id in category_ids:
-            cat_inst = config.get_category(cat_id)
-            if cat_inst.has_tag({"os", "iso1", "iso2"}, mode=all): # D 
-                qcd_groups[cat_inst.x.qcd_group].os_iso = cat_inst
-            elif cat_inst.has_tag({"os", "noniso1", "iso2"}, mode=all): # C
-                qcd_groups[cat_inst.x.qcd_group].os_noniso = cat_inst
-            elif cat_inst.has_tag({"ss", "iso1", "iso2"}, mode=all): # B
-                qcd_groups[cat_inst.x.qcd_group].ss_iso = cat_inst
-            elif cat_inst.has_tag({"ss", "noniso1", "iso2"}, mode=all): # A
-                qcd_groups[cat_inst.x.qcd_group].ss_noniso = cat_inst
 
-        print(qcd_groups)
+        ### Create a QCD group ofr each DM and Njet category
 
-        # get complete qcd groups
-        complete_groups = [name for name, cats in qcd_groups.items() if len(cats) == 4]
+        dms = ["tau1a1DM11", "tau1a1DM10", "tau1a1DM2", "tau1pi", "tau1rho"]  # Decay modes
+        njets = ["has0j", "has1j", "has2j"]  # Jet multiplicity
 
-        # nothing to do if there are no complete groups
+        # dms = ["tau1rho"]  # Decay modes
+        # njets = ["has0j"]  # Jet multiplicity
+
+        # Loop over all categories and create a QCD group for each DM and Njet category
+        for dm in dms:
+            for njet in njets:
+                for cat_id in category_ids:
+                    cat_inst = config.get_category(cat_id)
+                    if cat_inst.has_tag({"os", "iso1", njet, dm}, mode=all) and not cat_inst.has_tag("noniso2"): # cat D 
+                        qcd_groups[f"dm_{dm}_njet_{njet}"].os_iso = cat_inst
+                    elif cat_inst.has_tag({"os", "noniso1", njet, dm}, mode=all) and not cat_inst.has_tag("noniso2"): # cat C
+                        qcd_groups[f"dm_{dm}_njet_{njet}"].os_noniso = cat_inst
+                    # Ignore AB categories
+                    # elif cat_inst.has_tag({"ss", "iso1", njet, dm}, mode=all): # cat A
+                    #     qcd_groups[f"dm_{dm}_njet_{njet}"].ss_iso = cat_inst
+                    # elif cat_inst.has_tag({"ss", "noniso1", njet, dm}, mode=all):  # cat B
+                    #     qcd_groups[f"dm_{dm}_njet_{njet}"].ss_noniso = cat_inst 
+   
+
+        # Get complete qcd groups
+        complete_groups = [name for name, cats in qcd_groups.items() if len(cats) == 2]
+    
+        # Nothing to do if there are no complete groups, you need C to apply Fake to D 
         if not complete_groups:
+            print("no complete groups")
             return hists
 
-        # sum up mc and data histograms, stop early when empty
+        # Sum up mc and data histograms, stop early when empty
         mc_hists = [h for p, h in hists.items() if p.is_mc and not p.has_tag("signal")]
         data_hists = [h for p, h in hists.items() if p.is_data]
         if not mc_hists or not data_hists:
             return hists
         mc_hist = sum(mc_hists[1:], mc_hists[0].copy())
         data_hist = sum(data_hists[1:], data_hists[0].copy())
-
-        # start by copying the mc hist and reset it, then fill it at specific category slices
-        hists = {}
-        hists[fake_process] = factor_hist = mc_hist.copy().reset()
-        hists[factor_int] = factor_hist_int = mc_hist.copy().reset()
+        
+        # Start by copying the data hist and reset it, then fill it at specific category slices
+        hists[qcd_proc] = qcd_hist = data_hist.copy().reset()
         for group_name in complete_groups:
             group = qcd_groups[group_name]
-            # get the corresponding histograms and convert them to number objects,
-            # each one storing an array of values with uncertainties
-            # shapes: (SHIFT, VAR)
-            get_hist = lambda h, region_name: h[{"category": hist.loc(group[region_name].id)}]
-            ss_noniso_mc = hist_to_num(get_hist(mc_hist, "ss_noniso1"), "ss_noniso1_mc")
-            ss_iso_mc = hist_to_num(get_hist(mc_hist, "ss_iso1"), "ss_iso1_mc")
-            ss_noniso_data = hist_to_num(get_hist(data_hist, "ss_noniso1"), "ss_noniso1_data")
-            ss_iso_data = hist_to_num(get_hist(data_hist, "ss_iso1"), "ss_iso1_data")
+   
+            # Get the corresponding histograms of the id, if not present, create a zeroed histogram
+            get_hist = lambda h, region_name: (
+                h[{"category": hist.loc(group[region_name].id)}]
+                if group[region_name].id in h.axes["category"]
+                else hist.Hist(*[axis for axis in (h[{"category": [0]}] * 0).axes if axis.name != 'category'])
+            ) 
 
-            # take the difference between data and MC in the control regions
-            ss_iso_qcd = ss_iso_data - ss_iso_mc
-            ss_noniso_qcd = ss_noniso_data - ss_noniso_mc
+            # Get the corresponding histograms and convert them to number objects,
+            os_noniso_mc  = hist_to_num(get_hist(mc_hist, "os_noniso"), "os_noniso_mc")
+            os_noniso_data = hist_to_num(get_hist(data_hist, "os_noniso"), "os_noniso_data")
 
-            ##################################################################
-            ####                 Calculate the fake factor A/B             ###
-            ##################################################################
+            ## DATA - MC of region C (FF are already apply to them)
+            fake_hist = os_noniso_data - os_noniso_mc
 
-            # # calculate the pt-independent fake factor
-            # int_ss_iso = integrate_num(ss_iso_qcd, axis=1)
-            # int_ss_noniso = integrate_num(ss_noniso_qcd, axis=1)
-            # fake_factor_int = (int_ss_iso / int_ss_noniso)[0, None]
+            # combine uncertainties and store values in bare arrays
+            fake_hist_values = fake_hist()
+            fake_hist_variances = fake_hist(sn.UP, sn.ALL, unc=True)**2
 
-            # # calculate the pt-dependent fake factor
-            # fake_factor = (ss_iso_qcd / ss_noniso_qcd)[:, None]
-            # fake_factor_values = np.squeeze(np.nan_to_num(fake_factor()), axis=0)
-            # fake_factor_variances = fake_factor(sn.UP, sn.ALL, unc=True)**2
+            # Guaranty positive values of fake_hist
+            neg_int_mask = fake_hist_values <= 0
+            fake_hist_values[neg_int_mask] = 1e-5
+            fake_hist_variances[neg_int_mask] = 0
 
-            # # change shape of fake_factor_int for plotting
-            # fake_factor_int_values = fake_factor_values.copy()
-            # fake_factor_int_values.fill(fake_factor_int()[0])
+            ## Use fake_hist as qcd histogram for category D (os_iso)
+            cat_axis = qcd_hist.axes["category"]
+            for cat_index in range(cat_axis.size):
+                if cat_axis.value(cat_index) == group.os_iso.id:
+                    qcd_hist.view().value[cat_index, ...] = fake_hist_values
+                    qcd_hist.view().variance[cat_index, ...] = fake_hist_variances
+                    break
+            else:
+                raise RuntimeError(
+                    f"could not find index of bin on 'category' axis of qcd histogram {mc_hist} "
+                    f"for category {group.os_iso}",
+                )
 
-            ##################################################################
-            ####          Extract Fake factor from the json files          ###
-            ##################################################################
-            for group_name in complete_groups:
-                group = qcd_groups[group_name]
-                path = f"httcp/fakes/FakeFactors/{group.os_iso.x.decay_mode}/fake_factor.json"
-                
-                # Load correction data
-                with open(path) as f:
-                    correction_data = json.load(f)
-
-                correction = correction_data["corrections"]
-                correction_type = correction["data"]["nodetype"]
-
-                # Apply Binned Correction
-                if correction_type == "binning":
-                    bin_edges = correction["data"]["edges"]
-                    bin_contents = correction["data"]["content"]
-                    def get_binned_fake_factor(pt):
-                        for idx, edge in enumerate(bin_edges[:-1]):
-                            if edge <= pt < bin_edges[idx + 1]:
-                                return bin_contents[idx]["value"], bin_contents[idx]["uncertainty"]
-                        return bin_contents[-1]["value"], bin_contents[-1]["uncertainty"]
-
-                    fake_factor_values = []
-                    fake_factor_variances = []
-
-                    for pt_bin_center in group.os_iso.x.pt_bins:
-                        value, uncertainty = get_binned_fake_factor(pt_bin_center)
-                        fake_factor_values.append(value)
-                        fake_factor_variances.append(uncertainty**2)
-
-                # Apply Formula Correction
-                elif correction_type == "formula":
-                    params = {p["name"]: p["value"] for p in correction["data"]["parameters"]}
-                    def correction_formula(x):
-                        return (
-                            params["p0"] * np.exp(-((x - params["p1"]) ** 2) / (2 * params["p2"] ** 2))
-                            + params["p3"]
-                            + params["p4"] * x
-                        )
-
-                    pt_bin_centers = group.os_iso.x.pt_bins
-                    fake_factor_values = correction_formula(np.array(pt_bin_centers))
-                    fake_factor_variances = np.zeros_like(fake_factor_values)  # Placeholder
-
-                # Insert fake factor values into histograms
-                cat_axis = factor_hist.axes["category"]
-                for cat_index in range(cat_axis.size):
-                    if cat_axis.value(cat_index) == group.os_iso.id:
-                        factor_hist.view().value[cat_index, ...] = fake_factor_values
-                        factor_hist.view().variance[cat_index, ...] = fake_factor_variances
-                        break
-
-            return hists
-
+        return hists
 
 
     config.x.hist_hooks = {
