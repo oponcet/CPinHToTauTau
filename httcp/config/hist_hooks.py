@@ -733,9 +733,9 @@ def add_hist_hooks(config: od.Config) -> None:
             return hists
 
         # Get the qcd process
-        qcd_proc = config.get_process("qcd", default=None)
+        qcd_proc = config.get_process("fake", default=None)
         if not qcd_proc:
-            print("no qcd") 
+            print("no fake") 
             return hists
 
         # extract all unique category ids and verify that the axis order is exactly

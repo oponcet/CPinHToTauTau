@@ -133,3 +133,7 @@ def stylize_processes(config: od.Config) -> None:
 
     if (p := config.get_process("qcd", default=None)):
         p.color1 = cfg.x.colors.red
+
+    if (p := config.get_process("fake", default=None)):
+        p.color1 = cfg.x.colors.light_blue
+        p.label = r"$j \to \tau_h fakes$"

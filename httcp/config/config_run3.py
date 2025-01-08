@@ -97,6 +97,8 @@ def add_config (ana: od.Analysis,
         "wh_htt",
         # QCD
         "qcd",
+        # Fake
+        "fake",
     ]
 
     for process_name in process_names:
@@ -105,6 +107,10 @@ def add_config (ana: od.Analysis,
             # qcd is not part of procs since there is no dataset registered for it
             from cmsdb.processes.qcd import qcd
             proc = cfg.add_process(qcd)
+        elif process_name == "fake":
+            # qcd is not part of procs since there is no dataset registered for it
+            from cmsdb.processes.fake import fake
+            proc = cfg.add_process(fake)
         elif process_name not in procs:
             logger.warning(f"WARNING: {process_name} not in cmsdb processes")
             continue
