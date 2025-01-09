@@ -456,7 +456,14 @@ def derive_CCorr(ratio_hist, variable, dm, njet):
     # Also save the ratio in a TH1D
     ratio_hist.Write("ratio_hist")
 
-    fit_result, h_uncert, ratio_hist, fit_details = fit_fake_factor(ratio_hist, -1.5, 1.5, usePol1=True)
+    # Divide the number on bin by two by merging the bins
+    ratio_hist.Rebin(2)
+    # Divive each bin by 2 to get the average
+    ratio_hist.Scale(0.5)
+    
+    
+
+    fit_result, h_uncert, ratio_hist, fit_details = fit_fake_factor(ratio_hist, -1.5, 1.5, polOnly=3, usePol1=False)
 
     # Save the fake factor and fit results to a ROOT file
 
@@ -508,22 +515,22 @@ def derive_CCorr(ratio_hist, variable, dm, njet):
 
     # #### PNG FILE: FIT DETAIL #### uncert_canvas
     # # Create a text box to show the fit details
-    # fit_details_text = ROOT.TPaveText(0.35, 0.69, 0.6, 0.89, "NDC") # x1, y1, x2, y2, option
-    # fit_details_text.SetBorderSize(0)
-    # fit_details_text.SetFillColor(0)
-    # fit_details_text.SetTextAlign(12)
-    # fit_details_text.SetTextSize(0.02)
+    fit_details_text = ROOT.TPaveText(0.35, 0.69, 0.6, 0.89, "NDC") # x1, y1, x2, y2, option
+    fit_details_text.SetBorderSize(0)
+    fit_details_text.SetFillColor(0)
+    fit_details_text.SetTextAlign(12)
+    fit_details_text.SetTextSize(0.02)
 
     # # Add fit statistics and parameters to the text box
-    # fit_details_text.AddText(f"Chi2 = {fit_details['Chi2']:.4f}")
-    # fit_details_text.AddText(f"NDf = {fit_details['NDf']}")
+    fit_details_text.AddText(f"Chi2 = {fit_details['Chi2']:.4f}")
+    fit_details_text.AddText(f"NDf = {fit_details['NDf']}")
 
     # # Add parameter values with their errors
     # for i, param in enumerate(fit_details['Parameters']):
     #     fit_details_text.AddText(f"p{i} = {param['p']:.4f} \pm {param['error']:.4f}")
 
     # # Draw the text box
-    # fit_details_text.Draw()
+    fit_details_text.Draw()
 
     # Add fit details to the canvas
     ROOT.gStyle.SetOptFit(1)
