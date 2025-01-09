@@ -55,7 +55,7 @@ def main_init(self: WeightProducer) -> None:
         # manually skip weights for samples that do not have lhe info
         if getattr(self, "dataset_inst", None) is not None:
 
-            if weight_name != "ff_weight" and self.dataset_inst.is_data:    
+            if (weight_name != "ff_weight" or weight_name != "closure_weight") and self.dataset_inst.is_data:    
                 continue
 
             # skip pdf weights for samples that dont have lhe weight

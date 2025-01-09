@@ -123,10 +123,11 @@ def zpt_reweight_setup(
     uses={
         "channel_id",
         "category_ids",
-        "hcand.pt", "hcand.mass",
+        "hcand.pt", "hcand.mass", "PuppiMET.pt", "PuppiMET.phi",
     },
     produces={
         "ff_weight",
+        "closure_weight"
     },
     mc_only=False,
 )
@@ -136,7 +137,9 @@ def ff_weight(
         **kwargs,
 ) :
     # Leading candidate
-    hcand1 = events.hcand[:,0]
+    from IPython import embed; embed()
+    hcand1 = events.hcand[:,0:1] # Leading candidate hcand1 = events.hcand[:,0] 
+
 
     # If events.is_os, events.is_real_1, events.is_iso_2 are True and events.is_iso_1 is False, then is_C_category is True
     is_C_category = (
@@ -151,6 +154,13 @@ def ff_weight(
     # Get the pt of the leading candidate
     pt1 = flat_np_view(hcand1.pt[:,None])
 
+    # Get met_var_qcd_h1
+    met = ak.with_name(events.PuppiMET, "PtEtaPhiMLorentzVector")
+    dphi_met_h1 = met.delta_phi(hcand1)
+    met_var_qcd_h1 = met.pt * np.cos(dphi_met_h1)/hcand1.pt
+    met_var_qcd_h1 = flat_np_view(met_var_qcd_h1[:,None])
+
+
     # Get the decay mode and jet multiplicity
     dms = ["a1dm11_1", "a1dm10_1", "a1dm2_1", "pi_1", "rho_1"]  # Decay modes
     njets = ["has_0j", "has_1j", "has_2j"]  # Jet multiplicity
@@ -162,12 +172,21 @@ def ff_weight(
                 dm,
                 njet
             )
+            closure_nom = self.closure_corrector.evaluate(
+                met_var_qcd_h1,
+                dm,
+                njet
+            )
 
     # Apply the fake factor only for the C category
     ff_nom = np.where(is_C_category, fake_factors_nom, 1.0)
 
+    closure_nom = np.where(is_C_category, closure_nom, 1.0)
+
+
     # Add the column to the events
     events = set_ak_column(events, "ff_weight", ff_nom, value_type=np.float32)
+    events = set_ak_column(events, "closure_weight", closure_nom, value_type=np.float32)
     
     return events
 
@@ -196,3 +215,9 @@ def ff_weight_setup(
     ) 
 
     self.ff_corrector    = correction_set["fake_factors_fit"]
+
+    correction_set = correctionlib.CorrectionSet.from_file(
+        bundle.files.tautau_closure.path,
+    ) 
+
+    self.closure_corrector    = correction_set["closure_correction_fit"]

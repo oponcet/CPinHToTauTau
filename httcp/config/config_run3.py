@@ -560,7 +560,8 @@ def add_config (ana: od.Analysis,
         "ditau_jet_trig_sf" : (f"{json_mirror}/POG/TAU/{year}_{postfix}/ditaujet_jetleg_SFs_preEE.json",               "v1"),
         "jet_veto_map"      : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz",        "v1"), # JetVeto
         "zpt_rewt_sf"       : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
-        "tautau_ff"         : ("/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/fakes/FakeFactors/json/fake_factor_2022_preEE.json",                                        "v1"), # DUMMY !!!
+        "tautau_ff"         : ("/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/fakes/FakeFactors/json/fake_factor_2022_preEE.json", "v1"), # Fake Factors
+        "tautau_closure"    : ("/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/fakes/FakeFactors/json_Closure/closure_correction_2022_preEE2.json",    "v1") # DUMMY !!!
         #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz",                "v1"),
         #"met_phi_corr": (f"{json_mirror}/POG/JME/2018_UL/met.json.gz",                                                "v1"), #met phi, unavailable Run3
     })
@@ -981,6 +982,13 @@ def add_config (ana: od.Analysis,
             #"normalized_pdf_weight": "normalized_pdf_weight_{direction}",
         },
     )
+    # add_shift_aliases(
+    #     cfg,
+    #     "cc",
+    #     {
+    #         "closure_weight": "closure_weight_{direction}",
+    #     },
+    # )
 
 
 
@@ -1009,6 +1017,7 @@ def add_config (ana: od.Analysis,
         "muon_xtrig_weight"                     : [], #get_shifts("mu_xtrig"),
         "tau_weight"                            : [], #get_shifts("tau"),
         "ff_weight"                             : [],
+        "closure_weight"                        : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
         "tauspinner_weight"                     : get_shifts("tauspinner"),
         "pdf_weight"                            : [],
