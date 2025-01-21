@@ -80,7 +80,7 @@ def load_datasets_histograms(eos_path, task, datasets, hist_path_var, cat_id, va
     """
     hists = {}
 
-    print("var ", var)
+    # print("var ", var)
     for dataset in datasets:
         pickle_file_path = eos_path + task + dataset + "/" + hist_path_var
         hist_data = load_histogram_data(pickle_file_path)
@@ -243,7 +243,7 @@ def create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir, c
    
 
     cat = cat_dir.GetName()
-    print("cat ", cat)  
+    # print("cat ", cat)  
 
     if var == "hcand_1_pt":
         # remove stat box
@@ -351,38 +351,250 @@ def prepare_output_directory(dm):
     return output_path
 
 
-def process_categories(categories, dm, output_file, vars1D, vars2D, eos_path, task, dataset_data, dataset_mc, hist_path_base):
+def process_categories(categories, dm, njet, output_file, vars1D, vars2D, eos_path, task, dataset_data, dataset_mc, hist_path_base):
     """
     Process each category and save the corresponding histograms.
     """
-    for njet, njet_categories in categories[dm].items():
-        print(f"Processing njet: {njet}")
-        for cat_group, cat_dict in njet_categories.items():
-            for cat, cat_id in cat_dict.items():
-                cat_dir = output_file.mkdir(cat)
-                cat_dir.cd()
-                print(f"Processing category: {cat} with id {cat_id}")
+    print(categories[dm][njet])
+    for group, cat_dict in categories[dm][njet].items():
+        print(f"Group: {group}")
+        print(f"Categories: {cat_dict}")
+        # for cat_group, cat_dict in njet_categories.items():
+        for cat, cat_id in cat_dict.items():
+            cat_dir = output_file.mkdir(cat)
+            cat_dir.cd()
+            print(f"Processing category: {cat} with id {cat_id}")
+            
+            for var1D in vars1D:
+                # if var1D already processed, skip
+                if cat_dir.GetListOfKeys().Contains(var1D):
+                    continue
                 
-                for var1D in vars1D:
-                    # if var1D already processed, skip
-                    if cat_dir.GetListOfKeys().Contains(var1D):
-                        continue
-                    
-                    var1D_dir = cat_dir.mkdir(var1D)
-                    var1D_dir.cd()
+                var1D_dir = cat_dir.mkdir(var1D)
+                var1D_dir.cd()
 
-                    hists_data, hists_mc = get_histograms(eos_path, task, dataset_data, dataset_mc, hist_path_base, var1D, cat_id, twoD=False)
-                    save_histograms_to_root(hists_data, hists_mc, var1D, cat_dir)
-                    
-                cat_dir.cd()
-                for var2D in vars2D:
-                    print(f"Processing 2D variable: {var2D}")
-                    var2D_name = f"{var2D[0]}-{var2D[1]}"
-                    var2D_dir = cat_dir.mkdir(var2D_name)
-                    var2D_dir.cd()
+                hists_data, hists_mc = get_histograms(eos_path, task, dataset_data, dataset_mc, hist_path_base, var1D, cat_id, twoD=False)
+                save_histograms_to_root(hists_data, hists_mc, var1D, cat_dir)
+                
+            cat_dir.cd()
+            for var2D in vars2D:
+                print(f"Processing 2D variable: {var2D}")
+                var2D_name = f"{var2D[0]}-{var2D[1]}"
+                var2D_dir = cat_dir.mkdir(var2D_name)
+                var2D_dir.cd()
 
-                    hists_data, hists_mc = get_histograms(eos_path, task, dataset_data, dataset_mc, hist_path_base, var2D_name, cat_id, twoD=True)
-                    save_histograms_to_root2D(hists_data, hists_mc, var2D[0], var2D[1], cat_dir)
+                hists_data, hists_mc = get_histograms(eos_path, task, dataset_data, dataset_mc, hist_path_base, var2D_name, cat_id, twoD=True)
+                save_histograms_to_root2D(hists_data, hists_mc, var2D[0], var2D[1], cat_dir)
+
+# # def sum_data_minus_mc_across_njets(dm):
+#     """
+#     Sum the data minus MC histograms across the njet categories.
+#     """
+#     # Open the ROOT file for the given DM
+#     output_path = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}'
+#     output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "RECREATE")
+#     print(f"Output file: {output_file}")
+
+#     # Create a TH1D histogram to store the sum
+#     data_minus_mc_sum = None
+#     # Detach the histogram from the ROOT file 
+#     # data_minus_mc_sum.SetDirectory(0)
+    
+
+#     # Loop over the njet categories and sum the data minus MC histograms
+#     for cat in ["A", "B", "C", "D", "A0", "B0", "C0", "D0"]:
+#         # create directory for the category
+#         cat_dir = output_file.mkdir(f"tautau_real_1__had{cat}__allnjet_{dm}")
+#         cat_dir.cd()
+#         # create directory for the variable
+#         var_dir = cat_dir.mkdir("hcand_1_pt")
+#         var_dir.cd()
+#         output_file.Close()
+#         for njet in ["has_0j", "has_1j", "has_2j"]:
+#             input_file = ROOT.TFile(f"{output_path}/{dm}_{njet}.root", "READ")
+#             cat_dir = input_file.Get(f"tautau_real_1__had{cat}__{njet}_{dm}")
+#             input_file.cd()
+#             var_dir = cat_dir.Get("hcand_1_pt")
+#             input_file.cd()
+#             data_minus_mc = cat_dir.Get("data_minus_mc")
+#             if data_minus_mc:
+#                 if data_minus_mc_sum is None:
+#                     data_minus_mc_sum = data_minus_mc.Clone("data_minus_mc_sum")
+#                 else:
+#                     data_minus_mc_sum.Add(data_minus_mc)   
+        
+#         # write sum histo outpout root file
+#         output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "UPDATE")
+#         output_file.cd()
+#         # go in the category directory
+#         cat_dir = output_file.Get(f"tautau_real_1__had{cat}__allnjet_{dm}")
+#         cat_dir.cd()
+#         # go in the variable directory
+#         var_dir = cat_dir.Get("hcand_1_pt")
+
+#         # Write the sum to the ROOT file
+#         data_minus_mc_sum.Write()
+
+#     # Close the ROOT file
+#     output_file.Close()
+
+# def sum_data_minus_mc_across_njets(dm):
+#     """
+#     Sum the data minus MC histograms across the njet categories.
+#     """
+#     import ROOT
+
+#     # Define the input and output paths
+#     output_path = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}'
+#     output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "RECREATE")
+#     print(f"Output file: {output_file.GetName()}")
+#     output_file.Close()
+
+#     # Initialize variable to store the sum of histograms
+#     data_minus_mc_sum = None
+
+#     for cat in ["A", "B", "C", "D", "A0", "B0", "C0", "D0"]:
+#         output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "UPDATE")
+#         # Create category directory
+#         cat_dir = output_file.mkdir(f"tautau__real_1__had{cat}__allnjet__{dm}")
+        
+#         for njet in ["has_0j", "has_1j", "has_2j"]:
+#             # Open the input file
+#             input_file = ROOT.TFile(f"{output_path}/{dm}_{njet}.root", "READ")
+#             print(f"Input file: {input_file}")
+#             if not input_file or input_file.IsZombie():
+#                 print(f"Error: Could not open file {input_file.GetName()}")
+#                 continue
+            
+#             # Navigate to the desired category directory
+#             cat_dir_in = input_file.Get(f"tautau__real_1__had{cat}__{njet}__{dm}")
+#             if not cat_dir_in:
+#                 print(f"Warning: Directory 'tautau__real_1__had{cat}__{njet}__{dm}' not found in {input_file.GetName()}")
+#                 input_file.Close()
+#                 continue
+
+#             # Navigate to the variable directory
+#             var_dir = cat_dir_in.Get("hcand_1_pt")
+#             if not var_dir:
+#                 print(f"Warning: Directory 'hcand_1_pt' not found in {cat_dir_in.GetName()}")
+#                 input_file.Close()
+#                 continue
+
+#             # Retrieve the histogram
+#             data_minus_mc = var_dir.Get("data_minus_mc")
+#             if not data_minus_mc:
+#                 print(f"Warning: Histogram 'data_minus_mc' not found in {var_dir.GetName()}")
+#                 input_file.Close()
+#                 continue
+
+#             print(f"Adding histogram dm {dm}, cat {cat}, njet {njet}")
+#             print("data_minus_mc_sum ", data_minus_mc_sum)
+
+#             # Sum the histograms
+#             if data_minus_mc_sum is None:
+#                 data_minus_mc_sum = data_minus_mc.Clone("data_minus_mc_sum")
+#             else:
+#                 data_minus_mc_sum.Add(data_minus_mc)
+            
+#             data_minus_mc_sum.SetDirectory(0)
+            
+#             input_file.Close()
+
+#         # Open the output file
+#         output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "UPDATE")
+
+#         print(f"Output file: {output_file.GetName()}")
+
+#         output_file.ls()
+
+#         print("cat ", cat)
+#         cat_dir_in = output_file.Get(f"tautau__real_1__had{cat}__allnjet__{dm}")
+#         if not cat_dir_in:
+#                 print(f"Warning: Directory 'tautau__real_1__had{cat}__allnjet__{dm}' not found in {output_file.GetName()}")
+#         var_dir = cat_dir_in.Get("hcand_1_pt")
+#         output_file.cd()
+
+#         # Write the summed histogram to the output file
+#         if data_minus_mc_sum:
+#             data_minus_mc_sum.Write()
+    
+#     # Close the output file
+#     output_file.Close()
+
+def sum_data_minus_mc_across_njets(dm):
+    """
+    Sum the data minus MC histograms across the njet categories.
+    """
+
+    # Define the input and output paths
+    output_path = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}'
+    output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "RECREATE")
+    print(f"Output file: {output_file.GetName()}")
+
+    for cat in ["A", "B", "C", "D", "A0", "B0", "C0", "D0"]:
+        # Reset data_minus_mc_sum for each category
+        data_minus_mc_sum = None
+        print(f"Processing category: {cat}")
+        
+        for njet in ["has_0j", "has_1j", "has_2j"]:
+            input_file_name = f"{output_path}/{dm}_{njet}.root"
+            input_file = ROOT.TFile(input_file_name, "READ")
+            if not input_file or input_file.IsZombie():
+                print(f"Error: Could not open file {input_file_name}")
+                continue
+
+            # Navigate to the directory
+            dir_name = f"tautau__real_1__had{cat}__{njet}__{dm}"
+            cat_dir_in = input_file.Get(dir_name)
+            if not cat_dir_in:
+                print(f"Warning: Directory '{dir_name}' not found in {input_file_name}")
+                input_file.Close()
+                continue
+
+            var_dir = cat_dir_in.Get("hcand_1_pt")
+            if not var_dir:
+                print(f"Warning: Directory 'hcand_1_pt' not found in {cat_dir_in.GetName()}")
+                input_file.Close()
+                continue
+
+            # Retrieve the histogram
+            data_minus_mc = var_dir.Get("data_minus_mc")
+            if not data_minus_mc:
+                print(f"Warning: Histogram 'data_minus_mc' not found in {var_dir.GetName()}")
+                input_file.Close()
+                continue
+
+            print(f"Adding histogram dm {dm}, cat {cat}, njet {njet}")
+
+            # Sum the histograms
+            if data_minus_mc_sum is None:
+                data_minus_mc_sum = data_minus_mc.Clone("data_minus_mc_sum")
+                data_minus_mc_sum.SetDirectory(0)  # Detach from the file
+            else:
+                data_minus_mc_sum.Add(data_minus_mc)
+                data_minus_mc_sum.SetDirectory(0)
+
+            input_file.Close()
+
+        # Write the summed histogram to the output file
+        if data_minus_mc_sum:
+            dir_name = f"tautau__real_1__had{cat}__allnjet__{dm}"
+            if not output_file.GetDirectory(dir_name):
+                output_file.mkdir(dir_name)
+
+            output_file.cd(dir_name)
+            # create directory for the variable
+            var_dir =  output_file.GetDirectory(dir_name).mkdir("hcand_1_pt")
+            output_file.cd(f"{dir_name}/hcand_1_pt")
+
+            data_minus_mc_sum.Write("data_minus_mc")
+            print(f"Summed histogram written for category: {cat}")
+        else:
+            print(f"No histograms found for category: {cat}")
+
+    # Close the output file
+    output_file.Close()
+    print("All operations completed successfully.")
 
 
 def main(config_path, dm):
@@ -404,10 +616,11 @@ def main(config_path, dm):
 
     # For 1D histograms
     vars1D = ["hcand_1_pt"] + [var['var1'] for var in variables]
-    print(f"Variables 1D: {vars1D}")
+    # print(f"Variables 1D: {vars1D}")
 
-    vars2D = [[var['var1'], var['var2']] for var in variables]
-    print(f"Variables 2D: {vars2D}")
+    # vars2D = [[var['var1'], var['var2']] for var in variables]
+    vars2D = []
+    # print(f"Variables 2D: {vars2D}")
 
     # Prepare the output directory
     output_path = prepare_output_directory(dm)
@@ -415,9 +628,11 @@ def main(config_path, dm):
     # Loop over the categories and process the histograms
     for njet in categories[dm].keys():
         output_file = ROOT.TFile(f"{output_path}/{dm}_{njet}.root", "RECREATE")
-        print(f"Output file: {output_file}")
-        process_categories(categories, dm, output_file, vars1D, vars2D, eos_path, task, dataset_data, dataset_mc, hist_path_base)
+        # print(f"Output file: {output_file}")
+        process_categories(categories, dm,njet, output_file, vars1D, vars2D, eos_path, task, dataset_data, dataset_mc, hist_path_base)
         output_file.Close()
+    if dm == "pi_1":
+            sum_data_minus_mc_across_njets(dm)
 
 
 if __name__ == "__main__":

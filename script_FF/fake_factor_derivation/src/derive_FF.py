@@ -20,8 +20,76 @@ import ROOT
 from correctionlib import schemav2 as cs
 from array import array
 import re
+import cmsstyle as CMS
+
 
 from fit_functions import fit_fake_factor
+
+
+
+def rebin_to_custom_bins(hist, custom_bins):
+    """
+    Rebins a histogram to custom bin ranges and normalizes content to bin widths.
+
+    Args:
+        hist (ROOT.TH1): The original histogram to rebin.
+        custom_bins (list): List of custom bin edges (e.g., [40, 44, 48, ...]).
+    
+    Returns:
+        ROOT.TH1: A new histogram with custom bins and normalized bin content.
+    """
+
+    print("###############################################")
+    # Ensure custom_bins is a valid list
+    if len(custom_bins) < 2:
+        raise ValueError("custom_bins must contain at least two values to define bin ranges.")
+    
+    # Convert to array format for ROOT
+    bin_edges_array = array('d', custom_bins)
+    n_bins = len(custom_bins) - 1
+
+    # Create a new histogram with custom binning
+    rebinned_hist = ROOT.TH1F(
+        f"{hist.GetName()}_rebinned",
+        hist.GetTitle(),
+        n_bins,
+        bin_edges_array
+    )
+
+    for i in range(0,n_bins):
+        new_bin_low = bin_edges_array[i] # low edge of the bin
+        new_bin_high = bin_edges_array[i + 1] # high edge of the bin
+        print(f"new_bin_low: {new_bin_low}, new_bin_high: {new_bin_high}")
+        # Find the corresponding bin in the original histogram
+        new_bin_content = 0
+        n_bin_merged = 0
+        new_bin_error_sq = 0  # Sum of squared errors for the new bin
+
+        # Loop over the original histogram bins
+        for j in range(1, hist.GetNbinsX() + 1):
+            bin_center = hist.GetBinCenter(j)
+            bin_content = hist.GetBinContent(j)
+            bin_error = hist.GetBinError(j)
+
+            # Check if the bin center is within the new bin range
+            if new_bin_low <= bin_center < new_bin_high and bin_content != 0:
+                # Add bin content to the new histogram
+                n_bin_merged += 1
+                new_bin_content += bin_content
+                new_bin_error_sq += bin_error ** 2
+                print(f"bin_center: {bin_center}, bin_content: {bin_content}")
+
+        # Skip empty bins
+        if n_bin_merged == 0:
+            continue
+        bin_width = new_bin_high - new_bin_low    
+        new_bin_content /= n_bin_merged # normalize to the bin width
+        new_bin_error = (new_bin_error_sq**0.5) / n_bin_merged  # Propagate uncertainty
+        print(f"new_bin_content: {new_bin_content} for bin center : {rebinned_hist.GetBinCenter(i + 1)} ")
+        rebinned_hist.SetBinContent(i + 1, new_bin_content)
+        rebinned_hist.SetBinError(i + 1, new_bin_error)
+
+    return rebinned_hist
 
 
 def calculate_fake_factor(input_file, catA, catB, dm, njet):
@@ -38,7 +106,7 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     """
 
     # Reset the style of the canvas to use default style
-    ROOT.gROOT.SetStyle("Plain")
+    # ROOT.gROOT.SetStyle("Plain")
     
 
     # Define output paths
@@ -69,23 +137,13 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
 
     # Rebin the fake factor histogram like this [40,45,55,60,65,70,80,90,100,120,140,200]
-    custom_bins = [40,45,50,55,60,65,70,80,90,100,120,140,200]
-    n_bins = len(custom_bins) - 1
+    custom_bins = [40,45,50,55,60,65,70,80,120,200]
+    # custom_bins = [40,45,50,55,60,65,70,80,100,120,200]
 
-    # # print(array('d', custom_bins))
-
-    fake_factor_hist_rebinned = fake_factor_hist.Rebin(n_bins, "fake_factor_rebinned", array('d', custom_bins))
-
-    # normalize to the bin width
-    for i in range(1, fake_factor_hist_rebinned.GetNbinsX() + 1):
-        bin_width = fake_factor_hist_rebinned.GetBinWidth(i)/5. # divide by 5 because the bin width is 5 GeV
-        print(f"bin_width: {bin_width}")
-        bin_content = fake_factor_hist_rebinned.GetBinContent(i)
-        bin_error = fake_factor_hist_rebinned.GetBinError(i)
-        fake_factor_hist_rebinned.SetBinContent(i, bin_content / bin_width)
-        fake_factor_hist_rebinned.SetBinError(i, bin_error / bin_width)
-
-    fake_factor_hist = fake_factor_hist_rebinned
+    # custom_bins = [40,44,50,54,58,64,70,80,120,200]
+    # custom_bins = [40,44,48,52,56,60,70,80,120,200]
+    
+    fake_factor_hist = rebin_to_custom_bins(fake_factor_hist, custom_bins)
 
 
     # Fit the fake factor histogram using `fit_functions.py`
@@ -95,19 +153,18 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     # if last bin = 0 
     if fake_factor_hist.GetBinContent(fake_factor_hist.GetNbinsX()) == 0:
         print("Last bin is 0")
-        xmax = 140
+        xmax = 120
         ff_last_bin = fake_factor_hist.GetBinContent(fake_factor_hist.GetNbinsX() - 1)
     else:
         ff_last_bin = fake_factor_hist.GetBinContent(fake_factor_hist.GetNbinsX())
         xmax = 200
 
     print(f"dms: {dm}, njet: {njet}")
-    if dm == 'a1dm2_1' and njet == "has_2j":
-        fit_method = 3
-    else:
-        fit_method = 2
+ 
+    fit_method = 2
 
     fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, xmax, usePol1=False, polOnly=fit_method) # polOnly = None
+    # fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, xmax, usePol1=True) # polOnly = None
 
 
     # Save the fake factor and fit results to a ROOT file
@@ -121,13 +178,20 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
 
     # Plot the uncertainties
     uncert_canvas = ROOT.TCanvas("Fake_Factor", "Fake Factor", 800, 600)
-    
+
+    # Set style plain 
+     
    
     # Draw the fake factor histogram
     fake_factor_hist.Draw("EP")
     fake_factor_hist.SetLineColor(ROOT.kBlack)
-    fake_factor_hist.SetTitle("Fit Fake Factor;p_{T} (GeV) ;Fake Factor")
-    fake_factor_hist.GetYaxis().SetRangeUser(0, 2.5)
+    fake_factor_hist.SetMarkerStyle(20)
+    title = f"Fake Factor for {dm} {njet} jets"
+    fake_factor_hist.SetTitle(title)    
+    fake_factor_hist.GetYaxis().SetTitle("Fake Factor")
+    fake_factor_hist.GetXaxis().SetTitle("p_{T} (GeV)")
+    # fake_factor_hist.SetTitle("{};p_{T} (GeV) ;Fake Factor")
+    fake_factor_hist.GetYaxis().SetRangeUser(0, 1.5)
 
     # Draw the uncertainties as a filled area
     h_uncert.Draw("E3 SAME")
@@ -143,37 +207,48 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     legend = ROOT.TLegend(0.15, 0.75, 0.35, 0.9) #  
     legend.AddEntry(fake_factor_hist, "Fake Factor", "EP")
     legend.AddEntry(fit_result, "Fit Result", "L")
-    legend.AddEntry(h_uncert, "95% CL (Uncertainties)", "F")
+    legend.AddEntry(h_uncert, "68% CL (Uncertainties)", "F")
     legend.SetBorderSize(0)
     legend.SetFillStyle(0)
+    legend.SetTextSize(0.03)
     legend.Draw()
 
     # remove stat box
     ROOT.gStyle.SetOptStat(0)
     ROOT.gStyle.SetOptFit(0)
+  
 
     # Save the canvas to an image file
     output_image_path = output_root_file.replace(".root", "_FullPlot.png")
     uncert_canvas.SaveAs(output_image_path)
+    output_image_path = output_root_file.replace(".root", "_FullPlot.pdf")
+    uncert_canvas.SaveAs(output_image_path)
 
-    #### PNG FILE: FIT DETAIL #### uncert_canvas
-    # Create a text box to show the fit details
-    fit_details_text = ROOT.TPaveText(0.35, 0.69, 0.6, 0.89, "NDC") # x1, y1, x2, y2, option
-    fit_details_text.SetBorderSize(0)
-    fit_details_text.SetFillColor(0)
-    fit_details_text.SetTextAlign(12)
-    fit_details_text.SetTextSize(0.03)
+    # #### PNG FILE: FIT DETAIL #### uncert_canvas
+    # Display fit info like NDF, Chi2, etc.
+    ROOT.gStyle.SetOptFit(1)
+    # change stat box position and size
+    ROOT.gStyle.SetStatY(0.9)
+    ROOT.gStyle.SetStatX(0.78)
+    ROOT.gStyle.SetStatW(0.15)
+    ROOT.gStyle.SetStatH(0.15)
+    # # Create a text box to show the fit details
+    # fit_details_text = ROOT.TPaveText(0.35, 0.69, 0.6, 0.89, "NDC") # x1, y1, x2, y2, option
+    # fit_details_text.SetBorderSize(0)
+    # fit_details_text.SetFillColor(0)
+    # fit_details_text.SetTextAlign(12)
+    # fit_details_text.SetTextSize(0.03)
 
-    # Add fit statistics and parameters to the text box
-    fit_details_text.AddText(f"Chi2 = {fit_details['Chi2']:.4f}")
-    fit_details_text.AddText(f"NDf = {fit_details['NDf']}")
+    # # Add fit statistics and parameters to the text box
+    # fit_details_text.AddText(f"Chi2 = {fit_details['Chi2']:.4f}")
+    # fit_details_text.AddText(f"NDf = {fit_details['NDf']}")
 
-    # Add parameter values with their errors
-    for i, param in enumerate(fit_details['Parameters']):
-        fit_details_text.AddText(f"p{i} = {param['p']:.4f} \pm {param['error']:.4f}")
+    # # Add parameter values with their errors
+    # for i, param in enumerate(fit_details['Parameters']):
+    #     fit_details_text.AddText(f"p{i} = {param['p']:.4f} \pm {param['error']:.4f}")
 
-    # Draw the text box
-    fit_details_text.Draw()
+    # # Draw the text box
+    # fit_details_text.Draw()
 
     # Save the fit details canvas as a separate PNG file
     output_details_image_path = output_root_file.replace(".root", "_FitDetails.png")
@@ -234,6 +309,27 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
         name = "closure_correction"
         output_description = "Closure correction to apply to data-MC"
 
+    if njet == "has_0j":
+        njet_int = 0
+    elif njet == "has_1j":
+        njet_int = 1
+    elif njet == "has_2j":
+        njet_int = 2
+    else:
+        njet_int = -1
+    
+    if dm == "pi_1":
+        dm_int = 0
+    elif dm == "rho_1":
+        dm_int = 1
+    elif dm == "a1dm2_1":
+        dm_int = 2
+    elif dm == "a1dm10_1":
+        dm_int = 10
+    elif dm == "a1dm11_1":
+        dm_int = 11
+    else:
+        dm_int = -1
 
 
     correctionlib_json = {
@@ -252,13 +348,13 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
                     },
                     {
                         "name": "dm",
-                        "type": "string",
-                        "description": "Reconstructed tau decay mode of leading tau: pi_1, rho_1, a1dm11_1, a1dm10_1, a1dm2_1"
+                        "type": "int",
+                        "description": "Reconstructed tau decay mode of leading tau: 0,1,2,10,11"
                     },
                     {
                         "name": "njets",
-                        "type": "string",
-                        "description": "Number of jets in the event (has_0j, has_1j, has_2j)"
+                        "type": "int",
+                        "description": "Number of jets in the event 0,1,2"
                     }
                 ],
                 "output": {
@@ -271,13 +367,13 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
                     "input": "dm",
                     "content": [
                     {
-                        "key": dm,
+                        "key": dm_int,
                         "value": {
                             "nodetype": "category",
                             "input": "njets",
                             "content": [
                                 {
-                                    "key": njet,
+                                    "key": njet_int,
                                     "value": {
                                         "nodetype": "formula",
                                         "expression": fit_formula_converted,
@@ -305,57 +401,6 @@ def save_to_correctionlib_with_fit(fake_factor_hist, fit_result, output_json_fil
         json.dump(correctionlib_json, f, indent=4)
     
     print(f"CorrectionLib JSON with fit formula saved to {output_json_file}")
-
-
-
-
-# if __name__ == "__main__":
-#     # Define input and output paths
-#     input_file_a = "inputs/inputs_rootfile/dm/region.root/A/pt1/data_minus_mc"
-#     input_file_b = "inputs/inputs_rootfile/dm/region.root/B/pt1/data_minus_mc"
-#     output_root_file = "outputs/FakeFactors/dm/region.root"
-#     output_json_file = "outputs/FakeFactors/dm/region.json"
-
-#     # Calculate fake factor
-#     calculate_fake_factor(input_file_a, input_file_b, output_root_file, output_json_file)
-
-# def main(config_path, dm):
-
-#     # ROOT configuration
-#     ROOT.gROOT.SetBatch(True) # Do not display canvas
-
-#     # Load the JSON configuration
-#     with open(config_path, 'r') as f:
-#         config = json.load(f)
-
-#     categories = config['categories']
-#     variable = "hcand_1_pt"
-
-#     catA, catB = None, None  # Initialize to None
-
-#     for njet in config['categories'][dm]:
-#         for cat in config['categories'][dm][njet]['ABCD']:
-
-#             if '_hadA__' in cat:
-#                 catA = cat
-#             if '_hadB__' in cat:
-#                 catB = cat
-            
-#         if not catA or not catB:
-#             raise ValueError(f"Categories _hadA__ or _hadB__ not found for {dm} in njet {njet}")   
-        
-#         # Define input file
-#         input_file = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_{njet}.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
-
-#         # Calculate fake factor
-#         calculate_fake_factor(input_file, catA, catB, dm, njet)
-
-# if __name__ == "__main__":
-#     # dms = ['pi_1', 'rho_1', 'a1dm2_1', 'a1dm10_1', 'a1dm11_1']
-#     dms = ['pi_1']
-#     for dm in dms:
-#         config_path = f'script_FF/fake_factor_derivation/inputs/inputs_json/fake_factors_{dm}.json'
-#         main(config_path, dm)
 
 
 def convert_fit_formula_to_correctionlib(fit_formula, min_value=None, max_value=None):

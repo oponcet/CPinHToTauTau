@@ -96,6 +96,10 @@ def fit_fake_factor(h, xmin, xmax, usePol1=False, polOnly=None):
         ROOT.TVirtualFitter.GetFitter().GetConfidenceIntervals(h_uncert, 0.68)
         fit = f2
 
+    # Set range of h_uncert to match fit range
+    h_uncert.SetAxisRange(xmin, xmax)
+    f2.SetRange(xmin, xmax)
+
     if fit is None:
         raise RuntimeError("Fit did not converge after 100 iterations.")
 

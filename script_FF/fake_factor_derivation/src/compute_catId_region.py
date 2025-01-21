@@ -106,14 +106,14 @@ base_data_config = {
     "paths": {
         "eos_path": "/eos/user/g/gsaha/CPinHToTauTauOutput/cf_store/analysis_httcp/cf.MergeHistograms/", 
         "task": "run3_2022_preEE_nano_cp_tau_v14/",
-        "hist_path": "nominal/calib__main/sel__main/prod__main/weight__main/Run3_2022PreEE_full_20241206_193602/"
+        "hist_path": "nominal/calib__main/sel__main/prod__main/weight__main/Run3_2022PreEE_full_20250118_215651/"
     },
     "datasets": {
         "data": [
-            "data_tau_C", "data_tau_D", "data_mu_C", "data_mu_D", "data_e_C", "data_e_D", "data_single_mu_C"
+            "data_tau_C", "data_tau_D",
         ],
         "mc": [
-            "wj_incl_madgraph", "wj_1j_madgraph", "wj_2j_madgraph", "wj_3j_madgraph", "wj_4j_madgraph",
+            "wj_incl_madgraph",
             "dy_lep_m10to50_madgraph", "dy_lep_m50_madgraph", "dy_lep_m50_1j_madgraph", "dy_lep_m50_2j_madgraph", 
             "dy_lep_m50_3j_madgraph", "dy_lep_m50_4j_madgraph", "tt_dl", "tt_sl", "tt_fh",
             "st_tchannel_t", "st_tchannel_tbar", "st_tw_t_sl", "st_tw_t_dl", "st_tw_t_fh", "st_tw_tb_sl",
@@ -123,46 +123,13 @@ base_data_config = {
     },
     "variables": [
         {
-            "var1": "dphi_met_h1",
-            "var2": "hcand_1_pt"
-        },
-        {
-            "var1": "hcand_invm",
-            "var2": "hcand_1_pt"
-        },
-        {
-            "var1": "jet_1_pt",
-            "var2": "hcand_1_pt"
-        },
-        {
-            "var1": "jet_2_pt",
-            "var2": "hcand_1_pt"
-        },
-        {
             "var1": "met_var_qcd_h1",
             "var2": "hcand_1_pt"
         },
         {
-            "var1": "hcand_2_pt",
+            "var1": "hcand_1_pt_VTightWP_binvar",
             "var2": "hcand_1_pt"
-        },
-        {
-            "var1": "hT",
-            "var2": "hcand_1_pt"
-        },
-        {
-            "var1": "n_jet",
-            "var2": "hcand_1_pt"
-        },
-        {
-            "var1": "hcand_dr",
-            "var2": "hcand_1_pt"
-        },
-        {
-            "var1": "hcand_dr",
-            "var2": "met_var_qcd_h1"
         }
-
     ]
 }
 
