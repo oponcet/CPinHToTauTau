@@ -50,9 +50,9 @@ def main(config_path, dm):
         catA0 = 'tautau__real_1__hadA0__allnjet__pi_1'
         catB0 = 'tautau__real_1__hadB0__allnjet__pi_1'
 
-        # input_file_region = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_allnjet.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
+        input_file_region = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_allnjet.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
 
-        # calculate_fake_factor(input_file_region, catA0, catB0, dm, njet)
+        # calculate_fake_factor(input_file_region, catA, catB, dm, njet)
 
         # apply_fake_factor_CD(input_file_region, catA, catB, dm, njet)
     else:
@@ -111,8 +111,11 @@ def main(config_path, dm):
         # #########################################
         # # # Calculate fake factor
 
+            # # 0 ABCD categories
+            # calculate_fake_factor(input_file_region, catA0, catB0, dm, njet)
+
+            ## ABCD categories
             # calculate_fake_factor(input_file_region, catA, catB, dm, njet)
-            calculate_fake_factor(input_file_region, catA0, catB0, dm, njet)
 
         
 
@@ -123,7 +126,12 @@ def main(config_path, dm):
         ## Apply the fake factor to the region C and D to get the final D region. Correction are not yet apply.
         ## It's a first set of control plot on pt distribution of the region C and D.
 
-            apply_fake_factor_CD(input_file_region, catC0, catD0, dm, njet)
+
+            ## 0 ABCD categories
+            # apply_fake_factor_CD(input_file_region, catC0, catD0, dm, njet)
+
+            ## ABCD categories
+            apply_fake_factor_CD(input_file_region, catC, catD, dm, njet)
 
 
         # # #########################################

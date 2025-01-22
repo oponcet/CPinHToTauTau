@@ -202,8 +202,8 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     fake_factor_hist.GetYaxis().SetTitle("Fake Factor")
     fake_factor_hist.GetXaxis().SetTitle("p_{T} (GeV)")
     # fake_factor_hist.SetTitle("{};p_{T} (GeV) ;Fake Factor")
-    # fake_factor_hist.GetYaxis().SetRangeUser(0, 1.5)
-    fake_factor_hist.GetYaxis().SetRangeUser(0, 0.5)
+    fake_factor_hist.GetYaxis().SetRangeUser(0, 1.5)
+    # fake_factor_hist.GetYaxis().SetRangeUser(0, 0.5)
 
 
     # Draw the uncertainties as a filled area
