@@ -178,7 +178,9 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     ratio.SetTitle("")
     # ratio.SetTitle("Data / MC with Fake Jets")
     ratio.GetYaxis().SetTitle("Ratio")
-    ratio.GetYaxis().SetRangeUser(0.5, 1.5)  # Adjust range as needed
+    ratio.GetYaxis().SetRangeUser(0.5, 2.5)  # Adjust range as needed
+    # automatci range 
+    # ratio.GetYaxis().SetRangeUser(ratio.GetMinimum()-0.1, ratio.GetMaximum()+0.1)
     ratio.GetYaxis().SetNdivisions(3)
     ratio.GetXaxis().SetTitle("p_{T} (GeV)")    # Replace with appropriate axis label
     ratio.SetMarkerStyle(20)
@@ -199,13 +201,20 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     mc_stack.Draw("HIST SAME")
     data_hist.Draw("E SAME")
 
-    data_hist.SetTitle("")
+    # data_hist.SetTitle("")
+    title = f"Fake Factor for {dm} {njet} jets"
+    data_hist.SetTitle(title) 
+    
+
 
     # remove x axis title and labels
-    data_hist.GetXaxis().SetTitle("")
+    # data_hist.GetXaxis().SetTitle("")
     data_hist.GetXaxis().SetLabelSize(0)
     data_hist.GetXaxis().SetRangeUser(40, 200)
     data_hist.GetYaxis().SetTitle("Events/5 GeV")
+
+    output_canvas_ratio.Update()
+    output_canvas_ratio.Modified()
 
 
     # legend
@@ -225,7 +234,7 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
     ratio.GetXaxis().SetTitleSize(0.1)
     ratio.GetYaxis().SetTitleOffset(0.5)  # Adjust this value to move the title to the right
     ratio.GetYaxis().SetTitle("Data/MC")
-    ratio.GetYaxis().SetRangeUser(0.5, 1.5)
+    ratio.GetYaxis().SetRangeUser(0.0, 2.5)
     ratio.GetYaxis().SetNdivisions(3)
     ratio.SetMarkerStyle(20)
 
@@ -246,6 +255,7 @@ def apply_fake_factor_CD(input_file, catC, catD, dm, njet):
 
     # Save the canvas as a PNG file
     output_canvas_ratio.SaveAs(output_png_file_ratio)
+    
 
     # detatch the histograms from the ROOT file
     ratio.SetDirectory(0)

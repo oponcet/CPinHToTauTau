@@ -47,9 +47,14 @@ def main(config_path, dm):
         catA = 'tautau__real_1__hadA__allnjet__pi_1'
         catB = 'tautau__real_1__hadB__allnjet__pi_1'
 
-        input_file_region = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_allnjet.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
+        catA0 = 'tautau__real_1__hadA0__allnjet__pi_1'
+        catB0 = 'tautau__real_1__hadB0__allnjet__pi_1'
 
-        calculate_fake_factor(input_file_region, catA, catB, dm, njet)
+        # input_file_region = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/{dm}_allnjet.root'   # script_FF/fake_factor_derivation/inputs/inputs_rootfile/pi_1/pi_1_has_0j.root
+
+        # calculate_fake_factor(input_file_region, catA0, catB0, dm, njet)
+
+        # apply_fake_factor_CD(input_file_region, catA, catB, dm, njet)
     else:
         for njet in config['categories'][dm]:
             # Loop over ABCD categories
@@ -62,6 +67,16 @@ def main(config_path, dm):
                     catC = cat
                 if '_hadD__' in cat:
                     catD = cat
+            for cat in config['categories'][dm][njet]['A0B0C0D0']:
+                if '_hadA0__' in cat:
+                    catA0 = cat
+                if '_hadB0__' in cat:
+                    catB0 = cat
+                if '_hadC0__' in cat:
+                    catC0 = cat
+                if '_hadD0__' in cat:
+                    catD0 = cat
+                
                 
             if not catA or not catB:
                 raise ValueError(f"Categories _hadA__ or _hadB__ not found for {dm} in njet {njet}")   
@@ -96,7 +111,9 @@ def main(config_path, dm):
         # #########################################
         # # # Calculate fake factor
 
-            calculate_fake_factor(input_file_region, catA, catB, dm, njet)
+            # calculate_fake_factor(input_file_region, catA, catB, dm, njet)
+            calculate_fake_factor(input_file_region, catA0, catB0, dm, njet)
+
         
 
         # #########################################
@@ -106,7 +123,7 @@ def main(config_path, dm):
         ## Apply the fake factor to the region C and D to get the final D region. Correction are not yet apply.
         ## It's a first set of control plot on pt distribution of the region C and D.
 
-        # apply_fake_factor_CD(input_file_region, catC, catD, dm, njet)
+            apply_fake_factor_CD(input_file_region, catC0, catD0, dm, njet)
 
 
         # # #########################################

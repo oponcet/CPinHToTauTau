@@ -157,13 +157,24 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
         ff_last_bin = fake_factor_hist.GetBinContent(fake_factor_hist.GetNbinsX() - 1)
     else:
         ff_last_bin = fake_factor_hist.GetBinContent(fake_factor_hist.GetNbinsX())
-        xmax = 200
+        xmax = 160
 
     print(f"dms: {dm}, njet: {njet}")
- 
-    fit_method = 2
 
-    fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, xmax, usePol1=False, polOnly=fit_method) # polOnly = None
+    if dm == "pi_111" :
+        fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, xmax, usePol1=True) # polOnly = None
+
+    else:
+        if dm == "a1dm10_1" and njet == "has_0j":
+            fit_method = 3
+        elif (dm == "rho_1" and njet == "has_1j"):
+            fit_method = 3
+        elif dm == "pi_1":
+            fit_method = 3
+        else:
+            fit_method = 2
+
+        fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, xmax, usePol1=False, polOnly=fit_method) # polOnly = None
     # fit_result, h_uncert, fake_factor_hist, fit_details = fit_fake_factor(fake_factor_hist, 40, xmax, usePol1=True) # polOnly = None
 
 
@@ -191,7 +202,9 @@ def calculate_fake_factor(input_file, catA, catB, dm, njet):
     fake_factor_hist.GetYaxis().SetTitle("Fake Factor")
     fake_factor_hist.GetXaxis().SetTitle("p_{T} (GeV)")
     # fake_factor_hist.SetTitle("{};p_{T} (GeV) ;Fake Factor")
-    fake_factor_hist.GetYaxis().SetRangeUser(0, 1.5)
+    # fake_factor_hist.GetYaxis().SetRangeUser(0, 1.5)
+    fake_factor_hist.GetYaxis().SetRangeUser(0, 0.5)
+
 
     # Draw the uncertainties as a filled area
     h_uncert.Draw("E3 SAME")
@@ -421,8 +434,7 @@ def convert_fit_formula_to_correctionlib(fit_formula, min_value=None, max_value=
         "TMath::Sqrt(x)": "sqrt(x)",
         "TMath::Power(x,": "pow(x,",
         "TMath::Exp(x)": "exp(x)",
-        "TMath::Log(x)": "log(x)",
-        "TMath::Landau(x": "landau(x"
+        "TMath::Log(x)": "log(x)"
     }
     print("min_value: ", min_value)
     print("max_value: ", max_value)

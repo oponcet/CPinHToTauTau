@@ -260,7 +260,7 @@ def create_stack_plot_and_summary(mc_histograms, data_histogram, var, cat_dir, c
 
         
         # Save the canvas to a file
-        outdir_plot = f"script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}/plots"
+        outdir_plot = f"script_FF/fake_factor_derivation/inputs/inputs_rootfile_ffapply/{dm}/plots"
         if not os.path.exists(outdir_plot):
             os.makedirs(outdir_plot)
         canvas.SaveAs(f"{outdir_plot}/input_stack_hcand_1_pt_{cat}.pdf")
@@ -386,141 +386,6 @@ def process_categories(categories, dm, njet, output_file, vars1D, vars2D, eos_pa
                 hists_data, hists_mc = get_histograms(eos_path, task, dataset_data, dataset_mc, hist_path_base, var2D_name, cat_id, twoD=True)
                 save_histograms_to_root2D(hists_data, hists_mc, var2D[0], var2D[1], cat_dir)
 
-# # def sum_data_minus_mc_across_njets(dm):
-#     """
-#     Sum the data minus MC histograms across the njet categories.
-#     """
-#     # Open the ROOT file for the given DM
-#     output_path = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}'
-#     output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "RECREATE")
-#     print(f"Output file: {output_file}")
-
-#     # Create a TH1D histogram to store the sum
-#     data_minus_mc_sum = None
-#     # Detach the histogram from the ROOT file 
-#     # data_minus_mc_sum.SetDirectory(0)
-    
-
-#     # Loop over the njet categories and sum the data minus MC histograms
-#     for cat in ["A", "B", "C", "D", "A0", "B0", "C0", "D0"]:
-#         # create directory for the category
-#         cat_dir = output_file.mkdir(f"tautau_real_1__had{cat}__allnjet_{dm}")
-#         cat_dir.cd()
-#         # create directory for the variable
-#         var_dir = cat_dir.mkdir("hcand_1_pt")
-#         var_dir.cd()
-#         output_file.Close()
-#         for njet in ["has_0j", "has_1j", "has_2j"]:
-#             input_file = ROOT.TFile(f"{output_path}/{dm}_{njet}.root", "READ")
-#             cat_dir = input_file.Get(f"tautau_real_1__had{cat}__{njet}_{dm}")
-#             input_file.cd()
-#             var_dir = cat_dir.Get("hcand_1_pt")
-#             input_file.cd()
-#             data_minus_mc = cat_dir.Get("data_minus_mc")
-#             if data_minus_mc:
-#                 if data_minus_mc_sum is None:
-#                     data_minus_mc_sum = data_minus_mc.Clone("data_minus_mc_sum")
-#                 else:
-#                     data_minus_mc_sum.Add(data_minus_mc)   
-        
-#         # write sum histo outpout root file
-#         output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "UPDATE")
-#         output_file.cd()
-#         # go in the category directory
-#         cat_dir = output_file.Get(f"tautau_real_1__had{cat}__allnjet_{dm}")
-#         cat_dir.cd()
-#         # go in the variable directory
-#         var_dir = cat_dir.Get("hcand_1_pt")
-
-#         # Write the sum to the ROOT file
-#         data_minus_mc_sum.Write()
-
-#     # Close the ROOT file
-#     output_file.Close()
-
-# def sum_data_minus_mc_across_njets(dm):
-#     """
-#     Sum the data minus MC histograms across the njet categories.
-#     """
-#     import ROOT
-
-#     # Define the input and output paths
-#     output_path = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}'
-#     output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "RECREATE")
-#     print(f"Output file: {output_file.GetName()}")
-#     output_file.Close()
-
-#     # Initialize variable to store the sum of histograms
-#     data_minus_mc_sum = None
-
-#     for cat in ["A", "B", "C", "D", "A0", "B0", "C0", "D0"]:
-#         output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "UPDATE")
-#         # Create category directory
-#         cat_dir = output_file.mkdir(f"tautau__real_1__had{cat}__allnjet__{dm}")
-        
-#         for njet in ["has_0j", "has_1j", "has_2j"]:
-#             # Open the input file
-#             input_file = ROOT.TFile(f"{output_path}/{dm}_{njet}.root", "READ")
-#             print(f"Input file: {input_file}")
-#             if not input_file or input_file.IsZombie():
-#                 print(f"Error: Could not open file {input_file.GetName()}")
-#                 continue
-            
-#             # Navigate to the desired category directory
-#             cat_dir_in = input_file.Get(f"tautau__real_1__had{cat}__{njet}__{dm}")
-#             if not cat_dir_in:
-#                 print(f"Warning: Directory 'tautau__real_1__had{cat}__{njet}__{dm}' not found in {input_file.GetName()}")
-#                 input_file.Close()
-#                 continue
-
-#             # Navigate to the variable directory
-#             var_dir = cat_dir_in.Get("hcand_1_pt")
-#             if not var_dir:
-#                 print(f"Warning: Directory 'hcand_1_pt' not found in {cat_dir_in.GetName()}")
-#                 input_file.Close()
-#                 continue
-
-#             # Retrieve the histogram
-#             data_minus_mc = var_dir.Get("data_minus_mc")
-#             if not data_minus_mc:
-#                 print(f"Warning: Histogram 'data_minus_mc' not found in {var_dir.GetName()}")
-#                 input_file.Close()
-#                 continue
-
-#             print(f"Adding histogram dm {dm}, cat {cat}, njet {njet}")
-#             print("data_minus_mc_sum ", data_minus_mc_sum)
-
-#             # Sum the histograms
-#             if data_minus_mc_sum is None:
-#                 data_minus_mc_sum = data_minus_mc.Clone("data_minus_mc_sum")
-#             else:
-#                 data_minus_mc_sum.Add(data_minus_mc)
-            
-#             data_minus_mc_sum.SetDirectory(0)
-            
-#             input_file.Close()
-
-#         # Open the output file
-#         output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "UPDATE")
-
-#         print(f"Output file: {output_file.GetName()}")
-
-#         output_file.ls()
-
-#         print("cat ", cat)
-#         cat_dir_in = output_file.Get(f"tautau__real_1__had{cat}__allnjet__{dm}")
-#         if not cat_dir_in:
-#                 print(f"Warning: Directory 'tautau__real_1__had{cat}__allnjet__{dm}' not found in {output_file.GetName()}")
-#         var_dir = cat_dir_in.Get("hcand_1_pt")
-#         output_file.cd()
-
-#         # Write the summed histogram to the output file
-#         if data_minus_mc_sum:
-#             data_minus_mc_sum.Write()
-    
-#     # Close the output file
-#     output_file.Close()
-
 def sum_data_minus_mc_across_njets(dm):
     """
     Sum the data minus MC histograms across the njet categories.
@@ -597,6 +462,176 @@ def sum_data_minus_mc_across_njets(dm):
     print("All operations completed successfully.")
 
 
+
+def create_canvas_stack_all_jets(dm, output_path):
+    """
+    Create a canvas for stacking histograms from all jet multiplicities and save as a PDF.
+    This combines the histograms from multiple jet multiplicities (`0j`, `1j`, `2j`) into a single plot.
+
+    Args:
+        dm (str): The decay mode (e.g., 'pi_1').
+        output_path (str): The path to save the canvas.
+    """
+    
+    """
+    Sum the data minus MC histograms across the njet categories.
+    """
+
+    # Define the input and output paths
+    output_path = f'script_FF/fake_factor_derivation/inputs/inputs_rootfile/{dm}'
+    output_file = ROOT.TFile(f"{output_path}/{dm}_allnjet.root", "UPDATE")
+    print(f"Output file: {output_file.GetName()}")
+
+    for cat in ["A", "B", "C", "D", "A0", "B0", "C0", "D0"]:
+        # Reset data_minus_mc_sum for each category
+        mc_stack_sum = None
+        data_hist_sum = None
+        print(f"Processing category: {cat}")
+        
+        for njet in ["has_0j", "has_1j", "has_2j"]:
+            input_file_name = f"{output_path}/{dm}_{njet}.root"
+            input_file = ROOT.TFile(input_file_name, "READ")
+            if not input_file or input_file.IsZombie():
+                print(f"Error: Could not open file {input_file_name}")
+                continue
+
+            # Navigate to the directory
+            dir_name = f"tautau__real_1__had{cat}__{njet}__{dm}"
+            cat_dir_in = input_file.Get(dir_name)
+            if not cat_dir_in:
+                print(f"Warning: Directory '{dir_name}' not found in {input_file_name}")
+                input_file.Close()
+                continue
+
+            var_dir = cat_dir_in.Get("hcand_1_pt")
+            if not var_dir:
+                print(f"Warning: Directory 'hcand_1_pt' not found in {cat_dir_in.GetName()}")
+                input_file.Close()
+                continue
+
+            # Retrieve the canvas
+            canvas = var_dir.Get("canvas")
+            if not canvas:
+                print(f"Warning: canvas  not found in {var_dir.GetName()}")
+                input_file.Close()
+                continue
+
+        
+            # Retrive the THStack and data histogram in the canvas
+            mc_stack = canvas.GetPrimitive("mc_stack")
+            data_hist = canvas.GetPrimitive("data_hist")
+
+            # Sum the mc histograms of the THStack
+            if mc_stack_sum is None:
+                mc_stack_sum = mc_stack.Clone("mc_stack_sum")
+            else:
+                for i in range(mc_stack.GetNhists()):
+                    # Get the i-th histogram from mc_stack
+                    hist = mc_stack.GetStack().At(i)
+                    
+                    # Add the histogram to the sum histogram (mc_stack_sum)
+                    mc_stack_sum.GetStack().Last().Add(hist)
+
+            # Do the same for the data histogram
+            if data_hist_sum is None:
+                data_hist_sum = data_hist.Clone("data_minus_mc_sum")
+            else:
+                data_hist_sum.Add(data_hist)
+
+            data_hist_sum.SetDirectory(0)
+
+            input_file.Close()
+
+        # Write the in the output file
+        if data_hist_sum:
+            dir_name = f"tautau__real_1__had{cat}__allnjet__{dm}"
+            if not output_file.GetDirectory(dir_name):
+                output_file.mkdir(dir_name)
+
+            output_file.cd(dir_name)
+            # create directory for the variable
+            var_dir =  output_file.GetDirectory(dir_name).mkdir("hcand_1_pt")
+            output_file.cd(f"{dir_name}/hcand_1_pt")
+
+            #### Create the canvas ### 
+
+            CMS.SetExtraText("Private work")
+            CMS.SetCmsTextFont(52)
+            CMS.SetCmsTextSize(0.75*0.76)
+            
+            # canvas = CMS.cmsCanvas('Data/MC',40,200,0,1,"Energy [GeV]","Events/5 GeV",square=CMS.kSquare,extraSpace=0.05,iPos=0)
+            canvas = CMS.cmsCanvas('canvas', 0, 1, 0, 1, '', '', square = CMS.kSquare, extraSpace=0.01, iPos=0)
+
+            # Create stack for MC histograms
+            stack = ROOT.THStack("mc_stack", "MC Stack")
+
+            # Add each MC histogram to the stack with custom colors
+            for i, hist in enumerate(mc_stack_sum.GetHists()):
+                # Set custom fill color based on the given dictionary
+                color, label = assign_color_and_label(hist.GetName()) 
+                hist.SetFillColor(ROOT.TColor.GetColor(color))
+                hist.SetLineColor(ROOT.kBlack)  # Set outline color to black
+                hist.SetLineWidth(1)
+                # Add histogram to stack
+                stack.Add(hist)
+
+            # Draw data histogram
+            if data_hist_sum:
+                data_hist_sum.SetLineColor(ROOT.kBlack)
+                data_hist_sum.SetMarkerStyle(20)
+                data_hist_sum.SetMarkerColor(ROOT.kBlack)
+                data_hist_sum.Draw("E1")
+
+            # rename to data_hist
+            data_hist_sum.SetName("data_hist")
+            # Draw the stack on top of the data histogram
+            stack.Draw("HIST SAME")
+            
+            # Set axis titles
+            data_hist_sum.GetXaxis().SetTitle("hcand_1_pt")
+            data_hist_sum.GetYaxis().SetTitle("Events/5 GeV")
+
+        # Add a legend
+            legend = CMS.cmsLeg(0.7, 0.7, 0.9, 0.9, textSize=0.02)
+            # legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)  # Position can be adjusted
+            for hist in mc_stack_sum.GetHists():
+                # Get color and label for each histogram from the assign_color_and_label function
+                color, label = assign_color_and_label(hist.GetName())
+                # add entry if label not already in the legend
+                if label not in [entry.GetLabel() for entry in legend.GetListOfPrimitives()]:
+                    legend.AddEntry(hist, label, "f")
+            
+            if data_hist_sum:
+                legend.AddEntry(data_hist_sum, "Data", "lep")
+            
+            legend.Draw()
+
+     
+
+            data_hist_sum.GetXaxis().SetRangeUser(40, 200)
+            data_hist_sum.GetXaxis().SetTitle("p_{T}^{#tau} [GeV]")
+
+            # Update the canvas to ensure everything is rendered properly
+            stack.Modified() # Update the stack 
+            canvas.Modified()
+            canvas.Update()
+            canvas.Write()
+            print(f"Summed histogram written for category: {cat}")
+        else:
+            print(f"No histograms found for category: {cat}")
+
+    # Close the output file
+    output_file.Close()
+    print("All operations completed successfully.")
+
+
+
+
+
+
+
+
+
 def main(config_path, dm):
 
     # ROOT configuration
@@ -633,6 +668,7 @@ def main(config_path, dm):
         output_file.Close()
     if dm == "pi_1":
             sum_data_minus_mc_across_njets(dm)
+            create_canvas_stack_all_jets(dm, output_path)
 
 
 if __name__ == "__main__":

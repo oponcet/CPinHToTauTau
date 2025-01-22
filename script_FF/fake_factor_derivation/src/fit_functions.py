@@ -52,6 +52,11 @@ def fit_fake_factor(h, xmin, xmax, usePol1=False, polOnly=None):
     elif polOnly == 3:
         f1 = ROOT.TF1("f1", "pol3", xmin, xmax)
         f2 = ROOT.TF1("f2", "pol3", xmin, xmax)
+    elif polOnly == -1: # use Gaussian approximation  exp(− ((x−mean)**2) / (2x sigma**2))
+        f1 = ROOT.TF1("f1", "[0]*exp(-0.5*((x-[1])/[2])^2)", xmin, xmax)  # Gaussian function without the linear term
+        f2 = ROOT.TF1("f2", "[0]*exp(-0.5*((x-[1])/[2])^2) + [3] + [4]*x", xmin, xmax)
+
+    
     
     # Reset histogram, keeping only bins with content > 0
     h_clone = h.Clone()
