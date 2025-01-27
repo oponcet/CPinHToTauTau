@@ -21,7 +21,7 @@ A Columnflow based analysis framework from IPHC and DESY
 ### Installation
 
 ```sh
-git clone --recursive https://github.com/gsaha009/CPinHToTauTau.git
+git clone --recursive https://github.com/IPHCTau/CPinHToTauTau.git
 cd CPinHToTauTau
 
 # set environment
