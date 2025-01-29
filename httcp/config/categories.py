@@ -28,7 +28,8 @@ def name_fn(root_categories):
 def kwargs_fn(root_categories):
     return {
         "id": sum([c.id for c in root_categories.values()]),
-        "label": ",".join([c.label for c in root_categories.values()]),
+        #"label": ",".join([c.label for c in root_categories.values()]),
+        "label": "+".join([c.label for c in root_categories.values()]),
         "tags": set.union(*[cat.tags for cat in root_categories.values() if cat]),
     }
 
@@ -63,11 +64,14 @@ def add_common_categories(config: od.Config) -> None:
 
 @call_once_on_config()
 def add_RealOrFake_categories(config: od.Config) -> None:
-    add_category(config, name="real_1", id=1000000, selection="cat_real_1", label=r"$t_1$", tags={"tau1isRealMC"})
-    add_category(config, name="fake_1", id=2000000, selection="cat_fake_1", label=r"$f_1$", tags={"tau1isFakeMC"})
-    add_category(config, name="real_2", id=3000000, selection="cat_real_2", label=r"$t_2$", tags={"tau2isRealMC"})
-    add_category(config, name="fake_2", id=4000000, selection="cat_fake_2", label=r"$f_2$", tags={"tau2isFakeMC"})
-    ##add_category(config, name="tautau__real_1", id=50000, selection="cat_tautau_real_1", label=r"lep1 real", tags={"tau1isRealMC"})
+    #add_category(config, name="real_1", id=1000000, selection="cat_real_1", label=r"$t_1$", tags={"tau1isRealMC"})
+    #add_category(config, name="fake_1", id=2000000, selection="cat_fake_1", label=r"$f_1$", tags={"tau1isFakeMC"})
+    #add_category(config, name="real_2", id=3000000, selection="cat_real_2", label=r"$t_2$", tags={"tau2isRealMC"})
+    #add_category(config, name="fake_2", id=4000000, selection="cat_fake_2", label=r"$f_2$", tags={"tau2isFakeMC"})
+    add_category(config, name="real_1", id=1000000, selection="cat_real_1", label="prompt",     tags={"tau1isRealMC"})
+    add_category(config, name="fake_1", id=2000000, selection="cat_fake_1", label="non-prompt", tags={"tau1isFakeMC"})
+    add_category(config, name="real_2", id=3000000, selection="cat_real_2", label="prompt",     tags={"tau2isRealMC"})
+    add_category(config, name="fake_2", id=4000000, selection="cat_fake_2", label="non-prompt", tags={"tau2isFakeMC"})
 
 
     #add_category(config, name="ipsig_0to1_1",   id=57, selection="cat_ipsig_0to1_1",   label=r"0 < IP_significance < 1", tags={"tau1_ipsig_0to1"})
@@ -76,9 +80,9 @@ def add_RealOrFake_categories(config: od.Config) -> None:
     
 @call_once_on_config()
 def add_njet_categories(config: od.Config) -> None:
-    add_category(config, name="has_0j", id=100000, selection="cat_0j", label=r"$0$j",          tags={"has0j"})
-    add_category(config, name="has_1j", id=200000, selection="cat_1j", label=r"$1$j",          tags={"has1j"})
-    add_category(config, name="has_2j", id=300000, selection="cat_2j", label=r"$\geq{2}$j",    tags={"has2j"})
+    add_category(config, name="has_0j", id=100000, selection="cat_0j", label=r"$0$ jet",           tags={"has0j"})
+    add_category(config, name="has_1j", id=200000, selection="cat_1j", label=r"$1$ jet",           tags={"has1j"})
+    add_category(config, name="has_2j", id=300000, selection="cat_2j", label=r"$\geq{2}$ jets",    tags={"has2j"})
     
 
 @call_once_on_config()
@@ -90,8 +94,8 @@ def add_ABCD_categories(config: od.Config) -> None:
     add_category(config,name="hadB0", id=7000,  selection="cat_ss_noniso1_noniso2_bveto", label="B0",  tags={"ss","noniso1","noniso2","bveto"})
     add_category(config,name="hadD0", id=9000,  selection="cat_os_iso1_noniso2_bveto",    label="D0",  tags={"os","iso1",   "noniso2","bveto"})
     add_category(config,name="hadC0", id=11000, selection="cat_os_noniso1_noniso2_bveto", label="C0",  tags={"os","noniso1","noniso2","bveto"})
-    add_category(config,name="hadD",  id=13000, selection="cat_os_iso1_iso2_bveto",       label="SR",  tags={"os","iso1",   "iso2",   "bveto"})
-    add_category(config,name="hadC",  id=15000, selection="cat_os_noniso1_iso2_bveto",    label="SB",  tags={"os","noniso1","iso2",   "bveto"})
+    add_category(config,name="hadD",  id=13000, selection="cat_os_iso1_iso2_bveto",       label="Signal Region",  tags={"os","iso1",   "iso2",   "bveto"})
+    add_category(config,name="hadC",  id=15000, selection="cat_os_noniso1_iso2_bveto",    label="Application Region",  tags={"os","noniso1","iso2",   "bveto"})
     # leptonic
     add_category(config,name="lepA",  id=2000,  selection="cat_ss_iso2_bveto_lowmt",      label="A",   tags={"ss","iso2",   "bveto",  "lowmt" })
     add_category(config,name="lepB",  id=4000,  selection="cat_ss_noniso2_bveto_lowmt",   label="B",   tags={"ss","noniso2","bveto",  "lowmt" })
@@ -99,8 +103,8 @@ def add_ABCD_categories(config: od.Config) -> None:
     add_category(config,name="lepB0", id=8000,  selection="cat_os_noniso2_nobveto_lowmt", label="B0",  tags={"os","noniso2","nobveto","lowmt" })
     add_category(config,name="lepA1", id=10000, selection="cat_os_iso2_bveto_highmt",     label="A1",  tags={"os","iso2",   "bveto",  "highmt"})
     add_category(config,name="lepB1", id=12000, selection="cat_os_noniso2_bveto_highmt",  label="B1",  tags={"os","noniso2","bveto",  "highmt"}) 
-    add_category(config,name="lepD",  id=14000, selection="cat_os_iso2_bveto_lowmt",      label="SR",  tags={"os","iso2",   "bveto",  "lowmt" })
-    add_category(config,name="lepC",  id=16000, selection="cat_os_noniso2_bveto_lowmt",   label="SB",  tags={"os","noniso2","bveto",  "lowmt" })
+    add_category(config,name="lepD",  id=14000, selection="cat_os_iso2_bveto_lowmt",      label="Signal Region",  tags={"os","iso2",   "bveto",  "lowmt" })
+    add_category(config,name="lepC",  id=16000, selection="cat_os_noniso2_bveto_lowmt",   label="Application Region",  tags={"os","noniso2","bveto",  "lowmt" })
 
 @call_once_on_config()
 def add_DM_categories(config: od.Config) -> None:
@@ -138,7 +142,7 @@ def add_DM_categories(config: od.Config) -> None:
 def add_etau_mutau_categories(config: od.Config) -> None:
     categories = {
         "channel": [config.get_category("etau"), config.get_category("mutau")],
-        #"RorF"   : [config.get_category("real_2")],
+        "RorF"   : [config.get_category("real_2")],
         "abcd"   : [config.get_category("lepA"),  config.get_category("lepB"),
                     config.get_category("lepA0"), config.get_category("lepB0"),
                     config.get_category("lepA1"), config.get_category("lepB1"),
@@ -156,6 +160,50 @@ def add_etau_mutau_categories(config: od.Config) -> None:
                                      kwargs_fn=kwargs_fn,
                                      skip_existing=False)
     logger.info(f"{n} categories have been created")
+
+
+@call_once_on_config()
+def add_tautau_categories(config: od.Config) -> None:
+    categories = {
+        "channel": [config.get_category("tautau")],
+        "RorF"   : [config.get_category("real_1")],
+        "abcd"   : [
+            config.get_category("hadA"),  config.get_category("hadB"),
+            config.get_category("hadA0"), config.get_category("hadB0"),
+            config.get_category("hadC0"), config.get_category("hadD0"),
+            config.get_category("hadC"),  config.get_category("hadD"),
+        ],
+        "nj"     : [
+            config.get_category("has_0j"),
+            config.get_category("has_1j"),
+            config.get_category("has_2j"),
+        ],        
+        "cp"     : [
+            config.get_category("pi_pi"),
+            config.get_category("pi_rho"),
+            config.get_category("pi_a1dm2"),
+            config.get_category("pi_a1dm10"),
+            config.get_category("pi_a1dm11"),
+            config.get_category("rho_rho"),
+            config.get_category("rho_a1dm2"),
+            config.get_category("rho_a1dm10"),
+            config.get_category("rho_a1dm11"),
+            config.get_category("a1dm2_a1dm10"),
+            config.get_category("a1dm2_a1dm11"),
+            config.get_category("a1dm10_a1dm10"),
+            config.get_category("a1dm10_a1dm11"),
+            config.get_category("a1dm11_a1dm11"),
+        ],
+    }
+    
+    logger.info("tautau_categories")
+    n = create_category_combinations(config,
+                                     categories,
+                                     name_fn=name_fn,
+                                     kwargs_fn=kwargs_fn,
+                                     skip_existing=False)
+    logger.info(f"{n} categories have been created")
+
 
     
 @call_once_on_config()
@@ -270,8 +318,9 @@ def add_categories(config: od.Config) -> None:
     add_DM_categories(config)
 
     add_etau_mutau_categories(config)
-    #add_tautau_real_categories(config)
-    add_tautau_phiCP_categories(config)
+    #add_tautau_categories(config)
+    add_tautau_real_categories(config)
+    #add_tautau_phiCP_categories(config)
     ###add_test_categories(config)
     
     #all_cats = [cat.name for cat, _, _ in config.walk_categories()]

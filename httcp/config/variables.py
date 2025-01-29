@@ -131,7 +131,7 @@ def add_jet_features(cfg: od.Config) -> None:
             name=f"jet_{i+1}_pt",
             expression=f"Jet.pt[:,{i}]",
             null_value=EMPTY_FLOAT,
-            binning=(40, 0.0, 400.0),
+            binning=(50, 0.0, 200.0),
             unit="GeV",
             x_title=r"Jet $p_{T}$",
         )
@@ -139,13 +139,20 @@ def add_jet_features(cfg: od.Config) -> None:
             name=f"jet_{i+1}_eta",
             expression=f"Jet.eta[:,{i}]",
             null_value=EMPTY_FLOAT,
-            binning=(30, -3.0, 3.0),
+            binning=(50, -5.0, 5.0),
             x_title=r"Jet $\eta$",
+        )
+        cfg.add_variable(
+            name=f"jet_{i+1}_phi",
+            expression=f"Jet.phi[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(32, -3.2, 3.2),
+            x_title=r"Jet $\phi$",
         )
     cfg.add_variable(
         name="hT",
         expression="hT",
-        binning=(200, 0.0, 2500.0),
+        binning=(60, 20.0, 320.0),
         #null_value=EMPTY_FLOAT,
         unit="GeV",
         x_title="HT",
@@ -153,7 +160,7 @@ def add_jet_features(cfg: od.Config) -> None:
     cfg.add_variable(
         name="hT_binvar",
         expression="hT",
-        binning=[0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 1000, 1500, 2500],
+        binning=[20, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 1000, 1500, 2500],
         #null_value=EMPTY_FLOAT,
         unit="GeV",
         x_title="HT",
@@ -190,7 +197,7 @@ def add_highlevel_features(cfg: od.Config) -> None:
         name="puppi_met_phi",
         expression="PuppiMET.phi",
         null_value=EMPTY_FLOAT,
-        binning=(30, -3,3),
+        binning=(32, -3.2, 3.2),
         x_title=r"MET $\phi$",
     )
     cfg.add_variable(
@@ -261,10 +268,26 @@ def add_hcand_features(cfg: od.Config) -> None:
             x_title=f"hcand[{i+1}]" + r" $p_{T}$",
         )
         cfg.add_variable(
-            name=f"hcand_{i+1}_pt_binvar",
+            name=f"hcand_{i+1}_pt_MediumWP_binvar",
             expression=f"hcand.pt[:,{i}]",
             null_value=EMPTY_FLOAT,
-            binning=[20,25,30,35,40,45,50,55,60,65,70,80,90,100,120,140,200],
+            binning=[35,40,45,50,55,60,65,70,80,90,100,120,140,200],
+            unit="GeV",
+            x_title=f"hcand[{i+1}]" + r" $p_{T}$",
+        )        
+        cfg.add_variable(
+            name=f"hcand_{i+1}_pt_VTightWP_binvar",
+            expression=f"hcand.pt[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=[35,40,45,50,55,60,65,70,80,120,200],
+            unit="GeV",
+            x_title=f"hcand[{i+1}]" + r" $p_{T}$",
+        )        
+        cfg.add_variable(
+            name=f"hcand_{i+1}_pt_VTightWP_binvar_v2",
+            expression=f"hcand.pt[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=[35,40,45,50,55,60,65,70,80,100,140,200],
             unit="GeV",
             x_title=f"hcand[{i+1}]" + r" $p_{T}$",
         )        
@@ -283,32 +306,40 @@ def add_hcand_features(cfg: od.Config) -> None:
             x_title=f"hcand[{i+1}]" + r" $\eta$",
         )
         cfg.add_variable(
+            name=f"hcand_{i+1}_mass",
+            expression=f"hcand.mass[:,{i}]",
+            null_value=EMPTY_FLOAT,
+            binning=(30, 0., 3.0),
+            unit="GeV",
+            x_title=f"hcand[{i+1}]" + " mass",
+        )
+        cfg.add_variable(
             name=f"hcand_{i+1}_decayMode",
             expression=f"hcand.decayMode[:,{i}]",
             #null_value=EMPTY_INT,
             binning=(12, -0.5, 11.5),
-            x_title=f"hcand[{i+1}]" + r" $DM$",
+            x_title=f"hcand[{i+1}]" + r" $DM (PNet)$",
         )
         cfg.add_variable(
             name=f"hcand_{i+1}_IPx",
             expression=f"hcand.IPx[:,{i}]",
             null_value=EMPTY_FLOAT,
             binning=(30, -0.015, 0.015),
-            x_title=f"hcand[{i+1}]" + r" $IPx$",
+            x_title=f"hcand[{i+1}]" + r" $IP_{x}$",
         )
         cfg.add_variable(
             name=f"hcand_{i+1}_IPy",
             expression=f"hcand.IPy[:,{i}]",
             null_value=EMPTY_FLOAT,
             binning=(30, -0.015, 0.015),
-            x_title=f"hcand[{i+1}]" + r" $IPy$",
+            x_title=f"hcand[{i+1}]" + r" $IP_{y}$",
         )
         cfg.add_variable(
             name=f"hcand_{i+1}_IPz",
             expression=f"hcand.IPz[:,{i}]",
             null_value=EMPTY_FLOAT,
             binning=(30, -0.015, 0.015),
-            x_title=f"hcand[{i+1}]" + r" $IPz$",
+            x_title=f"hcand[{i+1}]" + r" $IP_{z}$",
         )
         cfg.add_variable(
             name=f"hcand_{i+1}_IPsig",
@@ -336,15 +367,15 @@ def add_hcand_features(cfg: od.Config) -> None:
         name="hcand_invm",
         expression="hcand_invm",
         null_value=EMPTY_FLOAT,
-        binning=(50, 0, 400),
+        binning=(40, 0.0, 200.0),
         unit="GeV",
-        x_title=r"$m_{h1,h2}$",
+        x_title=r"$visible mass$",
     )
     cfg.add_variable(
         name="hcand_dr",
         expression="hcand_dr",
         null_value=EMPTY_FLOAT,
-        binning=(40, 0, 5),
+        binning=(40, 0.0, 5.0),
         x_title=r"$\Delta R(h1,h2)$",
     )
     # PhiCP - Det
