@@ -5,7 +5,7 @@ era     : 2022
 postfix : PostEE
 wrapper : true
 limited : false
-workers : 8
+workers : 10
 tasks_per_job  : 2
 
 args:
@@ -19,16 +19,24 @@ args:
     - data_tau_E
     - data_tau_F
     - data_tau_G
-    - data_mu_E
-    - data_mu_F
-    - data_mu_G
-    - data_e_E
-    - data_e_F
-    - data_e_G
+    #- data_mu_E
+    #- data_mu_F
+    #- data_mu_G
+    #- data_e_E
+    #- data_e_F
+    #- data_e_G
     # == wj ==
     - wj_incl_madgraph
+    #- wj_1j_madgraph
+    #- wj_2j_madgraph
+    #- wj_3j_madgraph
+    #- wj_4j_madgraph    
     # == dy ==
     - dy_lep_m50_madgraph
+    #- dy_lep_m50_1j_madgraph
+    #- dy_lep_m50_2j_madgraph
+    #- dy_lep_m50_3j_madgraph
+    #- dy_lep_m50_4j_madgraph    
     # == tt ==
     - tt_dl
     - tt_sl
@@ -54,9 +62,9 @@ args:
     - wzz
     - zzz    
     # == signal ==
-    - h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay
-    - h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay
-    - h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay
+    #- h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay
+    #- h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay
+    #- h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay
     #- zh_tautau_uncorrelatedDecay_Filtered
     #- wph_tautau_uncorrelatedDecay_Filtered
     #- wmh_tautau_uncorrelatedDecay_Filtered
@@ -64,19 +72,24 @@ args:
   processes :
     - data
     - w_lnu
-    - dy_m50toinf_lep
-    - dy_m50toinf_tau
-    - dy_m50toinf_jet
-    - tt
-    - st
-    - vv
-    - vvv
-    - h_ggf_tautau
+    - dy
+    #- dy_m50toinf_lep
+    #- dy_m50toinf_tau
+    #- dy_m50toinf_jet
+    #- tt
+    #- st
+    - top
+    #- vv
+    #- vvv
+    - multiboson
+    #- h_ggf_htt
+    #- zh_htt
+    #- wh_htt
 
   categories:
-    - etau__*
-    - mutau__*
-    - tautau__real_1__had*
+    #- etau__*
+    #- mutau__*
+    - tautau__real_1__*
 
   variables:
     ## -- electron -- #
