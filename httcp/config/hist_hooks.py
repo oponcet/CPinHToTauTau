@@ -14,6 +14,9 @@ import scinum as sn
 import json
 import numpy as np
 from collections import defaultdict
+import pickle
+import matplotlib.pyplot as plt
+
 
 from columnflow.util import maybe_import, DotDict
 
@@ -835,6 +838,205 @@ def add_hist_hooks(config: od.Config) -> None:
                     f"could not find index of bin on 'category' axis of qcd histogram {mc_hist} "
                     f"for category {group.os_iso}",
                 )
+        # Save hists[qcd_proc] in a pickle file
+
+        from IPython import embed
+        import pickle
+
+    
+        campaign = "run3_2022_preEE_nano_cp_tau_v14_limited"
+        path = f"/eos/user/o/oponcet2/analysis/CP_dev/analysis_httcp/cf.PlotVariables1D/{campaign}/calib__main/sel__main/prod__main/weight__main/nominal/qcd_hist.pkl"
+
+        with open(path, "wb") as f:
+            pickle.dump(qcd_hist, f)
+
+
+
+        return hists
+
+
+    def calculate_fake_factor_pt(task, hists):
+
+        campaign = "run3_2022_preEE_nano_cp_tau_v14_limited"
+        path = f"/eos/user/o/oponcet2/analysis/CP_dev/analysis_httcp/cf.PlotVariables1D/{campaign}/calib__main/sel__main/prod__main/weight__main/nominal/"
+
+        # Check if histograms are available
+        if not hists:
+            print("no hists")
+            return hists
+
+        # Get the qcd process
+        qcd_proc = config.get_process("fake", default=None)
+        if not qcd_proc:
+            print("no fake") 
+            return hists
+
+        # extract all unique category ids and verify that the axis order is exactly
+        # "category -> shift -> variable" which is needed to insert values at the end
+        CAT_AXIS, SHIFT_AXIS, VAR_AXIS = range(3)
+        category_ids = set()
+        for proc, h in hists.items():
+            # validate axes
+            assert len(h.axes) == 3
+            assert h.axes[CAT_AXIS].name == "category"
+            assert h.axes[SHIFT_AXIS].name == "shift"
+            # get the category axis
+            cat_ax = h.axes["category"]
+            for cat_index in range(cat_ax.size):
+                category_ids.add(cat_ax.value(cat_index))
+
+        # create qcd groups
+        qcd_groups: dict[str, dict[str, od.Category]] = defaultdict(DotDict)
+
+        ### Create a QCD group ofr each DM and Njet category
+
+        dms = ["tau1a1DM11", "tau1a1DM10", "tau1a1DM2", "tau1pi", "tau1rho"]  # Decay modes
+        njets = ["has0j", "has1j", "has2j"]  # Jet multiplicity
+
+        # dms = ["tau1rho"]  # Decay modes
+        # njets = ["has0j"]  # Jet multiplicity
+
+        # Loop over all categories and create a QCD group for each DM and Njet category
+        for dm in dms:
+            for njet in njets:
+                for cat_id in category_ids:
+                    # Ignore CD categories
+                    cat_inst = config.get_category(cat_id)
+                    # if cat_inst.has_tag({"os", "iso1", njet, dm}, mode=all) and not cat_inst.has_tag("noniso2"): # cat D 
+                    #     qcd_groups[f"dm_{dm}_njet_{njet}"].os_iso = cat_inst
+                    # elif cat_inst.has_tag({"os", "noniso1", njet, dm}, mode=all) and not cat_inst.has_tag("noniso2"): # cat C
+                    #     qcd_groups[f"dm_{dm}_njet_{njet}"].os_noniso = cat_inst
+                    if cat_inst.has_tag({"ss", "iso1", njet, dm}, mode=all) and not cat_inst.has_tag("noniso2"): # cat A 
+                        qcd_groups[f"dm_{dm}_njet_{njet}"].ss_iso = cat_inst
+                    elif cat_inst.has_tag({"ss", "noniso1", njet, dm}, mode=all) and not cat_inst.has_tag("noniso2"):  # cat B
+                        qcd_groups[f"dm_{dm}_njet_{njet}"].ss_noniso = cat_inst 
+   
+
+        # Get complete qcd groups
+        complete_groups = [name for name, cats in qcd_groups.items() if len(cats) == 2]
+    
+        # Nothing to do if there are no complete groups, you need C to apply Fake to D 
+        if not complete_groups:
+            print("no complete groups")
+            return hists
+
+        # Sum up mc and data histograms, stop early when empty
+        mc_hists = [h for p, h in hists.items() if p.is_mc and not p.has_tag("signal")]
+        data_hists = [h for p, h in hists.items() if p.is_data]
+        if not mc_hists or not data_hists:
+            return hists
+        mc_hist = sum(mc_hists[1:], mc_hists[0].copy())
+        data_hist = sum(data_hists[1:], data_hists[0].copy())
+        
+           # start by copying the mc hist and reset it, then fill it at specific category slices
+        fake_factor_hists = {}
+        hists[qcd_proc] = factor_hist = data_hist.copy().reset()
+        hists[qcd_proc] = factor_hist_int = data_hist.copy().reset()
+        for group_name in complete_groups:
+            group = qcd_groups[group_name]
+            # get the corresponding histograms and convert them to number objects,
+            # each one storing an array of values with uncertainties
+            # shapes: (SHIFT, VAR)
+            # get_hist = lambda h, region_name: h[{"category": hist.loc(group[region_name].id)}]
+
+            # Get the corresponding histograms of the id, if not present, create a zeroed histogram
+            get_hist = lambda h, region_name: (
+                h[{"category": hist.loc(group[region_name].id)}]
+                if group[region_name].id in h.axes["category"]
+                else hist.Hist(*[axis for axis in (h[{"category": [0]}] * 0).axes if axis.name != 'category'])
+            )
+
+
+            ss_noniso_mc = hist_to_num(get_hist(mc_hist, "ss_noniso"), "ss_noniso_mc")
+            ss_iso_mc = hist_to_num(get_hist(mc_hist, "ss_iso"), "ss_iso_mc")
+            ss_noniso_data = hist_to_num(get_hist(data_hist, "ss_noniso"), "ss_noniso_data")
+            ss_iso_data = hist_to_num(get_hist(data_hist, "ss_iso"), "ss_iso_data")
+
+            # take the difference between data and MC in the control regions
+            ss_iso_qcd = ss_iso_data - ss_iso_mc
+            ss_noniso_qcd = ss_noniso_data - ss_noniso_mc
+
+            # calculate the pt-independent fake factor
+            int_ss_iso = integrate_num(ss_iso_qcd, axis=1)
+            int_ss_noniso = integrate_num(ss_noniso_qcd, axis=1)
+            fake_factor_int = (int_ss_iso / int_ss_noniso)[0, None]
+
+            # calculate the pt-dependent fake factor
+            fake_factor = (ss_iso_qcd / ss_noniso_qcd)[:, None]
+            fake_factor_values = np.squeeze(np.nan_to_num(fake_factor()), axis=0)
+            fake_factor_variances = fake_factor(sn.UP, sn.ALL, unc=True)**2
+
+            # change shape of fake_factor_int for plotting
+            fake_factor_int_values = fake_factor_values.copy()
+            fake_factor_int_values.fill(fake_factor_int()[0])
+
+            # Create a hist object for the fake factor
+            # get bin adges from the ss_iso_qcd histogram
+            axis_name = "hcand_1_pt"
+            bin_edges = data_hist.axes[axis_name].edges
+            axis = hist.axis.Variable(bin_edges, name=axis_name, label=f"{group_name} {axis_name}")
+    
+            # Create a histogram object with weights storage
+            fake_factor_hist = hist.Hist(
+                axis,
+                storage=hist.storage.Weight(),
+                metadata={"group_name": group_name}
+            )
+    
+            print("fake_factor_values: ", fake_factor_values)
+            print("fake_factor_variances: ", fake_factor_variances)
+            # Fill the histogram with the fake factor values and uncertainties
+            # fake_factor_hist[...] = fake_factor_values, fake_factor_variances
+            fake_factor_hist.view().value[...] = fake_factor_values
+            fake_factor_hist.view().variance[...] = fake_factor_variances
+            
+            # Store the histogram in a dictionary for easy access
+            fake_factor_hists[group_name] = fake_factor_hist
+
+            # fake_factor_hists[group_name].plot1d().save(f"fake_factor_{group_name}.pdf")
+
+            # Plot the histogram
+            fig, ax = plt.subplots()
+            fake_factor_hists[group_name].plot1d(ax=ax)
+
+            # Save the plot to a PDF
+            output_filename = f"fake_factor_{group_name}.pdf"
+            plt.savefig(output_filename)
+            print(f"Plot saved as {output_filename}")
+
+            # Close the plot to free memory
+            plt.close(fig)
+
+        
+        with open(f"{path}fake_factor.pkl", "wb") as f:
+            pickle.dump(fake_factor_hists, f)
+
+        # create a hist clone of the data_hist
+        ratio = data_hist.copy()
+
+        # calultate sum_mc_hist
+        mc_hists = [h for p, h in hists.items() if p.is_mc and not p.has_tag("signal")]
+        mc_hist_sum = sum(mc_hists[1:], mc_hists[0].copy())
+
+        # convert to num 
+        mc_hist = hist_to_num(mc_hist_sum, "mc_hist")
+        data_hist_num = hist_to_num(data_hist, "data_hist")
+
+        # calculate the ratio
+        ratio = data_hist_num / mc_hist
+
+        # save the ratio in a pickle file
+        with open(f"{path}ratio.pkl", "wb") as f:
+            pickle.dump(ratio, f)
+
+
+
+
+        # ratio will be data / mc sum 
+        ratio /= mc_hist
+
+
+
 
         return hists
 
@@ -845,5 +1047,6 @@ def add_hist_hooks(config: od.Config) -> None:
         "fake_factor": fake_factor,
         "fake_factor_incl": fake_factor_incl,
         "closure": closure_test,
-        "apply_fake_factor": apply_fake_factor
+        "apply_fake_factor": apply_fake_factor,
+        "calculate_fake_factor_pt": calculate_fake_factor_pt
     }

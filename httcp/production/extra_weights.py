@@ -137,7 +137,6 @@ def ff_weight(
         **kwargs,
 ) :
     # Leading candidate
-    from IPython import embed; embed()
     hcand1 = events.hcand[:,0:1] # Leading candidate hcand1 = events.hcand[:,0] 
 
 

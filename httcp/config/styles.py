@@ -35,6 +35,7 @@ def stylize_processes(config: od.Config) -> None:
         bright_blue="#0aa4f6",
         dark_blue="#10376c",
         light_purple="#cbabfa",
+        light_pink="#fbb4ae",
         bright_purple="#bf5ffa",
         purple="#761fc3",
         aubergine="#431f67",
