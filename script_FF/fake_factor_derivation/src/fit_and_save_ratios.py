@@ -97,19 +97,19 @@ def get_input_file(dm, n_jets, config, VARIABLE):
     return CATEGORY, INPUT_FILE
 
 
-def save_root_file(OUTPUT_DIR, th1d, HIST_NAME, fit_result, h_uncert, ratio_hist, config, CATEGORY):
+def save_root_file(OUTPUT_DIR, th1d, HIST_NAME, fit, h_uncert, ratio_hist, config, CATEGORY):
     """Save the histogram, fit results, and uncertainties to a ROOT file."""
     output_root_file = os.path.join(OUTPUT_DIR, f"{config['correction_type']}_{config['era']}_{CATEGORY}.root")
     output_file = ROOT.TFile(output_root_file, "RECREATE")
     th1d.Write(HIST_NAME)
-    fit_result.Write("fit_result")
+    fit.Write("fit")
     h_uncert.Write("h_uncert")
     ratio_hist.Write("ratio_hist")
     output_file.Close()
     return output_root_file
 
 
-def plot_results(fit_result, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_root_file):
+def plot_results(fit, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_root_file):
     """Create and save the plot results."""
     canvas = ROOT.TCanvas("Extrapolation Correction", "Extrapolation Correction", 800, 600)
     ratio_hist.Draw("EP")
@@ -126,12 +126,12 @@ def plot_results(fit_result, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_
     h_uncert.SetLineColor(ROOT.kAzure + 7)
     h_uncert.SetLineWidth(2)
 
-    fit_result.Draw("SAME")
-    fit_result.SetLineColor(ROOT.kAzure + 7)
+    fit.Draw("SAME")
+    fit.SetLineColor(ROOT.kAzure + 7)
 
     legend = ROOT.TLegend(0.15, 0.75, 0.35, 0.9)
     legend.AddEntry(ratio_hist, "Extrapolation Correction", "EP")
-    legend.AddEntry(fit_result, "Fit Result", "L")
+    legend.AddEntry(fit, "Fit Result", "L")
     legend.AddEntry(h_uncert, "68% CL (Uncertainties)", "F")
     legend.SetBorderSize(0)
     legend.SetFillStyle(0)
@@ -158,11 +158,10 @@ def plot_results(fit_result, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_
     return canvas
 
 
-def save_json_correction(fit_result, ratio_hist, output_root_file, config, PT_RANGE):
+def save_json_correction(fit, fit_up, fit_down, ratio_hist, output_root_file, config, PT_RANGE):
     """Save the fit results to a JSON file using the correctionlib format."""
     output_json_file = output_root_file.replace(".root", ".json")
-    fit_formula = str(fit_result.GetExpFormula("P"))  # Explicitly cast to a Python string
-    fit_up, fit_down = get_variated_function(fit_result)
+    fit_formula = str(fit.GetExpFormula("P"))  # Explicitly cast to a Python string
 
     fit_up_formula = str(fit_up.GetExpFormula("P"))
     fit_down_formula = str(fit_down.GetExpFormula("P"))
@@ -173,7 +172,6 @@ def save_json_correction(fit_result, ratio_hist, output_root_file, config, PT_RA
 
     save_to_correctionlib_with_fit(ratio_hist, output_json_file, -1, -1, fit_formula, fit_up_formula, fit_down_formula, 
                                    config['correction_type'], config['variable'], PT_RANGE[0], PT_RANGE[1])
-
 
 # -------------------------------
 # Main Function
@@ -215,16 +213,16 @@ def main(args):
         # -------------------------------
         # Fit Fake Factor & Save Fit Outputs
         # -------------------------------
-        fit_result, h_uncert, ratio_hist, _ = fit_fake_factor(th1d, *PT_RANGE, usePol1=False, polOnly=3)
+        fit, h_uncert, ratio_hist, fit_up, fit_down = fit_fake_factor(th1d, *PT_RANGE, usePol1=False, polOnly=3)
 
         # Save ROOT file
-        output_root_file = save_root_file(OUTPUT_DIR, th1d, HIST_NAME, fit_result, h_uncert, ratio_hist, config, CATEGORY)
+        output_root_file = save_root_file(OUTPUT_DIR, th1d, HIST_NAME, fit, h_uncert, ratio_hist, config, CATEGORY)
         
         # Plot Results
-        canvas = plot_results(fit_result, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_root_file)
+        canvas = plot_results(fit, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_root_file)
 
         # Save to JSON
-        save_json_correction(fit_result, ratio_hist, output_root_file, config, PT_RANGE)
+        save_json_correction(fit, fit_up, fit_down, ratio_hist, output_root_file, config, PT_RANGE)
 
 
 # -------------------------------

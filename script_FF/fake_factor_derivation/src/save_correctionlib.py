@@ -10,25 +10,6 @@ import ROOT
 from correctionlib import schemav2 as cs
 import re
 
-def get_variated_function(fit_result):
-    """
-    Get up and down variation of the fit function using error on the parameters.
-
-    Parameters:
-    - fit_result: TF1 fit result.
-    """
-    fit_up = fit_result.Clone(f"{fit_result.GetName()}_up")
-    fit_down = fit_result.Clone(f"{fit_result.GetName()}_down")
-
-    for i in range(fit_result.GetNpar()):
-        p = fit_result.GetParameter(i)
-        e = fit_result.GetParError(i)
-        fit_up.SetParameter(i, p + e)
-        fit_down.SetParameter(i, p - e)        
-
-    return fit_up, fit_down
-
-
    
 def save_to_correctionlib_with_fit(ratio_hist, output_json_file, dm, njet, fit_formula, fit_up_formula, fit_down_formula, correction, variable, x_min=40, x_max=200):
     """

@@ -1,3 +1,8 @@
+'''
+Author : @oponcet
+Date : 29-01-2025
+Script to combine the json files into one.
+'''
 import json
 import glob
 
@@ -26,6 +31,11 @@ merged_structure = {
                     "name": "njets",
                     "type": "int",
                     "description": "Number of jets in the event (has_0j, has_1j, has_2j)"
+                },
+                { 
+                    "name": "syst",
+                    "type": "string",
+                    "description": "Systematic variations: 'nom', 'up', 'down'"
                 }
             ],
             "output": {

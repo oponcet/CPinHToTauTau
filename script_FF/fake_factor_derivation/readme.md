@@ -35,7 +35,7 @@ fake_factor_derivation/
 │   ├── combine_jsonFF.py        # Merges JSON files from different DMs and NJets into a single JSON file
 │
 ├── README.md                    # Documentation file
-└── requirements.txt              # Required Python dependencies
+└── requirements.txt              # Required python3 dependencies
 ```
 
 ## Installation
@@ -63,9 +63,16 @@ Use this path in the config.json, add the variable (pt), the dm, njet (-1 if inc
 
 ### 2. Fit and produce json of the Fake Factors
 ```sh
-python src/fit_and_save_ratios.py --config config_FF_2022_preEE.json
+python3 src/fit_and_save_ratios.py --config config_FF_2022_preEE.json
 ```
-This will generate FF histograms and save fitted functions in a ROOT file and json format for each category and in a combine json file. For example `fake_factors_2022_preEE.json`.
+This will generate FF histograms and save fitted functions in a ROOT file and json format for each category. For example `fake_factors_2022_preEE.json`.
+
+You can combine dm and njet multiplicity files with: 
+
+```sh
+python3 src/combine_jsonFF.py --config config_FF_2022_preEE.json
+```
+
 
 ### 3. <span style="color:green">Run CF</span> to produce Closure plots, control plots:
 Now you can plug the FF file `fake_factors_2022_preEE.json` in columnflow.
@@ -83,7 +90,7 @@ Note: here you run the same version as step 1, but you have to run from cf.Produ
 ### 4. If needed, fit and produce json of the closure correction
 If required, closure correction can be produced like fake foctors with the ratio pkl files. This time the ratio is data/MC of A category. Similarly to step 2 you can run:
 ```sh
-python src/fit_and_save_ratios.py --config config_CC_2022_preEE.json
+python3 src/fit_and_save_ratios.py --config config_CC_2022_preEE.json
 ```
 This time you need to modify the config json to specify the "closure _correction" as correction type and the varaibles used.
 
@@ -99,17 +106,15 @@ And save the ratio pkl .file.
 ### 6. If needed, fit and produce json of the extrapolation corrections
 If required, extrapolation correction can be produced like fake foctors with the ratio pkl files. This time the ratio is data/MC of D0 category. Similarly to step 2 you can run:
 ```sh
-python src/fit_and_save_ratios.py --config config_EC_2022_preEE.json
+python3 src/fit_and_save_ratios.py --config config_EC_2022_preEE.json
 ```
 This time you need to modify the config json to specify the "extrapolation_correction" as correction type and the variables used.
 
 ### 7. <span style="color:green">Run CF</span> to produce final control plots. 
 FF, CR and EC should be apply, and you can run:
 ```sh
-python src/fit_and_save_ratios.py --config config_CC_2022_preEE.json
+python3 src/fit_and_save_ratios.py --config config_CC_2022_preEE.json
 ```
-
-
 
 ## Configuration
 The `config.json` file specifies options such as:
