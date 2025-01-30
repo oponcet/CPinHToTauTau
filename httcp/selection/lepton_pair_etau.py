@@ -140,16 +140,9 @@ def match_trigobjs(
     
     leps_pair = ak.zip([new_eles, new_taus])
     
-    #from IPython import embed; embed()
-
-    #ids_dummy = ak.from_regular((trigger_ids > 0)[:,:0])
-    #ids = ak.where(mask_has_tau_triggers_and_has_tau_pairs_evt_level, ids, ids_dummy)
-
     return leps_pair, ids, trigTypes
 
 
-    
-    
 
 def sort_pairs(dtrpairs: ak.Array)->ak.Array:
     # Just to get the indices

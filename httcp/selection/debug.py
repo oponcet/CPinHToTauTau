@@ -46,7 +46,10 @@ def get_event_level_eff(events, results):
     logger.info(f"---> Efficiencies of combined selections: \n{comb_table_}")
     
 
-def get_object_eff(results, tag, key : Optional[str]=None):
+def get_object_eff(results,
+                   tag,
+                   key : Optional[str]=None,
+                   final_mask : Optional[ak.Array]=None):
     from tabulate import tabulate
     logger.info(f"{tag}")
     aux = results.aux
@@ -64,6 +67,11 @@ def get_object_eff(results, tag, key : Optional[str]=None):
     for i, key in enumerate(keys):
         #mask = results.aux[key]
         mask = aux[key]
+        mask_dummy = mask[:,:0]
+        #from IPython import embed; embed()
+        if final_mask:
+            mask = ak.where(final_mask, mask, mask_dummy)
+            #mask = mask & final_mask
         n = ak.sum(ak.sum(mask, axis=1))
         nevt = ak.sum(ak.any(mask, axis=1))
         if i == 0:
@@ -83,6 +91,11 @@ def debug_main(events, results, triggers, **kwargs):
     
     logger.info(f"---> ################### Inspecting event selections ################### <---\n")
     get_event_level_eff(events, results)
+
+    _steps = list(results.steps.keys())
+    final_mask = results.steps[_steps[0]]
+    for key in _steps:
+        final_mask = final_mask & results.steps[key]
     
     logger.info(f"---> ################### Inspecting trigger selections ################### <---\n")
     
@@ -149,6 +162,7 @@ def debug_main(events, results, triggers, **kwargs):
     logger.info(cats_table)
     
     logger.info(f"---> Events selected per channel <---")
+    events = events[final_mask]
     sel_ev = ak.sum(events.channel_id > 0)
     logger.info(f"nSelectedEvents : {sel_ev}")
     channels = []
@@ -167,6 +181,7 @@ def debug_main(events, results, triggers, **kwargs):
     
     logger.info(channel_table)
     logger.info(f" ---> Total selected events in etau, mutau and tautau chennels : {etau_ev+mtau_ev+ttau_ev}\n\n")
+    #from IPython import embed; embed()
 
     
 

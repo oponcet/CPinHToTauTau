@@ -72,7 +72,6 @@ def higgscand(
 
     hcand_array = None
     if self.config_inst.campaign.x.year >= 2022 :
-        #from IPython import embed; embed()
         hcand_array = enforce_hcand_type(hcand_pair_concat, 
                                          {"pt"            : "float64",
                                           "eta"           : "float64",
