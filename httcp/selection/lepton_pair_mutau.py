@@ -28,8 +28,6 @@ def match_trigobjs(
         trigger_results: SelectionResult,
         **kwargs,
 ) -> tuple[ak.Array, ak.Array]:
-    #leps1, leps2 = ak.unzip(leps_pair)
-
     # extract the trigger names, types & others from trigger_results.x (aux)
     trigger_ids           = trigger_results.x.trigger_ids
     trigger_types         = trigger_results.x.trigger_types
@@ -153,14 +151,14 @@ def match_trigobjs(
 
 def sort_pairs(dtrpairs: ak.Array)->ak.Array:
 
-    sorted_idx = ak.argsort(dtrpairs["0"].pfRelIso03_all, ascending=True)
+    sorted_idx = ak.argsort(dtrpairs["0"].pfRelIso04_all, ascending=True)
 
     # Sort the pairs based on pfRelIso03_all of the first object in each pair
     dtrpairs = dtrpairs[sorted_idx]
 
     # Check if the pfRelIso03_all values are the same for the first two objects in each pair
     where_same_iso_1 = ak.fill_none(
-        ak.firsts(dtrpairs["0"].pfRelIso03_all[:,:1], axis=1) == ak.firsts(dtrpairs["0"].pfRelIso03_all[:,1:2], axis=1),
+        ak.firsts(dtrpairs["0"].pfRelIso04_all[:,:1], axis=1) == ak.firsts(dtrpairs["0"].pfRelIso04_all[:,1:2], axis=1),
         False
     )
     # Sort the pairs based on pt if pfRelIso03_all is the same for the first two objects
@@ -202,7 +200,7 @@ def sort_pairs(dtrpairs: ak.Array)->ak.Array:
     uses={
         # muon
         "Muon.pt", "Muon.eta", "Muon.phi", "Muon.mass",
-        "Muon.charge", "Muon.pfRelIso03_all", "Muon.rawIdx",
+        "Muon.charge", "Muon.pfRelIso04_all", "Muon.rawIdx",
         # tau
         optional("Tau.pt"),
         optional("Tau.pt_mutau"),
@@ -259,7 +257,7 @@ def mutau_selection(
     met = events.MET if self.config_inst.campaign.x.year < 2022 else events.PuppiMET
 
     # Sorting lep1 [Electron] by isolation [ascending]
-    muons_sort_idxs = ak.argsort(muons.pfRelIso03_all, axis=-1, ascending=True)
+    muons_sort_idxs = ak.argsort(muons.pfRelIso04_all, axis=-1, ascending=True)
     muons = muons[muons_sort_idxs]
     taus_sort_idx = ak.argsort(taus.rawDeepTau2018v2p5VSjet, axis=-1, ascending=False)
     taus = taus[taus_sort_idx]
