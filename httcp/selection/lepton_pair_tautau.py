@@ -305,13 +305,14 @@ def tautau_selection(
 
     preselection = {
         #"tautau_tau1_iso"      : (lep1.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j[vs_jet_wp]),
-        "tautau_is_pt_40"      : (lep1.pt > 35.0) & (lep2.pt > 35.0), # just changed 40.0 to 35.0 (19.12.2024)
+        "tautau_is_pt_35"      : (lep1.pt > 35.0) & (lep2.pt > 35.0), # just changed 40.0 to 35.0 (19.12.2024)
         "tautau_is_eta_2p1"    : (np.abs(lep1.eta) < 2.1) & (np.abs(lep2.eta) < 2.1),
         #"tautau_is_os"         : (lep1.charge * lep2.charge) < 0,
         "tautau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  #deltaR(lep1, lep2) > 0.5,
         "tautau_invmass_40"    : (1*lep1 + 1*lep2).mass > 40, # invariant_mass(lep1, lep2) > 40
     }
 
+    
     good_pair_mask = lep1.rawIdx >= 0
     pair_selection_steps = {}
     category_selections = {}
