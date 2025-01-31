@@ -43,7 +43,7 @@ electron_idiso_weights = electron_weights.derive(
     uses={
         "Electron.pt",
         "Electron.eta",
-        "trigger_ids",
+        #"trigger_ids",
         "single_e_triggered","cross_e_triggered",
     },
     produces={
@@ -62,8 +62,8 @@ def electron_trigger_weights(self: Producer,
     #Producer that calculates the single lepton trigger weights.
 
     # get trigger ids for IsoMu24
-    trigger_id_map = get_trigger_id_map(self.config_inst.x.triggers)
-    trigger_id = trigger_id_map["HLT_Ele30_WPTight_Gsf"]
+    #trigger_id_map = get_trigger_id_map(self.config_inst.x.triggers)
+    #trigger_id = trigger_id_map["HLT_Ele30_WPTight_Gsf"]
     
     # helper to bring a flat sf array into the shape of taus, and multiply across the tau axis
     reduce_mul = lambda sf: ak.prod(layout_ak_array(sf, events.Electron.pt), axis=1, mask_identity=False)
@@ -78,7 +78,8 @@ def electron_trigger_weights(self: Producer,
 
     ele_mask = np.abs(events.Electron.pt) >= 31.0
     
-    trig_mask = events.single_e_triggered & (events.trigger_ids == trigger_id) & ele_mask
+    #trig_mask = events.single_e_triggered & (events.trigger_ids == trigger_id) & ele_mask
+    trig_mask = events.single_e_triggered & ele_mask
     trig_mask = flat_np_view(trig_mask)
 
     for syst, postfix in [

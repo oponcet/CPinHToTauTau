@@ -67,6 +67,20 @@ def add_config (ana: od.Analysis,
                          name  = config_name,
                          id    = config_id)
 
+    # combination of processes
+    cfg.add_process(
+        name="multiboson",
+        id=7999, # vv proc is 8000 and vvv is 9000 in cmsdb processes
+        label="VV(V)",
+        processes=[procs.n.vv, procs.n.vvv],
+    )
+    cfg.add_process(
+        name="top",
+        id=1999, 
+        label="top",
+        processes=[procs.n.tt, procs.n.st],
+    )
+    
     
     # --------------------------------------------------------------------------------------------- #
     # add processes we are interested in
@@ -78,8 +92,6 @@ def add_config (ana: od.Analysis,
         "w_lnu",
         ## Drell-Yan
         "dy",
-        #"dy_m10to50",
-        #"dy_m50toinf",
         "dy_m50toinf_lep",
         "dy_m50toinf_tau",
         "dy_m50toinf_jet",
@@ -87,27 +99,40 @@ def add_config (ana: od.Analysis,
         "tt",
         ## Single top
         "st",
+        "top",
         ## VV [diboson inclusive]
         "vv",
         "vvv",
+        "multiboson",
         ## Signal
         "h_ggf_htt",
         "zh_htt",
         "wh_htt",
+        ##QCD
+        "qcd",
     ]
 
     for process_name in process_names:
         # development switch in case datasets are not _yet_ there
-        if process_name not in procs:
-            logger.warning(f"WARNING: {process_name} not in cmsdb processes")
-            continue
+        #if process_name not in procs:
+        #    logger.warning(f"WARNING: {process_name} not in cmsdb processes")
+        #    continue
         # add the process
         #if process_name == "h_ggf_tautau":
         #    procs.get(process_name).is_signal = True
-        proc = cfg.add_process(procs.get(process_name))
+        #proc = cfg.add_process(procs.get(process_name))
         #print(procs.get(process_name))
         #if proc.name == "h_ggf_tautau":
         #    proc.is_signal = True
+        if process_name == "qcd":
+            # qcd is not part of procs since there is no dataset registered for it
+            from cmsdb.processes.qcd import qcd
+            proc = cfg.add_process(qcd)
+        elif process_name not in procs:
+            logger.warning(f"WARNING: {process_name} not in cmsdb processes")
+            continue
+        else:
+            proc = cfg.add_process(procs.get(process_name))
 
     # configuration of colors, labels, etc. can happen here
     from httcp.config.styles import stylize_processes
@@ -122,10 +147,10 @@ def add_config (ana: od.Analysis,
         ##W+jets
         # --- LO --- #
         "wj_incl_madgraph",
-        "wj_1j_madgraph",
-        "wj_2j_madgraph",
-        "wj_3j_madgraph",
-        "wj_4j_madgraph",
+        #"wj_1j_madgraph",
+        #"wj_2j_madgraph",
+        #"wj_3j_madgraph",
+        #"wj_4j_madgraph",
         #"wj_ht40to100_madgraph",
         #"wj_ht100to400_madgraph",
         #"wj_ht400to800_madgraph",
@@ -191,21 +216,21 @@ def add_config (ana: od.Analysis,
         "zzz",
 
         ##Signal
-        "h_ggf_tautau_uncorrelated_filter",
-        "h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay",
-        "h_ggf_tautau_uncorrelatedDecay_CPodd_UnFiltered_ProdAndDecay",
-        "h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay",
-        "h_ggf_tautau_uncorrelatedDecay_MM_UnFiltered_ProdAndDecay",
-        "h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay",
-        "h_ggf_tautau_uncorrelatedDecay_SM_UnFiltered_ProdAndDecay",
-        "h_ggf_tautau_M125_amcatnloFXFX",
-        "h_ggf_tautau_prod_cp_even_sm",
-        "zh_tautau_uncorrelatedDecay_Filtered",
-        "zh_tautau_uncorrelatedDecay_UnFiltered",
-        "wph_tautau_uncorrelatedDecay_Filtered",
-        "wph_tautau_uncorrelatedDecay_UnFiltered",
-        "wmh_tautau_uncorrelatedDecay_Filtered",
-        "wmh_tautau_uncorrelatedDecay_UnFiltered",
+        #"h_ggf_tautau_uncorrelated_filter",
+        #"h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay",
+        #"h_ggf_tautau_uncorrelatedDecay_CPodd_UnFiltered_ProdAndDecay",
+        #"h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay",
+        #"h_ggf_tautau_uncorrelatedDecay_MM_UnFiltered_ProdAndDecay",
+        #"h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay",
+        #"h_ggf_tautau_uncorrelatedDecay_SM_UnFiltered_ProdAndDecay",
+        #"h_ggf_tautau_M125_amcatnloFXFX",
+        #"h_ggf_tautau_prod_cp_even_sm",
+        #"zh_tautau_uncorrelatedDecay_Filtered",
+        #"zh_tautau_uncorrelatedDecay_UnFiltered",
+        #"wph_tautau_uncorrelatedDecay_Filtered",
+        #"wph_tautau_uncorrelatedDecay_UnFiltered",
+        #"wmh_tautau_uncorrelatedDecay_Filtered",
+        #"wmh_tautau_uncorrelatedDecay_UnFiltered",
     ]
     
     datasets_data = []
@@ -217,8 +242,8 @@ def add_config (ana: od.Analysis,
                              "data_tau_C", "data_tau_D"]
 
         elif postfix == "postEE":
-            datasets_data = ["data_e_E",   "data_e_G",
-                             "data_mu_E",  "data_mu_G",
+            datasets_data = ["data_e_E",   "data_e_F",   "data_e_G",
+                             "data_mu_E",  "data_mu_F",  "data_mu_G",
                              "data_tau_E", "data_tau_F", "data_tau_G"]
         else:
             raise RuntimeError(f"Wrong postfix: {campaign.x.postfix}")
@@ -283,7 +308,7 @@ def add_config (ana: od.Analysis,
     cfg.x.default_categories      = ("incl",)
     #cfg.x.default_variables = ("n_jet", "jet1_pt")
     cfg.x.default_variables       = ("event","channel_id")
-    cfg.x.default_weight_producer = "main"
+    cfg.x.default_weight_producer = "main" # "normalization_only"
     
     # process groups for conveniently looping over certain processs
     # (used in wrapper_factory and during plotting)
@@ -342,9 +367,11 @@ def add_config (ana: od.Analysis,
     # (currently set to false because the number of files per dataset is truncated to 2)
     cfg.x.validate_dataset_lfns = False
 
+    cfg.x.allow_dy_stitching = False
+
     # define inclusive datasets for the stitched process identification with corresponding leaf processes
     # drell-yan [NLO]
-    cfg.x.allow_dy_stitching = False
+
     cfg.x.dy_stitching = {
         "dy": {
             "inclusive_dataset": cfg.datasets.n.dy_lep_m50_madgraph,
@@ -374,8 +401,9 @@ def add_config (ana: od.Analysis,
         },
     }
     """
+    cfg.x.allow_w_stitching = False
+        
     # w+jets [NLO]
-    cfg.x.allow_w_stitching = True
     cfg.x.w_stitching = {
         "wj": {
             "inclusive_dataset": cfg.datasets.n.wj_incl_madgraph,
@@ -402,7 +430,6 @@ def add_config (ana: od.Analysis,
         },
     }
     """
-    
     
     # --------------------------------------------------------------------------------------------- #
     # Luminosity and Normalization
@@ -515,7 +542,8 @@ def add_config (ana: od.Analysis,
 
     #print(f"GoldenJSON           : {goldenjson}")
     #print(f"NormtagJSON          : {normtagjson}")
-
+    #print(f"sdcsdcs sdcascascsd cscsdc : {external_path}/Zpt/myZptCorrections.json.gz")
+    
     cfg.x.external_files = DotDict.wrap({
         # lumi files
         "lumi": {
@@ -530,18 +558,25 @@ def add_config (ana: od.Analysis,
         "muon_xtrig_sf"     : (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/CrossMuTauHlt.json",         "v1"), # Mu xTrig SF
         "electron_sf"       : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electron.json.gz",           "v1"), # Ele POG SF
         "electron_trig_sf"  : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electronHlt.json.gz",        "v1"), # Ele HLT SF
+        "electron_ss"       : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electronSS.json.gz",         "v1"), # Ele Scale Smearing
         # https://gitlab.cern.ch/cclubbtautau/AnalysisCore/-/blob/main/data/TriggerScaleFactors/2022preEE/CrossEleTauHlt.json?ref_type=heads
         "electron_xtrig_sf" : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/CrossEleTauHlt.json",        "v1"), # Ele xTrig SF
         "tau_sf"            : (f"{json_mirror}/POG/TAU/{year}_{postfix}/tau_DeepTau2018v2p5_{year}_{postfix}.json.gz", "v1"), # TEC and ID SF
         # https://gitlab.cern.ch/cclubbtautau/AnalysisCore/-/blob/main/data/TriggerScaleFactors/2022preEE/ditaujet_jetleg_SFs_preEE.json?ref_type=heads
-        "ditau_jet_trig_sf" : (f"{json_mirror}/POG/TAU/{year}_{postfix}/ditaujet_jetleg_SFs_preEE.json",               "v1"),
+        "ditau_jet_trig_sf" : (f"{json_mirror}/POG/TAU/{year}_{postfix}/ditaujet_jetleg_SFs_{postfix}.json",           "v1"),
         "jet_veto_map"      : (f"{json_mirror}/POG/JME/{year}_Summer{year2}{year_postfix}/jetvetomaps.json.gz",        "v1"), # JetVeto
-        "zpt_rewt_sf"       : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
-        "tautau_ff"         : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # DUMMY !!!
+        # https://gitlab.cern.ch/dwinterb/HiggsDNA/-/tree/master/higgs_dna/systematics/ditau/ROOT/Zpt?ref_type=heads
+        "zpt_rewt_v1_sf"    : (f"{external_path}/Zpt/myZptCorrections.json.gz",                                        "v1"), # Zpt Rewt
+        # https://indico.cern.ch/event/1360909/contributions/6000616/attachments/2875911/5036473/HLepRare_24.06.12.pdf
+        # https://indico.cern.ch/event/489921/contributions/2000259/attachments/1248156/1839106/Recoil_20160323.pdf
+        # /afs/cern.ch/user/d/dmroy/public/DY_pTll_recoil_corrections.json.gz
+        "zpt_rewt_v2_sf"    : (f"{external_path_parent}/Run3/Zpt/DY_pTll_recoil_corrections.json.gz",                  "v1"), # Zpt Rewt
+        "tautau_ff"         : (f"{external_path}/Fake_tautau/fake_factor_2022_preEE_max_120GeV.json",                  "v1"),
+        "tautau_ff0"        : (f"{external_path}/Fake_tautau/fake_factor_2022_preEE_0cat_v2.json",                     "v1"),
+        "tautau_ext_corr"   : (f"{external_path}/Fake_tautau/extrapolation_correction_inclusive.json",                 "v1"),
         #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz",                "v1"),
         #"met_phi_corr": (f"{json_mirror}/POG/JME/2018_UL/met.json.gz",                                                "v1"), #met phi, unavailable Run3
     })
-
 
     # --------------------------------------------------------------------------------------------- #
     # electron settings
@@ -750,7 +785,7 @@ def add_config (ana: od.Analysis,
             "vs_j": {
                 "etau"   : "Tight",
                 "mutau"  : "Medium",
-                "tautau" : "Medium",
+                "tautau" : "VTight", ## VTight : Proposed by Imperial, was Medium in Run2 
             },
         },
     })
@@ -835,8 +870,17 @@ def add_config (ana: od.Analysis,
             "tau_weight": "tau_weight_{direction}",
         },
     )
-    #cfg.add_shift(name=f"tes_up", id=52, type="shape")
-    #cfg.add_shift(name=f"tes_down", id=53, type="shape")
+    cfg.add_shift(name=f"tau_trig_up", id=52, type="shape")
+    cfg.add_shift(name=f"tau_trig_down", id=53, type="shape")
+    add_shift_aliases(
+        cfg,
+        "tau_trig",
+        {
+            "tau_trigger_weight": "tau_trigger_weight_{direction}",
+        },
+    )
+    #cfg.add_shift(name=f"tes_up", id=54, type="shape")
+    #cfg.add_shift(name=f"tes_down", id=55, type="shape")
     #add_shift_aliases(
     #    cfg,
     #    "tes",
@@ -959,6 +1003,16 @@ def add_config (ana: od.Analysis,
         },
     )
 
+    cfg.add_shift(name="ff_ext_corr_up", id=180, type="shape")
+    cfg.add_shift(name="ff_ext_corr_down", id=181, type="shape")
+    add_shift_aliases(
+        cfg,
+        "ff_ext_corr",
+        {
+            "ff_ext_corr_weight": "ff_ext_corr_weight_{direction}",
+            #"normalized_pdf_weight": "normalized_pdf_weight_{direction}",
+        },
+    )
 
 
     # target file size after MergeReducedEvents in MB
@@ -985,11 +1039,13 @@ def add_config (ana: od.Analysis,
         "muon_IsoMu24_trigger_weight"           : [], #get_shifts("mu_trig"),
         "muon_xtrig_weight"                     : [], #get_shifts("mu_xtrig"),
         "tau_weight"                            : [], #get_shifts("tau"),
-        #"ff_weight"                             : [],
+        "tau_trigger_weight"                    : [], #get_shifts("tau_trig"),
+        "ff_weight"                             : [],
+        "ff_ext_corr_weight"                    : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
         "tauspinner_weight"                     : get_shifts("tauspinner"),
         "pdf_weight"                            : [],
-        "zpt_reweight"                          : [],
+        "zpt_reweight"                          : [], #get_shifts("zpt"), 
     })
 
     #---------------------------------------------------------------------------------------------#
@@ -1067,8 +1123,9 @@ def add_config (ana: od.Analysis,
         "etau"  : {},
         "mutau" : {},
         "tautau" : {
-            "id"  : [cfg.get_category("tautau").id, cfg.get_category("real_1").id, cfg.get_category("hadC").id],  # category_id for AR C 
-            "id0" : [cfg.get_category("tautau").id, cfg.get_category("real_1").id, cfg.get_category("hadC0").id], # category_id for AR C0
+            "id_for_B"  : [cfg.get_category("tautau").id, cfg.get_category("real_1").id, cfg.get_category("hadB").id],
+            "id_for_C"  : [cfg.get_category("tautau").id, cfg.get_category("real_1").id, cfg.get_category("hadC").id],  # category_id for AR C 
+            "id_for_C0" : [cfg.get_category("tautau").id, cfg.get_category("real_1").id, cfg.get_category("hadC0").id], # category_id for AR C0
         },
     })
     
@@ -1090,7 +1147,7 @@ def add_config (ana: od.Analysis,
             # general event info
             "run", "luminosityBlock", "event", "LHEPdfWeight",
             "PV.npvs","Pileup.nTrueInt","Pileup.nPU","genWeight", "LHEWeight.originalXWGTUP",
-            "trigger_ids",
+            #"trigger_ids",
             "single_triggered", "cross_triggered",
             "single_e_triggered", "cross_e_triggered",
             "single_mu_triggered", "cross_mu_triggered",
@@ -1220,7 +1277,8 @@ def add_config (ana: od.Analysis,
             ]
         } | { # electrons from hcand
             f"Electron.{var}" for var in [
-                "pt","eta","phi","mass","dxy","dz", "charge", "IPx", "IPy", "IPz",
+                "pt_no_ss", "pt","eta","phi","mass",
+                "dxy","dz", "charge", "IPx", "IPy", "IPz",
                 "decayMode", "pfRelIso03_all", "mT", "rawIdx",
                 "deltaEtaSC",
             ]
@@ -1269,6 +1327,14 @@ def add_config (ana: od.Analysis,
         },
     })
 
+    # --------------------------------------------------------------------------------------------- #
+    # Adding hist hooks
+    # --------------------------------------------------------------------------------------------- #
+
+    from httcp.config.hist_hooks import add_hist_hooks
+    add_hist_hooks(cfg)
+
+
     
     #---------------------------------------------------------------------------------------------#
     # Helper switch for debugging
@@ -1285,7 +1351,10 @@ def add_config (ana: od.Analysis,
             "extra_lep_veto"          : False,
             "dilep_veto"              : False,
             "higgscand"               : False,
-        },        
+        },
+        "production": {
+            "main"                    : False,
+        },
     })
 
 

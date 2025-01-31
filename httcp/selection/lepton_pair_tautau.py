@@ -150,11 +150,18 @@ def match_trigobjs(
     tautau_trigger_ids_brdcst = tautau_trigger_ids_brdcst[pass_taus]
     # -------------> Order of triggers is important. Mind the hierarchy
     # this ids are the trig-obj match ids
-    ids = ak.fill_none(ak.firsts(tautau_trigger_ids_brdcst, axis=-1), -1)
 
+    tautau_trigger_ids_brdcst_dummy = ak.from_regular(tautau_trigger_ids_brdcst[:,:0][:,None])
+    #_tautau_trigger_ids_brdcst = ak.fill_none(ak.firsts(tautau_trigger_ids_brdcst, axis=1), 0)
+    tautau_trigger_ids_brdcst = ak.where(ak.num(tautau_trigger_ids_brdcst) > 0, tautau_trigger_ids_brdcst, tautau_trigger_ids_brdcst_dummy)
+    
+    #ids = ak.fill_none(ak.firsts(tautau_trigger_ids_brdcst, axis=-1), -1)
+
+    ids = ak.Array(ak.to_list(ak.firsts(tautau_trigger_ids_brdcst, axis=1))) # BAD Practice !!!
+    
     #ids_dummy = ak.from_regular((trigger_ids > 0)[:,:0])
     #ids = ak.where(mask_has_tau_triggers_and_has_tau_pairs_evt_level, ids, ids_dummy)
-
+    
     
     ids = ak.values_astype(ids, 'int64')
 
@@ -174,7 +181,16 @@ def match_trigobjs(
     tautau_trigger_types_brdcst = tautau_trigger_types_brdcst[pass_taus]
     # -------------> Order of triggers is important. Mind the hierarchy
     # this ids are the trig-obj match ids
-    types = ak.fill_none(ak.firsts(tautau_trigger_types_brdcst, axis=-1), "")
+
+
+    #from IPython import embed; embed()
+
+    tautau_trigger_types_brdcst_dummy = ak.from_regular(tautau_trigger_types_brdcst[:,:0][:,None])
+    tautau_trigger_types_brdcst = ak.where(ak.num(tautau_trigger_types_brdcst) > 0, tautau_trigger_types_brdcst, tautau_trigger_types_brdcst_dummy)
+    
+    types = ak.Array(ak.to_list(ak.firsts(tautau_trigger_types_brdcst, axis=1))) # BAD Practice !!!
+
+    #types = ak.fill_none(ak.firsts(tautau_trigger_types_brdcst, axis=-1), "")
 
     #from IPython import embed; embed()
     
@@ -289,13 +305,14 @@ def tautau_selection(
 
     preselection = {
         #"tautau_tau1_iso"      : (lep1.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j[vs_jet_wp]),
-        "tautau_is_pt_40"      : (lep1.pt > 40) & (lep2.pt > 40),
+        "tautau_is_pt_35"      : (lep1.pt > 35.0) & (lep2.pt > 35.0), # just changed 40.0 to 35.0 (19.12.2024)
         "tautau_is_eta_2p1"    : (np.abs(lep1.eta) < 2.1) & (np.abs(lep2.eta) < 2.1),
         #"tautau_is_os"         : (lep1.charge * lep2.charge) < 0,
         "tautau_dr_0p5"        : (1*lep1).delta_r(1*lep2) > 0.5,  #deltaR(lep1, lep2) > 0.5,
         "tautau_invmass_40"    : (1*lep1 + 1*lep2).mass > 40, # invariant_mass(lep1, lep2) > 40
     }
 
+    
     good_pair_mask = lep1.rawIdx >= 0
     pair_selection_steps = {}
     category_selections = {}
@@ -326,8 +343,8 @@ def tautau_selection(
     # take the 1st pair and 1st trigger id
     lep1 = lep1[:,:1]
     lep2 = lep2[:,:1]
-    trigId = trigIds[:,:1]
-    trigTypes = trigTypes[:,:1]
+    #trigId = trigIds[:,:1]
+    #trigTypes = trigTypes[:,:1]
     
     # rebuild the pair with the 1st one only
     leps_pair = ak.concatenate([lep1, lep2], axis=1)

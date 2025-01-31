@@ -18,7 +18,7 @@ logger = law.logger.get_logger(__name__)
     #uses={"channel_id", "is_os", "is_low_mt", "is_b_veto", "is_real_2", "is_fake_2", "is_iso_2", "hcand.*"},
     # both produced columns and dependent shifts are defined in init below
     # only run on mc
-    mc_only=True,
+    mc_only=False,
     # options to keep or drop specific weights
     keep_weights=None,
     drop_weights=None,
@@ -53,6 +53,18 @@ def main_init(self: WeightProducer) -> None:
 
         # manually skip weights for samples that do not have lhe info
         if getattr(self, "dataset_inst", None) is not None:
+
+            #if (weight_name != "ff_weight" or weight_name != "closure_weight") and self.dataset_inst.is_data:    
+            #    continue
+            if self.dataset_inst.is_data:
+                if not weight_name in ["ff_weight","ff_ext_corr_weight"]:
+                    continue
+                #if weight_name != "ff_weight":
+                #    continue
+                #elif weight_name != "ff_ext_corr_weight":
+                #    continue
+                #else:
+                #    break
 
             # skip pdf weights for samples that dont have lhe weight
             is_lhe_weight = any(

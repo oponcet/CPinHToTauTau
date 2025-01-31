@@ -38,7 +38,8 @@ from httcp.selection.higgscand import higgscand, higgscandprod
 
 #from httcp.production.main import cutflow_features
 #from httcp.production.weights import scale_mc_weight
-from httcp.production.processes import process_ids_dy, process_ids_w
+from httcp.production.stitching_LO import process_ids_dy, process_ids_w
+#from httcp.production.stitching_NLO import process_ids_dy, process_ids_w
 from httcp.production.extra_weights import scale_mc_weight
 from httcp.production.dilepton_features import hcand_mass, mT, rel_charge #TODO: rename mutau_vars -> dilepton_vars
 
@@ -168,7 +169,7 @@ def get_2n_pairs(etau_indices_pair,
         #category_ids,
         increment_stats, 
         custom_increment_stats,
-        "trigger_ids",
+        #"trigger_ids",
         "single_triggered",
         "cross_triggered",
         "single_e_triggered",
@@ -197,7 +198,11 @@ def main(
     # add the mc weight --> need to move to calibration main?
     if self.dataset_inst.is_mc:
         events = self[scale_mc_weight](events, **kwargs)
-    
+
+    ##################################### NEW ######################################
+    results += SelectionResult(steps={"starts_with": np.ones(len(events), dtype=bool)})
+    ##################################### NEW ######################################
+        
     # filter bad data events according to golden lumi mask
     if self.dataset_inst.is_data:
         events, json_filter_results = self[json_filter](events, **kwargs)
@@ -248,6 +253,7 @@ def main(
         _, _, good_tau_indices_tautau         = self[tau_selection](events, "tautau", call_force=True, **kwargs)
     else:
         events, tau_results, good_tau_indices = self[tau_selection](events, call_force=True, **kwargs)
+        results += tau_results
     
     # double lepton veto
     events, extra_double_lepton_veto_results = self[double_lepton_veto](events,
@@ -304,7 +310,7 @@ def main(
                                                    tautau_pair.rawIdx)
     results += channel_results
 
-    
+    """
     trigger_types = ak.concatenate([etau_trig_types, mutau_trig_types, tautau_trig_types], axis=1)
     # save single_triggered and cross_triggered
     single_e_triggered = ak.any(ak.fill_none((trigger_types == 'single_e'), False), axis=1)
@@ -328,7 +334,35 @@ def main(
 
     # save the trigger_ids column
     events = set_ak_column(events, "trigger_ids", trigger_ids)
+    """
+    
+    trigger_types = ak.concatenate([etau_trig_types, mutau_trig_types, tautau_trig_types], axis=1)
 
+
+    # ele
+    single_e_triggered = ak.any(trigger_types == 'single_e', axis=1)
+    cross_e_triggered  = ak.any(trigger_types == 'cross_e_tau', axis=1)
+    # mu
+    single_mu_triggered = ak.any(trigger_types == 'single_mu', axis=1)
+    cross_mu_triggered = ak.any(trigger_types == 'cross_mu_tau', axis=1)
+    # tau
+    cross_tau_triggered = ak.any(trigger_types == 'cross_tau_tau', axis=1)
+    cross_tau_jet_triggered = ak.any(trigger_types == 'cross_tau_tau_jet', axis=1)
+
+    events = set_ak_column(events, "single_e_triggered", single_e_triggered)
+    events = set_ak_column(events, "single_mu_triggered", single_mu_triggered)
+    events = set_ak_column(events, "cross_e_triggered", cross_e_triggered)
+    events = set_ak_column(events, "cross_mu_triggered", cross_mu_triggered)
+    events = set_ak_column(events, "cross_tau_triggered", cross_tau_triggered)
+    events = set_ak_column(events, "cross_tau_jet_triggered", cross_tau_jet_triggered)
+    
+    events = set_ak_column(events, "single_triggered", (single_e_triggered | single_mu_triggered))
+    events = set_ak_column(events, "cross_triggered", (cross_e_triggered | cross_mu_triggered | cross_tau_triggered | cross_tau_jet_triggered))
+
+    trigger_ids = ak.concatenate([etau_trig_ids, mutau_trig_ids, tautau_trig_ids], axis=1)
+
+    # save the trigger_ids column
+    #events = set_ak_column(events, "trigger_ids", trigger_ids)
 
     # hcand pair: [ [[mu1,tau1]], [[e1,tau1],[tau1,tau2]], [[mu1,tau2]], [], [[e1,tau2]] ]
     hcand_pairs = ak.concatenate([etau_pair[:,None], mutau_pair[:,None], tautau_pair[:,None]], axis=1)
@@ -341,7 +375,6 @@ def main(
                                                                 hcand_pairs)
     results += extra_lepton_veto_results
 
-    #from IPython import embed; embed()
     # hcand results
     events, hcand_array, hcand_results = self[higgscand](events, hcand_pairs)
     results += hcand_results
@@ -460,7 +493,6 @@ def main(
         **kwargs,
     )
     
-
     # inspect cuts
     if self.config_inst.x.verbose.selection.main:
         debug_main(events,

@@ -28,7 +28,6 @@ coffea = maybe_import("coffea")
 # ------------------------------------------------------------------------------------------------------- #
 @selector(
     uses={
-        # Muon nano columns
         f"Muon.{var}" for var in [
             "pt", "eta", "phi", "dxy", "dz", "mediumId", 
             "pfRelIso04_all", "isGlobal", "isPFcand", 
@@ -67,7 +66,6 @@ def muon_selection(
     sorted_indices = ak.argsort(events.Muon.pt, axis=-1, ascending=False)
     muons = events.Muon[sorted_indices]
 
-    # make sure everything is based on muons, not events.Muon
     good_selections = {
         "muon_pt_20"          : muons.pt > 20,
         "muon_eta_2p4"        : abs(muons.eta) < 2.4,
@@ -76,7 +74,8 @@ def muon_selection(
         "muon_dz_0p2"         : abs(muons.dz) < 0.2,
         "muon_iso_0p15"       : muons.pfRelIso04_all < 0.15,
         "muon_ipsig_safe"     : muons.IPsig > ipsig_dummy,
-        #"muon_ipsig_1p5"      : np.abs(muons.IPsig) > 1.5,
+        # not before applying correction from IPsig calibration
+        "muon_ipsig_1p0"      : np.abs(muons.IPsig) > 1.0,
     }
     single_veto_selections = {
         "muon_pt_10"          : muons.pt > 10,
@@ -85,7 +84,6 @@ def muon_selection(
         "muon_dxy_0p045"      : abs(muons.dxy) < 0.045,
         "muon_dz_0p2"         : abs(muons.dz) < 0.2,
         "muon_iso_0p3"        : muons.pfRelIso04_all < 0.3,
-        ##"muon_ipsig_safe"     : muons.IPsig > ipsig_dummy,
     }
     double_veto_selections = {
         "muon_pt_15"          : muons.pt > 15,
@@ -96,7 +94,6 @@ def muon_selection(
         "muon_dxy_0p045"      : abs(muons.dxy) < 0.045,
         "muon_dz_0p2"         : abs(muons.dz) < 0.2,
         "muon_iso_0p3"        : muons.pfRelIso04_all < 0.3,
-        ##"muon_ipsig_safe"     : muons.IPsig > ipsig_dummy,
     }
 
     muon_mask      = ak.local_index(muons) >= 0
@@ -148,7 +145,6 @@ def muon_selection(
                 "DoubleVetoMuon": double_veto_muon_indices,
             },
         },
-        #aux=good_selection_steps,
         aux={
             "muon_good_selection": good_selection_steps,
             "muon_single_veto_selection": single_veto_selection_steps,
@@ -166,7 +162,6 @@ def muon_selection(
 # ------------------------------------------------------------------------------------------------------- #
 @selector(
     uses={
-        # Electron nano columns
         "Electron.pt", "Electron.eta", "Electron.phi", "Electron.mass", "Electron.dxy", "Electron.dz",
         "Electron.pfRelIso03_all", "Electron.convVeto", #"lostHits",
         IF_NANO_V9("Electron.mvaFall17V2Iso_WP80", "Electron.mvaFall17V2Iso_WP90", "Electron.mvaFall17V2noIso_WP90"),
@@ -212,12 +207,14 @@ def electron_selection(
 
     good_selections = {
         "electron_pt_25"          : electrons.pt > 25,
-        "electron_eta_2p1"        : abs(electrons.eta) < 2.1,
+        "electron_eta_2p5"        : abs(electrons.eta) < 2.5,
         "electron_dxy_0p045"      : abs(electrons.dxy) < 0.045,
         "electron_dz_0p2"         : abs(electrons.dz) < 0.2,
         "electron_mva_iso_wp80"   : mva_iso_wp80 == 1,
         "electron_ipsig_safe"     : electrons.IPsig > ipsig_dummy,
-        #"electron_ipsig_1p5"      : np.abs(electrons.IPsig) > 1.5,
+        "electron_iso_0p15"       : electrons.pfRelIso03_all < 0.15,
+        # not before applying correction from IPsig calibration        
+        "electron_ipsig_1p0"      : np.abs(electrons.IPsig) > 1.0,
     }
     single_veto_selections = {
         "electron_pt_10"          : electrons.pt > 10,
@@ -227,8 +224,7 @@ def electron_selection(
         "electron_mva_noniso_wp90": mva_noniso_wp90 == 1,
         "electron_convVeto"       : electrons.convVeto == 1,
         #"electron_lostHits"       : electrons.lostHits <= 1,
-        "electron_pfRelIso03_all" : electrons.pfRelIso03_all < 0.3,
-        ##"electron_ipsig_safe"     : electrons.IPsig > ipsig_dummy,
+        "electron_iso_0p3"        : electrons.pfRelIso03_all < 0.3,
     }
     double_veto_selections = {
         "electron_pt_15"          : electrons.pt > 15,
@@ -236,8 +232,7 @@ def electron_selection(
         "electron_dxy_0p045"      : abs(electrons.dxy) < 0.045,
         "electron_dz_0p2"         : abs(electrons.dz) < 0.2,
         "electron_cutBased"       : electrons.cutBased >= 1, # probably == 1 is wrong !!!
-        "electron_pfRelIso03_all" : electrons.pfRelIso03_all < 0.3,
-        ##"electron_ipsig_safe"     : electrons.IPsig > ipsig_dummy,
+        "electron_iso_0p3"        : electrons.pfRelIso03_all < 0.3,
     }
 
     electron_mask  = ak.local_index(electrons) >= 0
@@ -289,7 +284,6 @@ def electron_selection(
                 "DoubleVetoElectron": double_veto_electron_indices,
             },
         },
-        #aux=good_selection_steps,
         aux={
             "electron_good_selection": good_selection_steps,
             "electron_single_veto_selection": single_veto_selection_steps,
@@ -306,7 +300,6 @@ def electron_selection(
 # ------------------------------------------------------------------------------------------------------- #
 @selector(
     uses={
-        # Tau nano columns
         f"Tau.{var}" for var in [
             "eta", "phi", "dz",
             "idDeepTau2018v2p5VSe", "idDeepTau2018v2p5VSmu", "idDeepTau2018v2p5VSjet",
@@ -368,10 +361,12 @@ def tau_selection(
 
     sorted_indices = ak.argsort(tau_pt, axis=-1, ascending=False)
     taus = events.Tau[sorted_indices]
+
+    IPsig_1p25 = ak.where(taus.decayMode ==  0, np.abs(taus.IPsig) >= 1.25, False)
     
     good_selections = {
         "tau_pt_20"     : taus.pt > 20,
-        "tau_eta_2p3"   : abs(taus.eta) < 2.3,
+        "tau_eta_2p5"   : abs(taus.eta) < 2.5, # 2.3
         "tau_dz_0p2"    : abs(taus.dz) < 0.2,
         # have to make them channel-specific later
         #                  e-tau  mu-tau  tau-tau     SafeHere
@@ -379,22 +374,20 @@ def tau_selection(
         #   DeepTauVSe   : Tight  VVLoose VVLoose --> VVLoose 
         #   DeepTauVSmu  : Loose  Tight   VLoose  --> VLoose  
         "tau_DeepTauVSjet"  : taus.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.VVVLoose, # for tautau fake region
-        #"tau_DeepTauVSjet"  : taus.idDeepTau2018v2p5VSjet >= tau_tagger_wps.vs_j.Medium,
         "tau_DeepTauVSe"    : taus.idDeepTau2018v2p5VSe   >= tau_tagger_wps.vs_e.VVLoose,
         "tau_DeepTauVSmu"   : taus.idDeepTau2018v2p5VSmu  >= tau_tagger_wps.vs_m.VLoose,
-        #"tau_DecayMode"     : ((taus.decayMode == 0) 
+        #"tau_DecayMode_IP" : (((taus.decayMode == 0) & (np.abs(taus.IPsig) >= 1.25)) 
         #                       | (taus.decayMode == 1)
         #                       | (taus.decayMode == 10)
         #                       | (taus.decayMode == 11)),
-        "tau_DecayMode"     : (
-            (  (taus.decayMode ==  0)
+        "tau_ipsig_safe"    : taus.IPsig > ipsig_dummy,
+        "tau_DecayMode_IP"  : (
+            (  ((taus.decayMode ==  0) & (np.abs(taus.IPsig) >= 1.25))
                | (((taus.decayMode ==  1)
                    | (taus.decayMode ==  2)
                    | (taus.decayMode == 10)
                    | (taus.decayMode == 11))
                   & (taus.decayModeHPS != 0)))), # decayMode is now decayModePNet
-        "tau_ipsig_safe"    : taus.IPsig > ipsig_dummy,
-        #"tau_ipsig_1p5"     : (taus.decayModePNet ==  0) & (np.abs(taus.IPsig) > 1.5), # ipsig > 1.5 only for pion
     }
     
     tau_mask = ak.local_index(taus) >= 0
@@ -472,23 +465,28 @@ def jet_selection(
     """
     is_run2 = self.config_inst.campaign.x.run == 2
     is_run3 = self.config_inst.campaign.x.run == 3
-   
+
+    jet_mask  = ak.local_index(events.Jet.pt) >= 0 #Create a mask filled with ones
+    jet_special_pu_mask = ak.where(((abs(events.Jet.eta) >= 2.5) & (abs(events.Jet.eta) < 3.0)),
+                                   events.Jet.pt > 50.0,
+                                   jet_mask)
+        
     # nominal selection
     good_selections = {
         "jet_pt_20"               : events.Jet.pt > 20.0,
-        "jet_eta_2.4"             : abs(events.Jet.eta) < 2.4,
-        #"jet_id"                  : events.Jet.jetId == 0b110,  # Jet ID flag: bit2 is tight, bit3 is tightLepVeto 
+        "jet_eta_4p7"             : abs(events.Jet.eta) <= 4.7,  # 2.4
+        "jet_special_for_PU"      : jet_special_pu_mask,
+        "jet_id"                  : events.Jet.jetId >= 2,  # Jet ID flag: bit2 is tight, bit3 is tightLepVeto            
+                                                            # So, 0000010 : 2**1 = 2 : pass tight, fail lep-veto          
+                                                            #     0000110 : 2**1 + 2**2 = 6 : pass both tight and lep-veto
     }
     
     #if is_run2: 
     #    good_selections["jet_puId"] = ((events.Jet.pt >= 50.0) | (events.Jet.puId)) #For the Run2 there was
     
-    # b-tagged jets, tight working point
     events = set_ak_column(events, "Jet.rawIdx", ak.local_index(events.Jet.pt))    
 
-    jet_mask  = ak.local_index(events.Jet.pt) >= 0 #Create a mask filled with ones
     selection_steps = {}
-
     selection_steps = {"jet_starts_with": jet_mask}
     for cut in good_selections.keys():
         jet_mask = jet_mask & ak.fill_none(good_selections[cut], False)
@@ -500,7 +498,9 @@ def jet_selection(
 
     if "hcand" in events.fields:
         good_jets = ak.with_name(events.Jet[good_jet_indices], "PtEtaPhiMLorentzVector")
-        hcand = ak.with_name(events.hcand[events.hcand.decayMode >= 0], "PtEtaPhiMLorentzVector") # to make sure the presence of tauh only
+        # should we clean the jets wrt the tauh only or with e/mu/tauh?
+        #hcand = ak.with_name(events.hcand[events.hcand.decayMode >= 0], "PtEtaPhiMLorentzVector") # to make sure the presence of tauh only
+        hcand = ak.with_name(events.hcand, "PtEtaPhiMLorentzVector")
         dr_jets_hcand = good_jets.metric_table(hcand)
         jet_is_closed_to_hcand = ak.any(dr_jets_hcand < 0.4, axis=-1)
         selection_steps["jet_isclean"] = ~jet_is_closed_to_hcand
@@ -509,12 +509,17 @@ def jet_selection(
 
     # b-tagged jets, tight working point
     btag_wp = self.config_inst.x.btag_working_points.deepjet.medium
-    b_jet_mask = events.Jet[good_jet_indices].btagDeepFlavB >= btag_wp
+    b_jet_mask = (np.abs(events.Jet[good_jet_indices].eta) < 2.5) & (events.Jet[good_jet_indices].btagDeepFlavB >= btag_wp)
     b_jet_indices = good_jet_indices[b_jet_mask]
     selection_steps["jet_isbtag"] = ak.fill_none(b_jet_mask, False)
 
     # bjet veto
     bjet_veto = ak.sum(b_jet_mask, axis=1) == 0
+
+    # make a 30 GeV cut on good jet pT
+    #jet_pt_30_mask = events.Jet[good_jet_indices].pt > 30.0
+    #good_jet_indices = good_jet_indices[jet_pt_30_mask]
+    #selection_steps["good_jet_pt_30"] = ak.fill_none(jet_pt_30_mask, False)
     
     results = SelectionResult(
         # bveto selection will be required later for ABCD
@@ -593,7 +598,7 @@ def gentau_selection(
         "genpart_status"          : events.GenPart.status == 2,
         "genpart_status_flags"    : events.GenPart.hasFlags(["isPrompt", "isFirstCopy"]),
         "genpart_pt_10"           : events.GenPart.pt > 10.0,
-        "genpart_eta_2p3"         : np.abs(events.GenPart.eta) < 2.5,
+        "genpart_eta_2p5"         : np.abs(events.GenPart.eta) < 2.5,
         "genpart_momid_25"        : events.GenPart[events.GenPart.distinctParent.genPartIdxMother].pdgId == 25,
         "genpart_mom_status_22"   : events.GenPart[events.GenPart.distinctParent.genPartIdxMother].status == 22,
     }

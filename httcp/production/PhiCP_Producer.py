@@ -54,6 +54,10 @@ def ProducePhiCP(
     p4h1      = p4hcandinfo["p4h1"]
     p4h2      = p4hcandinfo["p4h2"]
 
+    # energy split mask
+    #esplit_h1 = ak.fill_none(ak.firsts(energy_split_h1 > 0.2, axis=1))
+    #esplit_h2 = ak.fill_none(ak.firsts(energy_split_h2 > 0.2, axis=1))
+    
     # etau
     mask_e_pi      = is_e(p4h1)   &   is_pi(p4h2)
     mask_e_rho     = is_e(p4h1)   &   is_rho(p4h2)
@@ -113,8 +117,6 @@ def ProducePhiCP(
     dummyPhiCP = ak.values_astype(events.event[:,None][:,:0], np.float32)
 
 
-
-    
     ##################################################################################
     #                                      IPIP                                      #
     #                        Only possible for (e/mu/pi)-pi                          #
@@ -292,6 +294,8 @@ def ProduceDetPhiCP(
         p4hcandinfo: dict,
         **kwargs,
 ) -> ak.Array:
+    #from IPython import embed; embed()
+    
     events, alpha = self[ProduceDetCosPsi](events, p4hcandinfo)
 
     print(f" ===>>> ProduceDetPhiCP ===>>> ")

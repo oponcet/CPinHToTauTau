@@ -279,39 +279,45 @@ def cat_mutau_fake_2(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.
 # D   : tautau [os__iso1__iso2__nobjet]
 # C   : tautau [os__noniso1__iso2__nobjet]
 
+# ##################################################################### #
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #
+# W A R N I N G
+# REMOVING b-veto to be on the same page of IMPERIAL
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #
+# ##################################################################### #
 
 # A
 @categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
 def cat_ss_iso1_iso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_os & events.is_iso_1 & events.is_iso_2 & events.is_b_veto
+    return events, ~events.is_os & events.is_iso_1 & events.is_iso_2 #& events.is_b_veto
 # B
 @categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
 def cat_ss_noniso1_iso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_os & ~events.is_iso_1 & events.is_iso_2 & events.is_b_veto
+    return events, ~events.is_os & ~events.is_iso_1 & events.is_iso_2 #& events.is_b_veto
 # A0
 @categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
 def cat_ss_iso1_noniso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_os & events.is_iso_1 & ~events.is_iso_2 & events.is_b_veto
+    return events, ~events.is_os & events.is_iso_1 & ~events.is_iso_2 #& events.is_b_veto
 # B0
 @categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
 def cat_ss_noniso1_noniso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, ~events.is_os & ~events.is_iso_1 & ~events.is_iso_2 & events.is_b_veto
+    return events, ~events.is_os & ~events.is_iso_1 & ~events.is_iso_2 #& events.is_b_veto
 # D0
 @categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
 def cat_os_iso1_noniso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, events.is_os & events.is_iso_1 & ~events.is_iso_2 & events.is_b_veto
+    return events, events.is_os & events.is_iso_1 & ~events.is_iso_2 #& events.is_b_veto
 # C0
 @categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
 def cat_os_noniso1_noniso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, events.is_os & ~events.is_iso_1 & ~events.is_iso_2 & events.is_b_veto
+    return events, events.is_os & ~events.is_iso_1 & ~events.is_iso_2 #& events.is_b_veto
 # D
 @categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
 def cat_os_iso1_iso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, events.is_os & events.is_iso_1 & events.is_iso_2 & events.is_b_veto
+    return events, events.is_os & events.is_iso_1 & events.is_iso_2 #& events.is_b_veto
 # C
 @categorizer(uses={"is_os", "is_iso_1", "is_iso_2", "is_b_veto"})
 def cat_os_noniso1_iso2_bveto(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    return events, events.is_os & ~events.is_iso_1 & events.is_iso_2 & events.is_b_veto
+    return events, events.is_os & ~events.is_iso_1 & events.is_iso_2 #& events.is_b_veto
 
 
 ## --- e/mutau --->>>

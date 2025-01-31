@@ -5,34 +5,34 @@ era     : 2022
 postfix : PreEE
 wrapper : true
 limited : false
-workers : 8
-tasks_per_job  : 2
+workers : 9
+tasks_per_job  : 3
 
 args:
   config    : run3_2022_preEE_nano_cp_tau_v14
   workflow  : htcondor
   branch    : -1
-  version   : Run3_2022PreEE_full_20241206_193602
+  version   : Run3_2022PreEE_full_20250118_215651
 
   datasets  :
     ## == data ==
     - data_tau_C
     - data_tau_D
-    - data_mu_C
-    - data_mu_D
-    - data_single_mu_C
-    - data_e_C
-    - data_e_D
+    #- data_mu_C
+    #- data_mu_D
+    #- data_single_mu_C
+    #- data_e_C
+    #- data_e_D
     ## == wj ==
     #- wj_incl_amcatnlo
     #- wj_0j_amcatnlo
     #- wj_1j_amcatnlo
     #- wj_2j_amcatnlo
     - wj_incl_madgraph
-    - wj_1j_madgraph
-    - wj_2j_madgraph
-    - wj_3j_madgraph
-    - wj_4j_madgraph    
+    #- wj_1j_madgraph
+    #- wj_2j_madgraph
+    #- wj_3j_madgraph
+    #- wj_4j_madgraph    
     ## == dy ==
     - dy_lep_m10to50_madgraph
     - dy_lep_m50_madgraph
@@ -80,9 +80,10 @@ args:
     - wzz
     - zzz
     ## == signal ==
-    - h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay
-    - h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay
-    - h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay
+    #- h_ggf_tautau_uncorrelated_filter
+    #- h_ggf_tautau_uncorrelatedDecay_CPodd_Filtered_ProdAndDecay
+    #- h_ggf_tautau_uncorrelatedDecay_MM_Filtered_ProdAndDecay
+    #- h_ggf_tautau_uncorrelatedDecay_SM_Filtered_ProdAndDecay
     #- zh_tautau_uncorrelatedDecay_Filtered
     #- wph_tautau_uncorrelatedDecay_Filtered
     #- wmh_tautau_uncorrelatedDecay_Filtered
@@ -96,21 +97,22 @@ args:
     #- dy_m50toinf_tau
     #- dy_m50toinf_jet
     - dy
-    - tt
+    #- tt
+    - top
     ##- st_tchannel
     ##- st_twchannel
-    - st
-    - vv
-    - vvv
-    - h_ggf_htt
+    #- st
+    #- vv
+    #- vvv
+    - multiboson
+    #- h_ggf_htt
     #- zh_htt
     #- wh_htt
 
   categories:
-    - etau__*
-    - mutau__*
-    - tautau__real_1__had*
-    
+    - etau__real_2__*
+    - mutau__real_2__*
+    - tautau__real_1__*
 
   variables:
     ## -- electron -- #
@@ -135,21 +137,21 @@ args:
     #- tau_2_IPsig
     ## -- hcand -- #
     - hcand_1_pt
-    - hcand_1_pt_binvar
+    #- hcand_1_pt_binvar
     - hcand_1_eta
     - hcand_1_phi
-    #- hcand_1_IPx
-    #- hcand_1_IPy
-    #- hcand_1_IPz
+    - hcand_1_IPx
+    - hcand_1_IPy
+    - hcand_1_IPz
     - hcand_1_IPsig
     - hcand_1_decayMode
     - hcand_2_pt
-    - hcand_2_pt_binvar
+    #- hcand_2_pt_binvar
     - hcand_2_eta
     - hcand_2_phi
-    #- hcand_2_IPx
-    #- hcand_2_IPy
-    #- hcand_2_IPz
+    - hcand_2_IPx
+    - hcand_2_IPy
+    - hcand_2_IPz
     - hcand_2_IPsig
     - hcand_2_decayMode
     - hcand_dr
@@ -172,45 +174,45 @@ args:
     - puppi_met_phi
     ## -- angular variables -- #
     #- Alpha
-    #- PhiCP_IPIP
+    - PhiCP_IPIP
     #- PhiCP_IPIP_alpha_lt_piby4
     #- PhiCP_IPIP_alpha_gt_piby4
-    #- PhiCP_DPDP
+    - PhiCP_DPDP
     #- PhiCP_PVPV
     #- PhiCP_IPPV
-    #- PhiCP_IPDP
+    - PhiCP_IPDP
     #- PhiCP_IPDP_alpha_lt_piby4
     #- PhiCP_IPDP_alpha_gt_piby4
     ## -- Y vs. pT -- ##
-    - dphi_met_h1-hcand_1_pt
-    - met_var_qcd_h1-hcand_1_pt
-    - hcand_dr-hcand_1_pt
-    - hcand_2_pt-hcand_1_pt
-    - n_jet-hcand_1_pt
-    - hT-hcand_1_pt
-    - hcand_invm-hcand_1_pt
-    - jet_1_pt-hcand_1_pt
-    - jet_2_pt-hcand_1_pt
+    #- dphi_met_h1-hcand_1_pt
+    #- met_var_qcd_h1-hcand_1_pt
+    #- hcand_dr-hcand_1_pt
+    #- hcand_2_pt-hcand_1_pt
+    #- n_jet-hcand_1_pt
+    #- hT-hcand_1_pt
+    #- hcand_invm-hcand_1_pt
+    #- jet_1_pt-hcand_1_pt
+    #- jet_2_pt-hcand_1_pt
     ## -- Y vs metvarqcd -- ##
-    - hcand_dr-met_var_qcd_h1
-    - hcand_1_pt-met_var_qcd_h1
-    - hcand_2_pt-met_var_qcd_h1
-    - n_jet-met_var_qcd_h1
-    - hT-met_var_qcd_h1
-    - hcand_invm-met_var_qcd_h1
-    - dphi_met_h1-met_var_qcd_h1
-    - jet_1_pt-met_var_qcd_h1
-    - jet_2_pt-met_var_qcd_h1
+    #- hcand_dr-met_var_qcd_h1
+    #- hcand_1_pt-met_var_qcd_h1
+    #- hcand_2_pt-met_var_qcd_h1
+    #- n_jet-met_var_qcd_h1
+    #- hT-met_var_qcd_h1
+    #- hcand_invm-met_var_qcd_h1
+    #- dphi_met_h1-met_var_qcd_h1
+    #- jet_1_pt-met_var_qcd_h1
+    #- jet_2_pt-met_var_qcd_h1
     ## -- Y vs DR -- ##
-    - met_var_qcd_h1-hcand_dr
-    - hcand_1_pt-hcand_dr
-    - hcand_2_pt-hcand_dr
-    - n_jet-hcand_dr
-    - hT-met_hcand_dr
-    - hcand_invm-hcand_dr
-    - dphi_met_h1-hcand_dr
-    - jet_1_pt-hcand_dr
-    - jet_2_pt-hcand_dr
+    #- met_var_qcd_h1-hcand_dr
+    #- hcand_1_pt-hcand_dr
+    #- hcand_2_pt-hcand_dr
+    #- n_jet-hcand_dr
+    #- hT-met_hcand_dr
+    #- hcand_invm-hcand_dr
+    #- dphi_met_h1-hcand_dr
+    #- jet_1_pt-hcand_dr
+    #- jet_2_pt-hcand_dr
 
   shifts:
     #- minbias_xs
