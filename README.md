@@ -69,9 +69,9 @@ To ensure a smooth workflow, here are some best practices:
   Follow the default task graph in ColumnFlow [task-graph](https://github.com/columnflow/columnflow/wiki#default-task-graph) is recommended.
 
 - **Handling Large Datasets:**  
-  If you have multiple datasets or processes, this [script](https://github.com/gsaha009/CPinHToTauTau/blob/main/cf_run.py) can help generate the necessary commands for batch execution.  
+  If you have multiple datasets or processes, this [script](https://github.com/IPHCTau/CPinHToTauTau/blob/main/cf_run.py) can help generate the necessary commands for batch execution.  
   Steps:
-  1. Modify the `yaml` (e.g. [2022PreEE_full.yml](https://github.com/gsaha009/CPinHToTauTau/blob/main/yamls/2022PreEE_full.yml)) for your needs.
+  1. Modify the `yaml` (e.g. [2022PreEE_full.yml](https://github.com/IPHCTau/CPinHToTauTau/blob/main/yamls/2022PreEE_full.yml)) for your needs.
   2. Run the `cf_run` script:  
      ```sh
      python cf_run.py -i <yaml/2022PreEE_full.yml> -f <ReduceEvents or other>
