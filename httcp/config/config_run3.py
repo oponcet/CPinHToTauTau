@@ -1331,6 +1331,7 @@ def add_config (ana: od.Analysis,
     # Adding hist hooks
     # --------------------------------------------------------------------------------------------- #
 
+    cfg.x.regions_to_extrapolate_fake = "CD" # Specify the regions to extrapolate the fake factors
     from httcp.config.hist_hooks import add_hist_hooks
     add_hist_hooks(cfg)
 
