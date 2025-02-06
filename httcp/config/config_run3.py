@@ -32,7 +32,7 @@ logger = law.logger.get_logger(__name__)
 ak = maybe_import("awkward")
 
 #thisdir = os.path.dirname(os.path.abspath(__file__))
-thisdir = "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/ColumnFlowAnalyses/CPinHToTauTau/httcp/config"
+thisdir = "/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/httcp/config"
 #print(f"thisdir: {thisdir}")
 corrdir = os.path.join(os.path.dirname(thisdir), "data")
 #print(f"corrdir: {corrdir}")
@@ -514,7 +514,7 @@ def add_config (ana: od.Analysis,
     # restructure the postfix names to build appropriate tags
     # --------------------------------------------------------------------------------------------- #
 
-    year2 = year%100
+    year2 = year%100 # 22, 23, 24
     #external_path_parent = os.path.join(os.environ.get('HTTCP_BASE'), f"httcp/data/corrections")
     external_path_parent = os.path.join(corrdir, "corrections")
     external_path_tail   = f"{year}{postfix}" if postfix else f"{year}"
@@ -529,16 +529,19 @@ def add_config (ana: od.Analysis,
     #print(f"json_mirror          : {json_mirror}")
 
     normtagjson = None
+    goldenjson = None
     if year == 2022:
         normtagjson = "/cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_BRIL.json"
+        goldenjson = "/eos/user/c/cmsdqm/www/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json"
     elif year == 2023:
         normtagjson = "/afs/cern.ch/user/l/lumipro/public/Normtags/normtag_PHYSICS.json"
+        goldenjson = "/eos/user/c/cmsdqm/www/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json"
     elif year == 2024:
         raise RuntimeWarning("too early")
     else:
         raise RuntimeError(f"Check year : {year}")
 
-    goldenjson  = glob(f"{external_path}/Lumi/*.json")[0]
+    #goldenjson  = glob(f"{external_path}/Lumi/*.json")[0]
 
     #print(f"GoldenJSON           : {goldenjson}")
     #print(f"NormtagJSON          : {normtagjson}")
@@ -558,7 +561,7 @@ def add_config (ana: od.Analysis,
         "muon_xtrig_sf"     : (f"{json_mirror}/POG/MUO/{year}_Summer{year2}{year_postfix}/CrossMuTauHlt.json",         "v1"), # Mu xTrig SF
         "electron_sf"       : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electron.json.gz",           "v1"), # Ele POG SF
         "electron_trig_sf"  : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electronHlt.json.gz",        "v1"), # Ele HLT SF
-        "electron_ss"       : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electronSS.json.gz",         "v1"), # Ele Scale Smearing
+        "electron_ss"       : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/electronSS.json.gz",         "v1"), # Ele Scale Smearing to add when availbale for 2023 
         # https://gitlab.cern.ch/cclubbtautau/AnalysisCore/-/blob/main/data/TriggerScaleFactors/2022preEE/CrossEleTauHlt.json?ref_type=heads
         "electron_xtrig_sf" : (f"{json_mirror}/POG/EGM/{year}_Summer{year2}{year_postfix}/CrossEleTauHlt.json",        "v1"), # Ele xTrig SF
         "tau_sf"            : (f"{json_mirror}/POG/TAU/{year}_{postfix}/tau_DeepTau2018v2p5_{year}_{postfix}.json.gz", "v1"), # TEC and ID SF
@@ -571,9 +574,9 @@ def add_config (ana: od.Analysis,
         # https://indico.cern.ch/event/489921/contributions/2000259/attachments/1248156/1839106/Recoil_20160323.pdf
         # /afs/cern.ch/user/d/dmroy/public/DY_pTll_recoil_corrections.json.gz
         "zpt_rewt_v2_sf"    : (f"{external_path_parent}/Run3/Zpt/DY_pTll_recoil_corrections.json.gz",                  "v1"), # Zpt Rewt
-        "tautau_ff"         : (f"{external_path}/Fake_tautau/fake_factor_2022_preEE_max_120GeV.json",                  "v1"),
-        "tautau_ff0"        : (f"{external_path}/Fake_tautau/fake_factor_2022_preEE_0cat_v2.json",                     "v1"),
-        "tautau_ext_corr"   : (f"{external_path}/Fake_tautau/extrapolation_correction_inclusive.json",                 "v1"),
+        # "tautau_ff"         : (f"{external_path}/Fake_tautau/fake_factor_2022_preEE_max_120GeV.json",                  "v1"),
+        # "tautau_ff0"        : (f"{external_path}/Fake_tautau/fake_factor_2022_preEE_0cat_v2.json",                     "v1"),
+        # "tautau_ext_corr"   : (f"{external_path}/Fake_tautau/extrapolation_correction_inclusive.json",                 "v1"),
         #"btag_sf_corr": (f"{json_mirror}/POG/BTV/{year}_Summer{year2}{year_postfix}/btagging.json.gz",                "v1"),
         #"met_phi_corr": (f"{json_mirror}/POG/JME/2018_UL/met.json.gz",                                                "v1"), #met phi, unavailable Run3
     })
@@ -588,7 +591,7 @@ def add_config (ana: od.Analysis,
     if year == 2022:
         electron_sf_tag = "2022Re-recoE+PromptFG" if year_postfix else "2022Re-recoBCD"
     elif year == 2023:
-        electron_sf_tag = "2023PromptC" if year_postfix else "2023PromptD"
+        electron_sf_tag = "2023PromptD" if postfix == "postBPix"   else "2023PromptC"
     elif year == 2024:
         raise RuntimeWarning("too early")
     else:
@@ -642,6 +645,7 @@ def add_config (ana: od.Analysis,
     # common jec/jer settings configuration
     # https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC?rev=201
     # https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution?rev=107
+    # https://cms-jerc.web.cern.ch/Recommendations/#jet-energy-scale
     # --------------------------------------------------------------------------------------------- #
 
     if year == 2022:
@@ -650,6 +654,13 @@ def add_config (ana: od.Analysis,
         jec_version = {2022: "V2"}[year]
         jer_campaign = f"Summer{year2}{year_postfix}_22Sep2023"
         jer_version = "JR" + {2022: "V1"}[year]
+        jet_type = "AK4PFPuppi"
+    elif year == 2023:
+        jec_campaign = f"Summer{year2}{year_postfix}Prompt23" # Summer23Prompt23 
+        jec_version = {2023: "V1"}[year]
+        jer_campaign = f"Summer{year2}{year_postfix}Prompt23"
+        jer_campaign += f"_Run{'Cv123' if postfix == 'preBPix' else 'D'}" # Summer23Prompt23_RunCv1234 or Summer23Prompt23_RunD
+        jer_version = "JR" + {2023: "V1"}[year]
         jet_type = "AK4PFPuppi"
     else:
         assert False
@@ -1031,7 +1042,7 @@ def add_config (ana: od.Analysis,
     cfg.x.event_weights = DotDict({
         "normalization_weight"                  : [],
         "pu_weight"                             : [], #get_shifts("minbias_xs"),
-        "electron_idiso_weight"                 : [], #get_shifts("e"),
+        "electron_idiso_weight"                 : [], #get_shifts("e"), # to comment in 2023
         "electron_Ele30_WPTight_trigger_weight" : [], #get_shifts("e_xtrig"),
         "electron_xtrig_weight"                 : [], #get_shifts("e_xtrig"),
         "muon_id_weight"                        : [], #get_shifts("mu_id"),
@@ -1040,8 +1051,8 @@ def add_config (ana: od.Analysis,
         "muon_xtrig_weight"                     : [], #get_shifts("mu_xtrig"),
         "tau_weight"                            : [], #get_shifts("tau"),
         "tau_trigger_weight"                    : [], #get_shifts("tau_trig"),
-        "ff_weight"                             : [],
-        "ff_ext_corr_weight"                    : [],
+        # "ff_weight"                             : [],
+        # "ff_ext_corr_weight"                    : [],
         #"tes_weight"                           : [], #get_shifts("tes"),
         "tauspinner_weight"                     : get_shifts("tauspinner"),
         "pdf_weight"                            : [],
@@ -1321,7 +1332,7 @@ def add_config (ana: od.Analysis,
             "is_ipsig_0to1_1",
             "has_0jet", "has_1jet", "has_2jet",
             "PuppiMET.*", "Jet.*",
-            "TauSpinner.*", "hcand.*", "hcandprod.*"
+            "TauSpinner.*", "hcand.*", "hcandprod.*",  "TauProd.*",
             "GenTau.*", "GenTauProd.*",
             "process_id", "category_ids"
         },
