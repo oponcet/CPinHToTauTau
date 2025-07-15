@@ -33,7 +33,7 @@ from httcp.production.PhiCP_Producer import ProduceDetPhiCP, ProduceGenPhiCP
 #from httcp.production.weights import tauspinner_weight
 from httcp.production.extra_weights import zpt_reweight, zpt_reweight_v2, ff_weight # ff_weight : dummy
 from httcp.production.muon_weights import muon_id_weights, muon_iso_weights, muon_trigger_weights, muon_xtrigger_weights
-from httcp.production.electron_weights import electron_idiso_weights, electron_trigger_weights, electron_xtrigger_weights
+from httcp.production.electron_weights import electron_trigger_weights, electron_xtrigger_weights, electron_idiso_weights # comment for 2023
 from httcp.production.tau_weights import tau_all_weights, tauspinner_weights
 
 
@@ -156,7 +156,7 @@ def hcand_features(
         muon_trigger_weights,
         muon_xtrigger_weights,
         # -- electron -- #
-        electron_idiso_weights,
+        electron_idiso_weights, # comment for 2023
         electron_trigger_weights,
         electron_xtrigger_weights,
         # -- tau -- #
@@ -169,7 +169,7 @@ def hcand_features(
         category_ids,
         build_abcd_masks,
         "channel_id",
-        ff_weight,
+        # ff_weight,
     },
     produces={
         make_column_valid,
@@ -186,7 +186,7 @@ def hcand_features(
         muon_trigger_weights,
         muon_xtrigger_weights,
         # -- electron -- #
-        electron_idiso_weights,
+        electron_idiso_weights, # comment for 2023
         electron_trigger_weights,
         electron_xtrigger_weights,
         # -- tau -- #
@@ -200,7 +200,7 @@ def hcand_features(
         #"trigger_ids",
         category_ids,
         build_abcd_masks,
-        ff_weight,
+        # ff_weight,
     },
 )
 def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
@@ -262,7 +262,7 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         events = self[muon_trigger_weights](events, **kwargs)
         events = self[muon_xtrigger_weights](events, **kwargs)
         # ----------- Electron weights ----------- #
-        events = self[electron_idiso_weights](events, **kwargs)
+        events = self[electron_idiso_weights](events, **kwargs) # comment for 2023
         events = self[electron_trigger_weights](events, **kwargs)
         events = self[electron_xtrigger_weights](events, **kwargs)
         # ----------- Tau weights ----------- #
@@ -283,7 +283,7 @@ def main(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         #    logger.info("splitting (any) Drell-Yan dataset ... ")
         #    events = self[split_dy](events,**kwargs)
 
-    events = self[ff_weight](events, **kwargs)        
+    # events = self[ff_weight](events, **kwargs)        
 
     # features
     events = self[hcand_mass](events, **kwargs)

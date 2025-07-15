@@ -42,7 +42,7 @@ fake_factor_derivation/
 
 Set usaul CF envrionment:
 ```sh
-source setup httcp_env
+source setup.sh httcp_env
 ```
 
 Ensure you have **ROOT** installed for handling histograms and fits. If not run:

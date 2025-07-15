@@ -132,15 +132,45 @@ def save_root_file(OUTPUT_DIR, th1d, HIST_NAME, fit, h_uncert, ratio_hist, confi
 
 def plot_results(fit, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_root_file, lumi=1):
     """Create and save the plot results."""
-    canvas = ROOT.TCanvas("Extrapolation Correction", "Extrapolation Correction", 800, 600)
+    canvas = ROOT.TCanvas("Fake Factors", "Fake Factors", 800, 600)
     ROOT.gStyle.SetOptStat(0) # Disable stat box
     ratio_hist.Draw("EP")
     ratio_hist.SetStats(0)  # Disable stats box
     ratio_hist.SetLineColor(ROOT.kBlack)
     ratio_hist.SetMarkerStyle(20)
+
+    DM = CATEGORY.split("_")[0]
+
+    if DM == "tau1a1DM10": # \tau \to a_1 \nu 
+        DM_latex = "#tau #rightarrow  a_{1}#nu" # 
+    elif DM == "tau1pi": # \tau \to \pi^\pm \nu
+        DM_latex = "#tau #rightarrow  #pi^{#pm} #nu"
+    elif DM == "tau1rho": # \tau \to \rho \nu
+        DM_latex = "#tau #rightarrow  #rho#nu"
+    elif DM == "tau1a1DM2": # \tau \to \pi^\pm \pi^0 \pi^0 \nu 
+        DM_latex = "#tau #rightarrow  #pi^{#pm}#pi^{0}#pi^{0}#nu"
+    else: 
+        DM_latex = DM
+
+    Njets = CATEGORY.split("_")[1] if len(CATEGORY.split("_")) > 1 else -1
     
-    ratio_hist.SetTitle("Extrapolation Correction for inclusive in DM and Njets")
-    ratio_hist.GetYaxis().SetTitle("Extrapolation Correction")
+    if Njets == -1:
+        Njets = "Inclusive"
+    elif Njets == "has0j": # N_jet = 0
+        Njets = "N_{jet} = 0"
+    elif Njets == "has1j": # N_jet = 1 
+        Njets = "N_{jet} = 1"
+    elif Njets == "has2j": # N_jet = 2
+        Njets = "N_{jet} #geq 2"
+    else:
+        Njets = Njets
+
+
+
+    print(f"DM and Njets for the plot: {DM} and {Njets}")
+    
+    ratio_hist.SetTitle(f"{DM_latex} and {Njets}")
+    ratio_hist.GetYaxis().SetTitle("Fake Factors")
     ratio_hist.GetXaxis().SetTitle("p_{T} (GeV)")
     ratio_hist.GetYaxis().SetRangeUser(0, 1.0)
 
@@ -155,7 +185,7 @@ def plot_results(fit, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_root_fi
     fit.SetLineColor(ROOT.kAzure + 7)
 
     legend = ROOT.TLegend(0.15, 0.75, 0.35, 0.9)
-    legend.AddEntry(ratio_hist, "Extrapolation Correction", "EP")
+    legend.AddEntry(ratio_hist, "Fake Factors", "EP")
     legend.AddEntry(fit, "Fit Result", "L")
     legend.AddEntry(h_uncert, "68% CL (Uncertainties)", "F")
     legend.SetBorderSize(0)
@@ -497,6 +527,10 @@ def main(args):
 
         for (dm, njet), data in combined_ss_data_minus_mc_th1d.items():
             print(f"Combining histograms for dm={dm}, njet={njet}")
+
+            CATEGORY = f"{dm}_{njet}" if njet != -1 else dm  # Handle cases where njet is -1
+
+            print(f"Processing category: {CATEGORY}")
 
             combined_ss_noniso_data_minus_mc_th1d_list = []
             combined_ss_iso_data_minus_mc_th1d_list = []

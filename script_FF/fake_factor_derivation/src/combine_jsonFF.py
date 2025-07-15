@@ -6,7 +6,7 @@ Script to combine the json files into one.
 import json
 import glob
 
-year = "2023_postBPix"
+year = "2023"
 # Define the files and the structure
 input_files = glob.glob(f"/afs/cern.ch/user/o/oponcet/private/analysis/CPinHToTauTau/script_FF/fake_factor_derivation/outputs/{year}/fake_factors/*/*.json")  # Replace with the path to your files
 merged_structure = {
