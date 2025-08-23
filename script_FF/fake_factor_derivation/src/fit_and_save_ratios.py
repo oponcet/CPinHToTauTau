@@ -56,7 +56,7 @@ def configure_directories(config):
     N_JETS_LIST = config["n_jets"]
     
     if VARIABLE == "met_var_qcd_h1":
-        PT_RANGE = (-1.5, 1.5)
+        PT_RANGE = (-1.0, 1.0)
     else:
         PT_RANGE = (35, 100)
 
@@ -109,9 +109,9 @@ def get_input_file(dm, n_jets, config, VARIABLE,CORRECTION_TYPE):
         if CORRECTION_TYPE == "fake_factors":
             ss_noniso_data_minus_mc_file = f"{config['input_base_path']}/{VARIABLE}_ss_noniso_data_minus_mc_hist_dm_{dm}_njet_{n_jets}.pkl" # fake_factors_ss_noniso_data_minus_mc_hist_dm_tau1pi_njet_has1j.pkl  
             ss_iso_data_minus_mc_file = f"{config['input_base_path']}/{VARIABLE}_ss_iso_data_minus_mc_hist_dm_{dm}_njet_{n_jets}.pkl" # fake_factors_ss_iso_data_minus_mc_hist_dm_tau1pi_njet_has1j.pkl
-        elif CORRECTION_TYPE == "closure_correction":
-            ss_noniso_data_minus_mc_file = f"{config['input_base_path']}/{VARIABLE}_ss_iso_data_hist_dm_{dm}_njet_{n_jets}.pkl"
-            ss_iso_data_minus_mc_file = f"{config['input_base_path']}/{VARIABLE}_ss_iso_mc_hist_dm_{dm}_njet_{n_jets}.pkl"
+        elif CORRECTION_TYPE == "closure_correction": # (DATA - PromptMC)/FakeMC  = CC 
+            ss_noniso_data_minus_mc_file = f"{config['input_base_path']}/{VARIABLE}_ss_iso_fake_hist_dm_{dm}_njet_{n_jets}.pkl" # denominator
+            ss_iso_data_minus_mc_file = f"{config['input_base_path']}/{VARIABLE}_ss_iso_data_minus_mc_hist_dm_{dm}_njet_{n_jets}.pkl" # numerator
         else:   
             raise ValueError(f"Unknown correction type: {CORRECTION_TYPE}")
     else:
@@ -486,6 +486,14 @@ def main(args):
             ss_noniso_data_minus_mc_th1d_rebin_dm0 = []
             ss_iso_data_minus_mc_th1d_rebin_dm0 = []
 
+        if correction_type == "closure_correction":
+            ss_noniso_data_minus_mc_th1d_rebin_njet0 = []
+            ss_iso_data_minus_mc_th1d_rebin_njet0 = []
+            ss_noniso_data_minus_mc_th1d_rebin_njet1 = []
+            ss_iso_data_minus_mc_th1d_rebin_njet1 = []
+            ss_noniso_data_minus_mc_th1d_rebin_njet2 = []
+            ss_iso_data_minus_mc_th1d_rebin_njet2 = []
+
         for dm, njet, ss_noniso_data_minus_mc_th1d, ss_iso_data_minus_mc_th1d, OUTPUT_DIR, CATEGORY in results :
             print(f"Processing category: {dm}, {njet}")
 
@@ -523,8 +531,62 @@ def main(args):
                 else: 
                     print("skip for loop on dm = 0")
                     continue
-
             
+            if correction_type == "closure_correction": 
+                print(f"correction type = {correction_type}")
+                # For closure correction it's measure only in NJET bin so we combine DMs together 
+                print(f"Decay mode = {dm}, NJET = {njet}")
+                if njet == "has0j":
+                        ss_noniso_data_minus_mc_th1d_rebin_njet0.append(ss_noniso_data_minus_mc_th1d_rebin)
+                        ss_iso_data_minus_mc_th1d_rebin_njet0.append(ss_iso_data_minus_mc_th1d_rebin)
+
+                        # if all dms have been added to the list, then merge by summing them, else continue
+                        if len(ss_noniso_data_minus_mc_th1d_rebin_njet0) == 4: 
+                            ss_noniso_data_minus_mc_th1d_rebin = ss_noniso_data_minus_mc_th1d_rebin_njet0[0].Clone()
+                            ss_iso_data_minus_mc_th1d_rebin = ss_iso_data_minus_mc_th1d_rebin_njet0[0].Clone()
+                            # take care of error
+                            ss_noniso_data_minus_mc_th1d_rebin.Sumw2()
+                            ss_iso_data_minus_mc_th1d_rebin.Sumw2()
+                            for i in range(1, 4):
+                                ss_noniso_data_minus_mc_th1d_rebin.Add(ss_noniso_data_minus_mc_th1d_rebin_njet0[i])
+                                ss_iso_data_minus_mc_th1d_rebin.Add(ss_iso_data_minus_mc_th1d_rebin_njet0[i])
+                        else: 
+                            print("skip for loop on njet = 0")
+                            continue
+                elif njet == "has1j":
+                        ss_noniso_data_minus_mc_th1d_rebin_njet1.append(ss_noniso_data_minus_mc_th1d_rebin)
+                        ss_iso_data_minus_mc_th1d_rebin_njet1.append(ss_iso_data_minus_mc_th1d_rebin)
+
+                        if len(ss_noniso_data_minus_mc_th1d_rebin_njet1) == 4:
+                            ss_noniso_data_minus_mc_th1d_rebin = ss_noniso_data_minus_mc_th1d_rebin_njet1[0].Clone()
+                            ss_iso_data_minus_mc_th1d_rebin = ss_iso_data_minus_mc_th1d_rebin_njet1[0].Clone()
+                            # take care of error
+                            ss_noniso_data_minus_mc_th1d_rebin.Sumw2()
+                            ss_iso_data_minus_mc_th1d_rebin.Sumw2()
+                            for i in range(1, 4):
+                                ss_noniso_data_minus_mc_th1d_rebin.Add(ss_noniso_data_minus_mc_th1d_rebin_njet1[i])
+                                ss_iso_data_minus_mc_th1d_rebin.Add(ss_iso_data_minus_mc_th1d_rebin_njet1[i])
+                        else:
+                            print("skip for loop on njet = 1")
+                            continue
+
+                elif njet == "has2j":
+                        ss_noniso_data_minus_mc_th1d_rebin_njet2.append(ss_noniso_data_minus_mc_th1d_rebin)
+                        ss_iso_data_minus_mc_th1d_rebin_njet2.append(ss_iso_data_minus_mc_th1d_rebin)
+
+                        if len(ss_noniso_data_minus_mc_th1d_rebin_njet2) == 4:
+                            ss_noniso_data_minus_mc_th1d_rebin = ss_noniso_data_minus_mc_th1d_rebin_njet2[0].Clone()
+                            ss_iso_data_minus_mc_th1d_rebin = ss_iso_data_minus_mc_th1d_rebin_njet2[0].Clone()
+                            # take care of error
+                            ss_noniso_data_minus_mc_th1d_rebin.Sumw2()
+                            ss_iso_data_minus_mc_th1d_rebin.Sumw2()
+                            for i in range(1, 4):
+                                ss_noniso_data_minus_mc_th1d_rebin.Add(ss_noniso_data_minus_mc_th1d_rebin_njet2[i])
+                                ss_iso_data_minus_mc_th1d_rebin.Add(ss_iso_data_minus_mc_th1d_rebin_njet2[i])
+                        else:
+                            print("skip for loop on njet = 2")
+                            continue
+
             # in the case several config files are used, we need to combine the histograms
             if nb_files > 1:
                 # Store results for merging
@@ -565,7 +627,11 @@ def main(args):
                 print("fit up  forumula : ", fit_up.GetExpFormula("P"))
                 print("fit down  forumula : ", fit_down.GetExpFormula("P"))
 
+                if correction_type == "closure_correction":
+                    CATEGORY = njet  # only consider njet catergory in closure correction and dms have been merged 
 
+
+                print("CATEGORY : ", CATEGORY)
                 # Save the result in ROOT and JSON
                 output_root_file = save_root_file(OUTPUT_DIR, ratio_th1d, HIST_NAME, fit, h_uncert, ratio_hist, config, CATEGORY)
 
@@ -573,6 +639,8 @@ def main(args):
                 canvas = plot_results(fit, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_root_file, lumi, correction_type)
 
                 # Save to JSON
+                if correction_type == "closure_correction":
+                    dm = -1 
                 save_json_correction(fit, fit_up, fit_down, ratio_hist, output_root_file, config, PT_RANGE, dm, njet)
 
     if nb_files > 1:
@@ -626,6 +694,75 @@ def main(args):
                 ss_iso_data_minus_mc_th1d_rebin = ss_iso_data_minus_mc_th1d_sum
             else:
                 raise ValueError(f"Unknown correction type: {correction_type}")
+                
+
+            if correction_type == "closure_correction":
+                ss_noniso_data_minus_mc_th1d_rebin_njet0 = []
+                ss_iso_data_minus_mc_th1d_rebin_njet0 = []
+                ss_noniso_data_minus_mc_th1d_rebin_njet1 = []
+                ss_iso_data_minus_mc_th1d_rebin_njet1 = []
+                ss_noniso_data_minus_mc_th1d_rebin_njet2 = []
+                ss_iso_data_minus_mc_th1d_rebin_njet2 = []
+
+            if correction_type == "closure_correction": 
+               # For closure correction it's measure only in NJET bin so we combine DMs together 
+               print(f"Decay mode = {dm}, NJET = {njet}")
+               if njet == 0:
+                    ss_noniso_data_minus_mc_th1d_rebin_njet0.append(ss_noniso_data_minus_mc_th1d_rebin)
+                    ss_iso_data_minus_mc_th1d_rebin_njet0.append(ss_iso_data_minus_mc_th1d_rebin)
+
+                    # if all dms have been added to the list, then merge by summing them, else continue
+                    if len(ss_noniso_data_minus_mc_th1d_rebin_njet0) == 4: 
+                        ss_noniso_data_minus_mc_th1d_rebin = ss_noniso_data_minus_mc_th1d_rebin_njet0[0].Clone()
+                        ss_iso_data_minus_mc_th1d_rebin = ss_iso_data_minus_mc_th1d_rebin_njet0[0].Clone()
+                        # take care of error
+                        ss_noniso_data_minus_mc_th1d_rebin.Sumw2()
+                        ss_iso_data_minus_mc_th1d_rebin.Sumw2()
+                        for i in range(1, 4):
+                            ss_noniso_data_minus_mc_th1d_rebin.Add(ss_noniso_data_minus_mc_th1d_rebin_njet0[i])
+                            ss_iso_data_minus_mc_th1d_rebin.Add(ss_iso_data_minus_mc_th1d_rebin_njet0[i])
+                    else: 
+                        print("skip for loop on njet = 0")
+                        continue
+
+               elif njet == 1:
+                    ss_noniso_data_minus_mc_th1d_rebin_njet1.append(ss_noniso_data_minus_mc_th1d_rebin)
+                    ss_iso_data_minus_mc_th1d_rebin_njet1.append(ss_iso_data_minus_mc_th1d_rebin)
+
+                    if len(ss_noniso_data_minus_mc_th1d_rebin_njet1) == 4:
+                        ss_noniso_data_minus_mc_th1d_rebin = ss_noniso_data_minus_mc_th1d_rebin_njet1[0].Clone()
+                        ss_iso_data_minus_mc_th1d_rebin = ss_iso_data_minus_mc_th1d_rebin_njet1[0].Clone()
+                        # take care of error
+                        ss_noniso_data_minus_mc_th1d_rebin.Sumw2()
+                        ss_iso_data_minus_mc_th1d_rebin.Sumw2()
+                        for i in range(1, 4):
+                            ss_noniso_data_minus_mc_th1d_rebin.Add(ss_noniso_data_minus_mc_th1d_rebin_njet1[i])
+                            ss_iso_data_minus_mc_th1d_rebin.Add(ss_iso_data_minus_mc_th1d_rebin_njet1[i])
+                    else:
+                        print("skip for loop on njet = 1")
+                        continue
+
+               elif njet == 2:
+                    ss_noniso_data_minus_mc_th1d_rebin_njet2.append(ss_noniso_data_minus_mc_th1d_rebin)
+                    ss_iso_data_minus_mc_th1d_rebin_njet2.append(ss_iso_data_minus_mc_th1d_rebin)
+
+                    if len(ss_noniso_data_minus_mc_th1d_rebin_njet2) == 4:
+                        ss_noniso_data_minus_mc_th1d_rebin = ss_noniso_data_minus_mc_th1d_rebin_njet2[0].Clone()
+                        ss_iso_data_minus_mc_th1d_rebin = ss_iso_data_minus_mc_th1d_rebin_njet2[0].Clone()
+                        # take care of error
+                        ss_noniso_data_minus_mc_th1d_rebin.Sumw2()
+                        ss_iso_data_minus_mc_th1d_rebin.Sumw2()
+                        for i in range(1, 4):
+                            ss_noniso_data_minus_mc_th1d_rebin.Add(ss_noniso_data_minus_mc_th1d_rebin_njet2[i])
+                            ss_iso_data_minus_mc_th1d_rebin.Add(ss_iso_data_minus_mc_th1d_rebin_njet2[i])
+                    else:
+                        print("skip for loop on njet = 2")
+                        continue
+
+
+
+
+
 
             # Calculate the ratio and fit the fake factor
             ratio_th1d = ss_iso_data_minus_mc_th1d_rebin.Clone("ratio")
@@ -650,10 +787,17 @@ def main(args):
             # print("fit down  forumula : ", fit_down.GetExpFormula("P"))
 
             # Save the result in ROOT and JSON
+            if correction_type == "closure_correction":
+                CATEGORY = njet  # only consider njet catergory in closure correction and dms have been merged 
+
             output_root_file = save_root_file(OUTPUT_DIR, ratio_th1d, HIST_NAME, fit, h_uncert, ratio_hist, config, CATEGORY, combine=True)
 
             # Plot Results
             canvas = plot_results(fit, h_uncert, ratio_hist, OUTPUT_DIR, CATEGORY, output_root_file, total_lumi, correction_type)
+
+            # Save to JSON
+            if correction_type == "closure_correction":
+                dm = -1 
 
             # Save to JSON
             save_json_correction(fit, fit_up, fit_down, ratio_hist, output_root_file, config, PT_RANGE, dm, njet)
